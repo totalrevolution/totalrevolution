@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="repository.totalrevolution" version="1.0" name=" [COLOR=dodgerblue]T[/COLOR]otal[COLOR=dodgerblue]R[/COLOR]evolution Repo" provider-name="TotalRevolution">
+	<extension point="xbmc.addon.repository" name="TotalRevolution repo">
+		<info compressed="false">https://github.com/totalrevolution/totalrevolution/raw/master/zips/addons.xml</info>
+		<checksum>https://github.com/totalrevolution/totalrevolution/raw/master/zips/addons.xml.md5</checksum>
+		<datadir zip="true">https://raw.github.com/totalrevolution/totalrevolution/master/zips/</datadir>
+	</extension>
+	<extension point="xbmc.addon.metadata">
+		<summary>[COLOR=dodgerblue]T[/COLOR]otal[COLOR=dodgerblue]R[/COLOR]evolution Repo</summary>
+		<description>All the latest development updates from the TotalRevolution team</description>
+		<platform>all</platform>
+	</extension>
+</addon>
