@@ -1,4 +1,8 @@
-v.4.6:
+v.0.4.7:
+- Updated the database functions (thanks to midraal)
+- Cleaned up some tutorials
+
+v.0.4.6:
 - Cleaned up and improved a lot of the guides
 - Fixed Play_Video so it also works with audio
 - Improved Grab_Log, can now filter and also have clean formatted text

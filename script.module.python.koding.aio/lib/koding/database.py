@@ -25,6 +25,7 @@ import xbmcaddon
 
 profile_path  = xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile'))
 addon_db_path = os.path.join(profile_path,'database.db')
+dbcur, dbcon = None, None
 #----------------------------------------------------------------
 def _connect_to_db():
     """ internal command ~"""
@@ -43,18 +44,21 @@ def _connect_to_db():
     dbcur = dbcon.cursor()
     return (dbcur, dbcon)
 #----------------------------------------------------------------
-def _execute_db_string(sql_string):
+def _execute_db_string(sql_string, commit = True):
     """ internal command ~"""
-    dbcur, dbcon = _connect_to_db()
+    global dbcur, dbcon
+    if dbcur is None or dbcon is None:
+        dbcur, dbcon = _connect_to_db()
     dbcur.execute(sql_string)
-    dbcon.commit()
+    if commit:
+        dbcon.commit()
     results = []
     for result in dbcur:
         results.append(result)
     return results
 #----------------------------------------------------------------
 # TUTORIAL #
-def Add_To_Table(table, spec):
+def Add_To_Table(table, spec, abort_on_error=False):
     """
 Add a row to the table in /userdata/addon_data/<your_addon_id>/database.db
 
@@ -66,6 +70,9 @@ AVAILABLE PARAMS:
 
     (*) spec   -  Sent through as a dictionary this is the colums and constraints.
 
+    abort_on_error  -  Default is set to False but set to True if you want to abort
+    the process when it hits an error.
+	
 EXAMPLE CODE:
 create_specs = {"columns":{"name":"TEXT", "id":"TEXT"}}
 koding.Create_Table("test_table", create_specs)
@@ -80,21 +87,32 @@ for item in results:
 koding.Text_Box('DB RESULTS', final_results)
 os.remove(addon_db_path)
 ~"""
+    global dbcon
     sql_string = "INSERT INTO %s (" % table
     keys = []
     values = []
-    for key in spec.keys():
-        keys.append(key)
-        values.append(spec[key])
-    for key in keys:
-        sql_string += "%s, " % key
-    sql_string = sql_string[:-2]
-    sql_string += ") Values ("
-    for value in values:
-        sql_string += "\"%s\", " % value
-    sql_string = sql_string[:-2]
-    sql_string += ")"
-    _execute_db_string(sql_string)
+    if type(spec) != list:
+        spec = [spec]
+    for item in spec:
+        for key in item.keys():
+            keys.append(key)
+            values.append(item[key])
+        for key in keys:
+            sql_string += "%s, " % key
+        sql_string = sql_string[:-2]
+        sql_string += ") Values ("
+        for value in values:
+            sql_string += "\"%s\", " % value
+        sql_string = sql_string[:-2]
+        sql_string += ")"
+        try:
+            _execute_db_string(sql_string, commit=False)
+        except:
+            if abort_on_error:
+                dbcon.rollback()
+                raise Exception()
+            continue
+    dbcon.commit()
 #----------------------------------------------------------------
 # TUTORIAL #
 def Create_Table(table, spec):
@@ -179,7 +197,7 @@ koding.Text_Box('DB SEARCH RESULTS',str(db_query))
         for rows in iter(cur.fetchmany, []):
             for row in rows:
                 temp_dict = {}
-                for idx,col in enumerate(cur.description):
+                for idx, col in enumerate(cur.description):
                     temp_dict[col[0]] = row[idx]
                 db_dict.append(temp_dict)
         return db_dict
@@ -230,7 +248,7 @@ os.remove(addon_db_path)
         return []
 #----------------------------------------------------------------
 # TUTORIAL #
-def Get_From_Table(table, spec=None, compare_operator="="):
+def Get_From_Table(table, spec=None, default_compare_operator="="):
     """
 Return a list of all entries matching a specific criteria from the
 database stored at: /userdata/addon_data/<your_addon_id>/database.db
@@ -243,7 +261,7 @@ AVAILABLE PARAMS:
 
     spec  -  This is the query value, sent through as a dictionary.
 
-    compare_operator  -  By default this is set to '=' but could be any
+    default_compare_operator  -  By default this is set to '=' but could be any
     other SQL query string such as 'LIKE', 'NOT LIKE', '!=' etc.
 
 EXAMPLE CODE:
@@ -253,7 +271,7 @@ add_specs1 = {"name":"YouTube", "id":"plugin.video.youtube"}
 add_specs2 = {"name":"vimeo","id":"plugin.video.vimeo"}
 koding.Add_To_Table("test_table", add_specs1)
 koding.Add_To_Table("test_table", add_specs2)
-results = koding.Get_From_Table(table="test_table", spec={"name":"%vim%"}, compare_operator="LIKE")
+results = koding.Get_From_Table(table="test_table", spec={"name":"%vim%"}, default_compare_operator="LIKE")
 final_results = ''
 for item in results:
     final_results += 'ID: %s | Name: %s\n'%(item["id"], item["name"])
@@ -264,15 +282,21 @@ os.remove(addon_db_path)
         return Get_All_From_Table()
     sql_string = "SELECT * FROM %s WHERE " % table
     for key in spec.keys():
-        sql_string += "%s %s \"%s\" AND" % (key, compare_operator, spec[key])
-    sql_string = sql_string[:-4]
+        if type(spec[key]) == dict:
+            value = spec[key]["value"]
+            column_compare_operator = spec[key].get("compare_operator", default_compare_operator)
+        else:
+            value = spec[key]
+            column_compare_operator = default_compare_operator
+        sql_string += "%s %s \"%s\" AND " % (key, column_compare_operator, value)
+    sql_string = sql_string[:-5]
     try:
-        return _execute_db_string(sql_string)
+        return _execute_db_string(sql_string, commit=False)
     except:
         return []
 #----------------------------------------------------------------
 # TUTORIAL #
-def Remove_From_Table(table, spec, compare_operator="="):
+def Remove_From_Table(table, spec, default_compare_operator="=", abort_on_error=False):
     """
 Remove entries in the db table at /userdata/addon_data/<your_addon_id>/database.db
 
@@ -282,9 +306,9 @@ AVAILABLE PARAMS:
 
     (*) table  -  The table name you want to query
 
-    spec              -  This is the query value, sent through as a dictionary.
+    spec  -  This is the query value, sent through as a dictionary.
 
-    compare_operator  -  By default this is set to '=' but could be any
+    default_compare_operator  -  By default this is set to '=' but could be any
     other SQL query string such as 'LIKE', 'NOT LIKE', '!=' etc.
 
 EXAMPLE CODE:
@@ -308,12 +332,26 @@ for item in results:
 koding.Text_Box('NEW DB CONTENTS', final_results)
 os.remove(addon_db_path)
 ~"""
+    global dbcon
     sql_string = "DELETE FROM %s WHERE " % table
-    for key in spec.keys():
-        sql_string += "%s %s \"%s\" AND" % (key, compare_operator, spec[key])
-    sql_string = sql_string[:-4]
-    try:
-        return _execute_db_string(sql_string)
-    except:
-        return []
+    if type(spec) != list:
+        spec = [spec]
+    for item in spec:
+        for key in item.keys():
+            if type(item[key]) == dict:
+                value = item[key]["value"]
+                column_compare_operator = item[key].get("compare_operator", default_compare_operator)
+            else:
+                value = item[key]
+                column_compare_operator = default_compare_operator
+            sql_string += "%s %s \"%s\" AND" % (key, column_compare_operator, value)
+        sql_string = sql_string[:-4]
+        try:
+            _execute_db_string(sql_string, commit=False)
+        except:
+            if abort_on_error:
+                dbcon.rollback()
+                raise Exception()
+            continue
+    dbcon.commit()
 #----------------------------------------------------------------
