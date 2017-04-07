@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 # script.module.python.koding.aio
 # Python Koding AIO (c) by whufclee (info@totalrevolution.tv)
@@ -168,6 +168,7 @@ CODE:  DB_Query(db_path, query, [values])
 AVAILABLE PARAMS:
 
     (*) db_path -  the full path to the database file you want to access.
+    
     (*) query   -  this is the actual db query you want to process, use question marks for values
 
     values  -  a list of values, even if there's only one value it must be sent through as a list item.
@@ -208,12 +209,20 @@ koding.Text_Box('DB SEARCH RESULTS',str(db_query))
 
 # ANY NON SELECT QUERY (UPDATE, INSERT ETC.)
     else:
-        if values == '':
-            cur.executemany(query)
-            con.commit()
-        else:
-            cur.executemany(query, values)
-            con.commit()
+        try:
+            if values == '':
+                cur.executemany(query)
+                con.commit()
+            else:
+                cur.executemany(query, values)
+                con.commit()
+        except:
+            if values == '':
+                cur.execute(query)
+                con.commit()
+            else:
+                cur.execute(query, values)
+                con.commit()
 
     cur.close()
 #----------------------------------------------------------------

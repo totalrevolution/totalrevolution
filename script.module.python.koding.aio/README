@@ -240,6 +240,29 @@ IMPORTANT: Do not confuse this with the Browse_To_File function
 
 ------------------------------------------------------------------------------------------
 
+ENABLE/DISABLE THE BUSY (WORKING) SYMBOL:
+This will show/hide a "working" symbol.
+
+	CODE: Show_Busy([status, sleep])
+
+	AVAILABLE PARAMS:
+
+	    status - This optional, by default it's True which means the "working"
+	    symbol appears. False will disable.
+
+	    sleep  -  If set the busy symbol will appear for <sleep> amount of
+	    milliseconds and then disappear.
+
+	EXAMPLE CODE:
+		dialog.ok('BUSY SYMBOL','Press OK to show a busy dialog which restricts any user interaction. We have added a sleep of 5 seconds at which point it will disable.')
+		koding.Show_Busy(sleep=5000)
+		dialog.ok('BUSY SYMBOL','We will now do the same but with slightly different code')
+		koding.Show_Busy(status=True)
+		xbmc.sleep(5000)
+		koding.Show_Busy(status=False)
+
+------------------------------------------------------------------------------------------
+
 SHOW TEXT IN A LARGE WINDOW:
 This will allow you to open a blank window and fill it with some text.
 
@@ -373,10 +396,12 @@ many values you want.
 ------------------------------------------------------------------------------------------
 
 POPULATE A LIST FROM AN ONLINE SCRAPE:
-If you have a basic index web page or a webpage with a common format for displaying links (on all pages)
-then you can use this to populate an add-on. It's capable of cleverly working out what needs to be sent
-through as a directory and what's a playable item. Take a look at the example below for a working example
-which explains this a little better.
+If you have a basic index web page or a webpage with a common
+format for displaying links (on all pages) then you can use this
+to populate an add-on. It's capable of cleverly working out what
+needs to be sent through as a directory and what's a playable item.
+Take a look at the example below for a working example which explains
+this a little better.
 
 	CODE: Populate_List(url, [start_point, end_point, separator, skip]):
 
@@ -648,6 +673,36 @@ S Y S T E M   B A S E D   F U N C T I O N S
 
 ------------------------------------------------------------------------------------------
 
+ADDON LISTS:
+Return a list of enabled or disabled add-ons found in the database.
+
+	CODE: Addon_List([enabled, inc_new])
+
+    AVAILABLE PARAMS:
+        
+        enabled  -  By default this is set to True which means you'll
+        get a list of all the enabled add-ons found in addons*.db but
+        if you want a list of all the disabled ones just set this to
+        False.
+
+        inc_new  -  This will also add any new add-on folders found on
+        your system that aren't yet in the database (ie ones that have
+        been recently been manually extracted but not scanned in). By
+        default this is set to False.
+	        
+	EXAMPLE CODE:
+		enabled_list = Addon_List(enabled=True)
+		disabled_list = Addon_List(enabled=False)
+		my_return = ''
+
+		for item in enabled_list:
+		    my_return += '[COLOR=lime]ENABLED:[/COLOR] %s\n' % item
+		for item in disabled_list:
+		    my_return += '[COLOR=red]DISABLED:[/COLOR] %s\n' % item
+		Text_Box('ADDON STATUS',my_return)
+
+------------------------------------------------------------------------------------------
+
 ADDON SETTINGS:
 By default this will open the current add-on settings but if you pass through an addon_id it will open the settings for that add-on.
 
@@ -678,19 +733,16 @@ Clean a string, removes whitespaces and common buggy formatting when pulling fro
 
 ------------------------------------------------------------------------------------------
 
-CLEANUP A URL:
-Clean a url, removes whitespaces and common buggy formatting when pulling from websites
+CURRENT PROFILE:
+This will return the current running profile, it's only one line of code but this is for my benefit as much as
+anyone else's. I use this function quite a lot and keep forgetting the code so figured it would be easier to
+just write a simple function for it :)
 
-	CODE: Cleanup_URL(url)
+CODE:  Current_Profile()
 
-	    AVAILABLE PARAMS:
-	        
-	        (*) url   -  This is the main url you want cleaned up.
-	        
-	EXAMPLE CODE:
-		raw_url = '" http://test.com/video/"/'
-		clean_url = koding.Cleanup_URL(raw_url)
-		dialog.ok('CLEANUP URL', 'Orig: %s'%raw_url,'Clean: %s'%clean_url)
+EXAMPLE CODE:
+profile = koding.Current_Profile()
+dialog.ok('CURRENT PROFILE','Your current running profile is:','[COLOR=dodgerblue]%s[/COLOR]' % profile)
 
 ------------------------------------------------------------------------------------------
 
@@ -772,22 +824,6 @@ Use this to set built-in kodi settings via JSON or set skin settings. The value 
 	Below is an example of how to disable the RSS feed. To find the setting you need the simplest way is to open the guisettings.xml and find the value you want to change. In the example below you'll notice the setting is split by a dot - this is because it exists in a sub-section in guisettings (lookandfeel > enablerssfeeds).
 
 		koding.Set_Setting('kodi_setting', 'lookandfeel.enablerssfeeds', 'false')
-
-------------------------------------------------------------------------------------------
-
-ENABLE/DISABLE THE BUSY (WORKING) SYMBOL:
-This will show/hide a "working" symbol.
-
-	CODE: Show_Busy(True)
-
-	AVAILABLE PARAMS:
-    	status - This optional, by default it's True which means the "working" symbol appears. False will disable.
-
-	EXAMPLE CODE:
-		dialog.ok('BUSY SYMBOL','Press OK to show a busy dialog which restricts any user interaction. We have added a sleep of 5 seconds at which point it will disable.')
-		koding.Show_Busy()
-		xbmc.sleep(5000)
-		koding.Show_Busy(False)
 
 ------------------------------------------------------------------------------------------
 
@@ -1019,6 +1055,45 @@ If you need to find out the current "real" database in use then this is the func
 
 ------------------------------------------------------------------------------------------
 
+REFRESH/RELOAD VARIOUS SECTIONS:
+Refresh a number of items in kodi, choose the order they are executed in by putting first in your r_mode.
+For example if you want to refresh addons then repo and then the profile you would send through a list in
+the order you want them to be executed.
+
+	CODE: koding.Refresh(r_mode, [profile])
+
+	AVAILABLE PARAMS:
+
+	    r_mode  -  This is the types of "refresh you want to perform",
+	    you can send through just one item or a list of items from the
+	    list below. If you want a sleep between each action just put a
+	    '~' followed by amount of milliseconds after the r_mode. For example
+	    r_mode=['addons~3000', 'repos~2000', 'profile']. This would refresh
+	    the addons, wait 2 seconds then refresh the repos, wait 3 seconds then
+	    reload the profile. The default is set to do a force refresh on
+	    addons and repositories - ['addons', 'repos'].
+	      
+	       'addons': This will perform the 'UpdateLocalAddons' command.
+
+	       'container': This will refresh the contents of the page.
+
+	       'profile': This will refresh the current profile or if
+	       the profile_name param is set it will load that.
+
+	       'repos': This will perform the 'UpdateAddonRepos' command.
+
+	       'skin': This will perform the 'ReloadSkin' command.
+
+	    profile_name -  If you're sending through the option to refresh
+	    a profile it will reload the current running profile by default
+	    but you can pass through a profile name here.
+
+	EXAMPLE CODE:
+		dialog.ok('RELOAD SKIN','We will now attempt to update the addons, pause 3s, update repos and pause 2s then reload the default profile. Press OK to continue.')
+		koding.Refresh(r_mode=['addons~3000', 'repos~2000', 'profile'], profile_name='default')
+
+------------------------------------------------------------------------------------------
+
 SPLIT STRING INTO LINES OF X AMOUNT OF CHARACTERS:
 Splits up a piece of text into a list of lines x amount of chars in length.
 
@@ -1038,37 +1113,52 @@ Splits up a piece of text into a list of lines x amount of chars in length.
 
 ------------------------------------------------------------------------------------------
 
-UPDATE ADD-ONS:
-Get Kodi to re-check for any newly installed add-ons and perform
-a forced update on the repos. As of Kodi 17 you can no longer simply
-extract a zip to the addons folder and perform an update command,
-instead you now need to manually enable each add-on via JSON-RPC.
-However that can be done via this command, see below:
+TOGGLE ADD-ONS:
+Send through either a list of add-on ids or one single add-on id. The add-ons sent through will then
+be added to the addons*.db and enabled or disabled (depending on state sent through).
 
-	CODE: koding.Update_Addons([force, skip, addon_paths])
+WARNING: If safe_mode is set to False this directly edits the addons*.db rather than using JSON-RPC.
+Although directly amending the db is a lot quicker there is no guarantee it won't cause severe problems
+in later versions of Kodi (this was created for v.17). DO NOT set safe_mode to False unless you 100%
+understand the consequences!
+
+	CODE:  Toggle_Addons([addon, enable, safe_mode, exclude_list, new_only])
 
 	AVAILABLE PARAMS:
 
-	    force  -  By default this is set to 'refresh' which will just
-	    check for new add-ons and force refresh the repositories. There are
-	    however 2 other modes you can use:
-	      
-	       'new': this will check for any newly extracted addon folders
-	       and will only enable those newly found items.
+	    (*) addon  -  This can be a list of addon ids, one single id or
+	    'all' to enable/disable all. If enabling all you can still use
+	    the exclude_list for any you want excluded from this function.
 
-	       'all': this will loop through ALL add-on folders attempting
-	       to enable them all.
+	    enable  -  By default this is set to True, if you want to disable
+	    the add-on(s) then set this to False.
 
-	    skip  -  If there are any add-ons you don't want enabling you
-	    can send through a list of id's here and they'll be skipped.
+	    safe_mode  -  By default this is set to True which means the add-ons
+	    are enabled/disabled via JSON-RPC which is the method recommended by
+	    the XBMC foundation. Setting this to False will result in a much
+	    quicker function BUT there is no guarantee this will work on future
+	    versions of Kodi and it may even cause corruption in future versions.
+	    Setting to False is NOT recommended and you should ONLY use this if
+	    you 100% understand the risks that you could break multiple setups.
 
-	    addon_paths  -  leave force as the default of 'refresh' and send
-	    through a list of addon PATHS. This will then ONLY enable these
-	    add-ons and their dependencies.
+	    exclude_list  -  Send through a list of any add-on id's you do not
+	    want to be included in this command.
+
+	    new_only  -  By default this is set to True so only newly extracted
+	    add-on folders will be enabled/disabled. This means that any existing
+	    add-ons which have deliberately been disabled by the end user are
+	    not affected.
 
 	EXAMPLE CODE:
-		dialog.ok('ADD NEW FOLDERS','Manually copy over some add-ons into your setup then click OK to continue. They should then all be populated and enabled on the system.')
-		koding.Update_Addons(force='all')
+		xbmc.executebuiltin('ActivateWindow(Videos, addons://sources/video/)')
+		xbmc.sleep(2000)
+		dialog.ok('DISABLE YOUTUBE','We will now disable YouTube (if installed)')
+		koding.Toggle_Addons(addon='plugin.video.youtube', enable=False, safe_mode=True, exclude_list=[], new_only=False)
+		koding.Refresh('container')
+		xbmc.sleep(2000)
+		dialog.ok('ENABLE YOUTUBE','When you click OK we will enable YouTube (if installed)')
+		koding.Toggle_Addons(addon='plugin.video.youtube', enable=True, safe_mode=True, exclude_list=[], new_only=False)
+		koding.Refresh('container')
 
 ------------------------------------------------------------------------------------------
 
@@ -1077,51 +1167,9 @@ V I D E O   T O O L S
 ------------------------------------------------------------------------------------------
 
 CHECK IF VIDEO PLAYBACK IS SUCCESSFUL:
-This function will return true or false based on video playback. Simply start a stream
-(whether via an add-on, direct link to URL or local storage doesn't matter), the code will
-then work out if playback is successful. This uses a number of checks and should take into
-account all potential glitches which can occur during playback. The return should happen
-within a second or two of playback being successful (or not).
+This function will return true or false based on video playback. Simply start a stream (whether via an add-on, direct link to URL or local storage doesn't matter), the code will then work out if playback is successful. This uses a number of checks and should take into account all potential glitches which can occur during playback. The return should happen within a second or two of playback being successful (or not).
 
 	CODE: Check_Playback()
-
-	EXAMPLE CODE:
-		xbmc.Player().play('http://totalrevolution.tv/videos/python_koding/Browse_To_Folder.mov')
-		isplaying = koding.Check_Playback()
-		if isplaying:
-		    dialog.ok('PLAYBACK SUCCESSFUL','Congratulations, playback was successful')
-		    xbmc.Player().stop()
-		else:
-		    dialog.ok('PLAYBACK FAILED','Sorry, playback failed :(')
-
-------------------------------------------------------------------------------------------
-
-PLAY VIDEO:
-This will attempt to play a video and return True or False on whether or not playback was successful.
-This function is similar to Check_Playback but this actually tries a number of methods to play the
-video whereas Check_Playback does not actually try to play a video - it will just return True/False
-on whether or not a video is currently playing.
-
-	CODE: Play_Video(video, [showbusy])
-
-	AVAILABLE PARAMS:
-
-	    (*) video  -  This is the path to the video, this can be a local
-	    path, online path or a channel number from the PVR.
-
-	    showbusy  -  By default this is set to True which means while the
-	    function is attempting to playback the video the user will see the
-	    busy dialog. Set to False if you prefer this not to appear but do
-	    bare in mind a user may navigate to another section and try playing
-	    something else if they think this isn't doing anything.
-	    
-	EXAMPLE CODE:
-		isplaying = koding.Play_Video('http://totalrevolution.tv/videos/python_koding/Browse_To_Folder.mov')
-		if isplaying:
-		    dialog.ok('PLAYBACK SUCCESSFUL','Congratulations, playback was successful')
-		    xbmc.Player().stop()
-		else:
-		    dialog.ok('PLAYBACK FAILED','Sorry, playback failed :(')
 
 ------------------------------------------------------------------------------------------
 
@@ -1176,24 +1224,6 @@ If you need to pull the contents of a webpage it's very simple to do so by using
 
 	EXAMPLE CODE:
 		koding.Open_URL('http://testpage.com?query1=value1&query2=value2', post_type='get').
-
-------------------------------------------------------------------------------------------
-
-VALIDATE URL:
-Returns the code for a particular link, so for example 200 is a good link and 404 is a URL not found
-
-CODE:   koding.Validate_Link(url)
-
-AVAILABLE PARAMS:
-
-    (*) url  -  This is url you want to check the header code for
-
-EXAMPLE CODE:
-url_code = koding.Validate_Link('http://totalrevolution.tv')
-if url_code == 200:
-    dialog.ok('WEBSITE STATUS','The website [COLOR=dodgerblue]totalrevolution.tv[/COLOR] is [COLOR=lime]ONLINE[/COLOR]')
-else:
-    dialog.ok('WEBSITE STATUS','The website [COLOR=dodgerblue]totalrevolution.tv[/COLOR] is [COLOR=red]OFFLINE[/COLOR]')
 
 ------------------------------------------------------------------------------------------
 

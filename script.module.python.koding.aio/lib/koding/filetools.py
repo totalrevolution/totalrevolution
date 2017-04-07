@@ -75,15 +75,9 @@ koding.Archive_Tree(HOME, DST)
     this_module      =  xbmcaddon.Addon(id=module_id)
     folder_size      =  Folder_Size(sourcefile,'mb')
     available_space  =  Free_Space(HOME,'mb')
-    xbmc.log('SOURCE: %s'%sourcefile, 2)
-    xbmc.log('DEST: %s'%destfile, 2)
-    xbmc.log('EXCLUDE: %s'%exclude_dirs, 2)
-    xbmc.log('EXCLUDE: %s'%exclude_files, 2)
-    xbmc.log('HEADER: %s'%message_header, 2)
-    xbmc.log('MESSAGE: %s'%message, 2)
     if os.path.exists(sourcefile):
         choice = True
-        if available_space < folder_size:
+        if float(available_space) < float(folder_size):
             choice = dialog.yesno(this_module.getLocalizedString(30809), this_module.getLocalizedString(30810), this_module.getLocalizedString(30811) % folder_size, this_module.getLocalizedString(30812) % available_space, yeslabel = this_module.getLocalizedString(30813), nolabel = this_module.getLocalizedString(30814))
         if choice:
             zipobj       = zipfile.ZipFile(destfile , 'w', zipfile.ZIP_DEFLATED)

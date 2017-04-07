@@ -74,7 +74,6 @@ def Show_Tutorial(url):
 
 # Check if a video exists in the comments
     internetstate = xbmc.getInfoLabel('System.InternetState')
-    xbmc.log('internet state: %s'%internetstate,2)
     if internetstate:
         video_page = Open_URL(video_base)
         extension = Find_In_Text(video_page, params["name"], '"', False)
