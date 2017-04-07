@@ -67,7 +67,11 @@ dialog.ok('FOLDER DETAILS','Folder path: [COLOR=dodgerblue]%s[/COLOR]'%folder)
 ~"""
     if not path.endswith(os.sep):
         path += os.sep
-    text = dialog.browse(type=1, heading=header, shares='myprograms', mask=extension, useThumbs=False, treatAsFolder=True, defaultt=path)
+    try:
+        text = dialog.browse(type=1, heading=header, shares='myprograms', mask=extension, useThumbs=False, treatAsFolder=True, defaultt=path)
+    except:
+        text = dialog.browse(type=1, heading=header, s_shares='myprograms', mask=extension, useThumbs=False,
+                             treatAsFolder=True, defaultt=path)
     return text
 #----------------------------------------------------------------    
 # TUTORIAL #

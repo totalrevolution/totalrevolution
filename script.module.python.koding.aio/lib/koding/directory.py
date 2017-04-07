@@ -25,13 +25,13 @@ dialog = xbmcgui.Dialog()
 mode   = ''
 #----------------------------------------------------------------
 # TUTORIAL #
-def Add_Dir(name, url, mode, folder = False, icon = '', fanart = '', description = 'N/A', info_labels ='', content_type=''):
+def Add_Dir(name, url, mode, folder = False, icon = '', fanart = '', description = 'N/A', info_labels ='', content_type='', context_items=None, context_override=False):
     """
 This allows you to create a list item/folder inside your add-on.
 Please take a look at your addon default.py comments for more information
 (presuming you created one at http://totalrevolution.tv)
 
-CODE: Add_Dir(name, url, mode, [folder, icon, fanart, description, info_labels, content_type]))
+CODE: Add_Dir(name, url, mode, [folder, icon, fanart, description, info_labels, content_type, context_items, context_override]))
 
 AVAILABLE PARAMS:
 
@@ -70,6 +70,26 @@ AVAILABLE PARAMS:
     log thousands of error reports in your log, cause the system to lag and make
     thousands of unnecessary db calls - sometimes resulting in a crash. You can find
     details on the content_types available here: http://forum.kodi.tv/showthread.php?tid=299107
+
+    context_items - Add context items to your directory. The params you need to send through
+    need to be in a list format of [(label, action,),] look at the example code below for
+    more details.
+
+    context_override - By default your context items will be added to the global context
+    menu items but you can override this by setting this to True and then only your
+    context menu items will show.
+
+EXAMPLE:
+my_context = [('Music','xbmc.executebuiltin("ActivateWindow(music)")'),('Programs','xbmc.executebuiltin("ActivateWindow(programs)")')]
+# ^ This is our two basic context menu items (music and programs)
+
+Add_Dir(name='TEST DIRECTORY', url='', mode='test_directory', folder=True, context_items=my_context, context_override=True)
+# ^ This will add a folder AND a context menu item for when bring up the menu (when focused on this directory).
+# ^^ The context_override is set to True which means it will override the default Kodi context menu items.
+
+Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=my_context, context_override=False)
+# ^ This will add an item to the list AND a context menu item for when bring up the menu (when focused on this item).
+# ^^ The context_override is set to False which means the new items will appear alongside the default Kodi context menu items.
 ~"""
 
     from __init__ import dolog
@@ -102,10 +122,12 @@ AVAILABLE PARAMS:
     liz.setInfo( type=content_type, infoLabels = my_infolabels)
     # liz.setArt({"thumb":,"icon:"})
     liz.setProperty( "Fanart_Image", fanart )
+    if context_items:
+        liz.addContextMenuItems(context_items, context_override)
 
     if url.startswith("plugin://"):
         u = url
-        listitem.setProperty('IsPlayable', 'true')
+        liz.setProperty('IsPlayable', 'true')
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=u, listitem=liz)
     
     else:
