@@ -240,6 +240,47 @@ IMPORTANT: Do not confuse this with the Browse_To_File function
 
 ------------------------------------------------------------------------------------------
 
+COUNTDOWN TIMER:
+Bring up a countdown timer and return true if waited or false if cancelled.
+
+	CODE: Countdown(title, message, update_msg, wait_time, allow_cancel, cancel_msg):
+
+	AVAILABLE PARAMS:
+
+	    title  -  The header string in the dialog window, the default is:
+	    'COUNTDOWN STARTED'
+
+	    message   -  A short line of info which will show on the first line
+	    of the dialog window just below the title. Default is:
+	    'A quick simple countdown example.'
+
+	    update_msg  - The message you want to update during the countdown.
+	    This must contain a %s which will be replaced by the current amount
+	    of seconds that have passed. The default is:
+	    'Please wait, %s seconds remaining.'
+
+	    wait_time  -  This is the amount of seconds you want the countdown to
+	    run for. The default is 10.
+
+	    allow_cancel  -  By default this is set to true and the user can cancel
+	    which will result in False being returned. If this is set to True
+	    they will be unable to cancel.
+
+	    cancel_msg  -  If allow_cancel is set to False you can add a custom
+	    message when the user tries to cancel. The default string is:
+	    '[COLOR=gold]Sorry, this process cannot be cancelled[/COLOR]'
+
+	EXAMPLE CODE:
+		dialog.ok('COUNTDOWN EXAMPLE', 'Press OK to bring up a countdown timer', '', 'Try cancelling the process.')
+		my_return = koding.Countdown(title='COUNTDOWN EXAMPLE', message='Quick simple countdown message (cancel enabled).', update_msg='%s seconds remaining', wait_time=5)
+		if my_return:
+		    dialog.ok('SUCCESS!','Congratulations you actually waited through the countdown timer without cancelling!')
+		else:
+		    dialog.ok('BORED MUCH?','What happened, did you get bored waiting?', '', '[COLOR=dodgerblue]Let\'s set off another countdown you CANNOT cancel...[/COLOR]')
+		    koding.Countdown(title='COUNTDOWN EXAMPLE', message='Quick simple countdown message (cancel disabled).', update_msg='%s seconds remaining', wait_time=5, allow_cancel=False, cancel_msg='[COLOR=gold]Sorry, this process cannot be cancelled[/COLOR]')
+
+------------------------------------------------------------------------------------------
+
 ENABLE/DISABLE THE BUSY (WORKING) SYMBOL:
 This will show/hide a "working" symbol.
 
@@ -320,7 +361,6 @@ D I R E C T O R Y   F U N C T I O N S
 
 ------------------------------------------------------------------------------------------
 
-
 ADD DIRECTORY ITEM:
 This allows you to create a list item/folder inside your add-on. Please take a look at your addon default.py
 comments for more information (presuming you created one at http://totalrevolution.tv)
@@ -348,12 +388,19 @@ comments for more information (presuming you created one at http://totalrevoluti
 	    usually appears below the thumbnail
 
 	    info_labels  - You can send through any number of info_labels via this option.
-	    For full details on the infolabels available please check the pydocs.
-	    When passing through infolabels you need to use this format:
-	    info_labels='genre : comedy ~ title : test video'
+	    For full details on the infolabels available please check the pydocs here:
+	    http://mirrors.kodi.tv/docs/python-docs/16.x-jarvis/xbmcgui.html#ListItem-setInfo
+
+	    When passing through infolabels you need to use a dictionary in this format:
+	    {"genre":"comedy", "title":"test video"}
 	    
-	    IMPORTANT: The colon separating the key from value and the tilda separating each
-	    infolabel MUST have a space either side.
+	    set_art  -  Using the same format as info_labels you can set your artwork via
+	    a dictionary here. Full details can be found here:
+	    http://mirrors.kodi.tv/docs/python-docs/16.x-jarvis/xbmcgui.html#ListItem-setArt
+
+	    set_property  -  Using the same format as info_labels you can set your artwork via
+	    a dictionary here. Full details can be found here:
+	    http://kodi.wiki/view/InfoLabels#ListItem
 
 	    content_type - By default this will set the content_type for kodi to a blank string
 	    which is what Kodi expects for generic category listings. There are plenty of different
@@ -373,7 +420,10 @@ comments for more information (presuming you created one at http://totalrevoluti
 	    menu items but you can override this by setting this to True and then only your
 	    context menu items will show.
 
-	EXAMPLE CODE:
+	    playlist  -  By default this is set to False but if set to True the item will be added
+	    to the current playlist.
+
+	EXAMPLE:
 		my_context = [('Music','xbmc.executebuiltin("ActivateWindow(music)")'),('Programs','xbmc.executebuiltin("ActivateWindow(programs)")')]
 		# ^ This is our two basic context menu items (music and programs)
 

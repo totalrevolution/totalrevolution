@@ -25,7 +25,7 @@ dialog = xbmcgui.Dialog()
 mode   = ''
 #----------------------------------------------------------------
 # TUTORIAL #
-def Add_Dir(name, url, mode, folder = False, icon = '', fanart = '', description = 'N/A', info_labels ='', content_type='', context_items=None, context_override=False):
+def Add_Dir(name, url, mode, folder=False, icon='', fanart='', description='N/A', info_labels={}, set_art={}, set_property={"IsPlayable":"true"}, content_type='', context_items=None, context_override=False, playlist=False, playable=False):
     """
 This allows you to create a list item/folder inside your add-on.
 Please take a look at your addon default.py comments for more information
@@ -54,12 +54,19 @@ AVAILABLE PARAMS:
     usually appears below the thumbnail
 
     info_labels  - You can send through any number of info_labels via this option.
-    For full details on the infolabels available please check the pydocs.
-    When passing through infolabels you need to use this format:
-    info_labels='genre : comedy ~ title : test video'
+    For full details on the infolabels available please check the pydocs here:
+    http://mirrors.kodi.tv/docs/python-docs/16.x-jarvis/xbmcgui.html#ListItem-setInfo
+
+    When passing through infolabels you need to use a dictionary in this format:
+    {"genre":"comedy", "title":"test video"}
     
-    IMPORTANT: The colon separating the key from value and the tilda separating each
-    infolabel MUST have a space either side.
+    set_art  -  Using the same format as info_labels you can set your artwork via
+    a dictionary here. Full details can be found here:
+    http://mirrors.kodi.tv/docs/python-docs/16.x-jarvis/xbmcgui.html#ListItem-setArt
+
+    set_property  -  Using the same format as info_labels you can set your artwork via
+    a dictionary here. Full details can be found here:
+    http://kodi.wiki/view/InfoLabels#ListItem
 
     content_type - By default this will set the content_type for kodi to a blank string
     which is what Kodi expects for generic category listings. There are plenty of different
@@ -79,6 +86,9 @@ AVAILABLE PARAMS:
     menu items but you can override this by setting this to True and then only your
     context menu items will show.
 
+    playlist  -  By default this is set to False but if set to True the item will be added
+    to the current playlist.
+
 EXAMPLE:
 my_context = [('Music','xbmc.executebuiltin("ActivateWindow(music)")'),('Programs','xbmc.executebuiltin("ActivateWindow(programs)")')]
 # ^ This is our two basic context menu items (music and programs)
@@ -93,57 +103,97 @@ Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=
 ~"""
 
     from __init__ import dolog
+    from systemtools import Data_Type
+
+    addon_handle = int(sys.argv[1])
 # Check we're in an appropriate section for the content type set
-    dolog(xbmc.getInfoLabel('Window.Property(xmlfile)'))
-    song_only_modes  = ['songs','artist','album','song','music']
-    video_only_modes = ['sets','tvshows','seasons','actors','directors','unknown','video','set','movie','tvshow','season','episode']
-    if xbmc.getInfoLabel('Window.Property(xmlfile)') == 'MyVideoNav.xml' and content_type in song_only_modes:
-        content_type = ''
-    if xbmc.getInfoLabel('Window.Property(xmlfile)') == 'MyMusicNav.xml' and content_type in video_only_modes:
-        content_type = ''
+    # dolog(xbmc.getInfoLabel('Window.Property(xmlfile)'))
+    # song_only_modes  = ['songs','artist','album','song','music']
+    # video_only_modes = ['sets','tvshows','seasons','actors','directors','unknown','video','set','movie','tvshow','season','episode']
+    # if xbmc.getInfoLabel('Window.Property(xmlfile)') == 'MyVideoNav.xml' and content_type in song_only_modes:
+    #     content_type = ''
+    # if xbmc.getInfoLabel('Window.Property(xmlfile)') == 'MyMusicNav.xml' and content_type in video_only_modes:
+    #     content_type = ''
 
+    if Data_Type(info_labels) != 'dict':
+        dialog.ok('WRONG INFO LABELS', 'Please check documentation, these should be sent through as a dictionary.')
 
-# Grab the infolabels sent through and split them up into a proper dictionary
-    my_infolabels = { "Title": name, "FileName" : name}
-    if not 'Plot:' in info_labels:
-        my_infolabels['Plot'] = description
-    final_labels  = []
-    if info_labels != '':
-        if not ' ~ ' in info_labels:
-            final_labels.append(info_labels)
-        else:
-            final_labels = info_labels.split(' ~ ')
+    if Data_Type(set_art) != 'dict':
+        dialog.ok('WRONG SET_ART', 'Please check documentation, these should be sent through as a dictionary.')
 
-        for item in final_labels:
-            key, value = item.split(' : ')
-            my_infolabels[key] = value
+    if Data_Type(set_property) != 'dict':
+        dialog.ok('WRONG SET_PROPERTY', 'Please check documentation, these should be sent through as a dictionary.')
+     
+    # xbmcplugin.setContent(addon_handle, 'songs')
 
-    liz = xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=icon)
-    liz.setInfo( type=content_type, infoLabels = my_infolabels)
-    # liz.setArt({"thumb":,"icon:"})
-    liz.setProperty( "Fanart_Image", fanart )
+# Set the default title, filename and plot if not sent through already via info_labels
+    try:
+        info_labels["title"]
+    except:
+        info_labels['title'] = name
+
+    try:
+        info_labels["filename"]
+    except:
+        info_labels['filename'] = name
+
+    try:
+        info_labels["plot"]
+    except:
+        info_labels['plot'] = description
+
+# Set default thumbnail image used for listing (if not sent through via set_art)
+    try:
+        set_art["icon"]
+    except:
+        set_art['icon'] = icon
+
+# Set default Fanart if not already sent through via set_property
+    try:
+        set_property["Fanart_Image"]
+    except:
+        set_property['Fanart_Image'] = fanart
+
+# Set the main listitem properties
+    liz = xbmcgui.ListItem(label=name, label2=description, iconImage=icon, thumbnailImage=icon)
+
+    xbmc.log('##### SETTING PARAMS FOR: %s'%name,2)
+# Set the infolabels
+    liz.setInfo(type=content_type, infoLabels = info_labels)
+    xbmc.log('### SETTING INFO LABELS:'+repr(info_labels),2)
+
+# Set the artwork
+    liz.setArt(set_art)
+    xbmc.log('### SETTING ART:'+repr(set_art),2)
+
+# Loop through the set_property list and set each item in there
+    for item in set_property.items():
+        xbmc.log('SETTING PROPERTY: %s:%s'%(item[0], item[1]),2)
+        liz.setProperty(item[0], item[1])
+
+# Add a context item (if details for context items are sent through)
     if context_items:
         liz.addContextMenuItems(context_items, context_override)
 
-    if url.startswith("plugin://"):
-        u = url
-        liz.setProperty('IsPlayable', 'true')
-        xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=u, listitem=liz)
+    u   = sys.argv[0]
+    u += "?mode="           +str(mode)
+    u += "&url="            +urllib.quote_plus(url)
+    u += "&name="           +urllib.quote_plus(name)
+    u += "&iconimage="      +urllib.quote_plus(icon)
+    u += "&fanart="         +urllib.quote_plus(fanart)
+    u += "&description="    +urllib.quote_plus(description)
     
+    if folder:
+        xbmcplugin.addDirectoryItem(handle=addon_handle,url=u,listitem=liz,isFolder=True)
+    
+    elif playlist:
+        playlist.add(url, liz)
+
+    elif playable:
+        xbmcplugin.addDirectoryItem(handle=addon_handle,url=url,listitem=liz,isFolder=False) 
+
     else:
-        u   = sys.argv[0]
-        u += "?mode="           +str(mode)
-        u += "&url="            +urllib.quote_plus(url)
-        u += "&name="           +urllib.quote_plus(name)
-        u += "&iconimage="      +urllib.quote_plus(icon)
-        u += "&fanart="         +urllib.quote_plus(fanart)
-        u += "&description="    +urllib.quote_plus(description)
-        
-        if folder:
-            xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
-        
-        else:
-            xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False) 
+        xbmcplugin.addDirectoryItem(handle=addon_handle,url=u,listitem=liz,isFolder=False) 
 #----------------------------------------------------------------
 def Default_Mode():
     """ internal command ~"""

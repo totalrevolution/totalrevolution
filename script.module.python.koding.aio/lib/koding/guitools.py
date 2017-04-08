@@ -75,46 +75,78 @@ dialog.ok('FOLDER DETAILS','Folder path: [COLOR=dodgerblue]%s[/COLOR]'%folder)
     return text
 #----------------------------------------------------------------    
 # TUTORIAL #
-def Sleep_If_Active(window_type):
+def Countdown(title='COUNTDOWN STARTED', message='A quick simple countdown example.', update_msg='Please wait, %s seconds remaining.', wait_time=10, allow_cancel=True, cancel_msg='[COLOR=gold]Sorry, this process cannot be cancelled[/COLOR]'):
     """
-This will allow you to pause code while a specific window is open.
+Bring up a countdown timer and return true if waited or false if cancelled.
 
-CODE: koding.Sleep_If_Active(window_type)
+CODE: Countdown(title, message, update_msg, wait_time, allow_cancel, cancel_msg):
 
 AVAILABLE PARAMS:
 
-    window_type  -  This is the window xml name you want to check for, if it's
-    active then the code will sleep until it becomes inactive.
+    title  -  The header string in the dialog window, the default is:
+    'COUNTDOWN STARTED'
+
+    message   -  A short line of info which will show on the first line
+    of the dialog window just below the title. Default is:
+    'A quick simple countdown example.'
+
+    update_msg  - The message you want to update during the countdown.
+    This must contain a %s which will be replaced by the current amount
+    of seconds that have passed. The default is:
+    'Please wait, %s seconds remaining.'
+
+    wait_time  -  This is the amount of seconds you want the countdown to
+    run for. The default is 10.
+
+    allow_cancel  -  By default this is set to true and the user can cancel
+    which will result in False being returned. If this is set to True
+    they will be unable to cancel.
+
+    cancel_msg  -  If allow_cancel is set to False you can add a custom
+    message when the user tries to cancel. The default string is:
+    '[COLOR=gold]Sorry, this process cannot be cancelled[/COLOR]'
 
 EXAMPLE CODE:
-koding.Text_Box('EXAMPLE TEXT','This is just an example, normally a text box would not pause code and the next command would automatically run immediately over the top of this.')
-koding.Sleep_If_Active(10147) # This is the window id for the text box
-dialog.ok('WINDOW CLOSED','The window has now been closed so this dialog code has now been initiated')
+dialog.ok('COUNTDOWN EXAMPLE', 'Press OK to bring up a countdown timer', '', 'Try cancelling the process.')
+my_return = koding.Countdown(title='COUNTDOWN EXAMPLE', message='Quick simple countdown message (cancel enabled).', update_msg='%s seconds remaining', wait_time=5)
+if my_return:
+    dialog.ok('SUCCESS!','Congratulations you actually waited through the countdown timer without cancelling!')
+else:
+    dialog.ok('BORED MUCH?','What happened, did you get bored waiting?', '', '[COLOR=dodgerblue]Let\'s set off another countdown you CANNOT cancel...[/COLOR]')
+    koding.Countdown(title='COUNTDOWN EXAMPLE', message='Quick simple countdown message (cancel disabled).', update_msg='%s seconds remaining', wait_time=5, allow_cancel=False, cancel_msg='[COLOR=gold]Sorry, this process cannot be cancelled[/COLOR]')
 ~"""
-    from __init__ import dolog
-    windowactive = False
-    counter      = 0
+    dp        = xbmcgui.DialogProgress()
+    current   = 0
+    increment = 100 / wait_time
+    cancelled = False
 
-    if window_type == 'yesnodialog':
-        count = 30
+    dp.create(title)
+    while current <= wait_time:
+        if (dp.iscanceled()):
+            if allow_cancel:
+                cancelled = True
+                break
+            else:
+                dp.create(title,cancel_msg)
+
+        if current != 0: 
+            xbmc.sleep(1000)
+
+        remaining = wait_time - current
+        if remaining == 0: 
+            percent = 100
+        else: 
+            percent = increment * current
+        
+        remaining_display = update_msg % remaining
+        dp.update(percent, message, remaining_display)
+
+        current += 1
+
+    if cancelled == True:     
+        return False
     else:
-        count = 10
-    
-    okwindow = False
-
-# Do not get stuck in an infinite loop. Check x amount of times and if condition isn't met after x amount it quits
-    while not okwindow and counter < count:
-        xbmc.sleep(100)
-        dolog('### %s not active - sleeping (%s)' % (window_type, counter))
-        okwindow = xbmc.getCondVisibility('Window.IsActive(%s)' % window_type)
-        counter += 1
-
-# Window is active
-    while okwindow:
-        okwindow = xbmc.getCondVisibility('Window.IsActive(%s)' % window_type)
-        xbmc.sleep(250)
-
-    return okwindow
+        return True        
 #----------------------------------------------------------------    
 # TUTORIAL #
 def Keyboard(heading='', default='', hidden=False):
@@ -162,6 +194,48 @@ EXAMPLE CODE:
 koding.Notify(title='TEST NOTIFICATION', message='This is a quick 5 second test', duration=5000)
 ~"""
     xbmc.executebuiltin('XBMC.Notification(%s, %s, %s, %s)' % (title , message , duration, icon))
+#----------------------------------------------------------------    
+# TUTORIAL #
+def Sleep_If_Active(window_type):
+    """
+This will allow you to pause code while a specific window is open.
+
+CODE: koding.Sleep_If_Active(window_type)
+
+AVAILABLE PARAMS:
+
+    window_type  -  This is the window xml name you want to check for, if it's
+    active then the code will sleep until it becomes inactive.
+
+EXAMPLE CODE:
+koding.Text_Box('EXAMPLE TEXT','This is just an example, normally a text box would not pause code and the next command would automatically run immediately over the top of this.')
+koding.Sleep_If_Active(10147) # This is the window id for the text box
+dialog.ok('WINDOW CLOSED','The window has now been closed so this dialog code has now been initiated')
+~"""
+    from __init__ import dolog
+    windowactive = False
+    counter      = 0
+
+    if window_type == 'yesnodialog':
+        count = 30
+    else:
+        count = 10
+    
+    okwindow = False
+
+# Do not get stuck in an infinite loop. Check x amount of times and if condition isn't met after x amount it quits
+    while not okwindow and counter < count:
+        xbmc.sleep(100)
+        dolog('### %s not active - sleeping (%s)' % (window_type, counter))
+        okwindow = xbmc.getCondVisibility('Window.IsActive(%s)' % window_type)
+        counter += 1
+
+# Window is active
+    while okwindow:
+        okwindow = xbmc.getCondVisibility('Window.IsActive(%s)' % window_type)
+        xbmc.sleep(250)
+
+    return okwindow
 #----------------------------------------------------------------    
 # TUTORIAL #
 def Text_Box(header, message):
