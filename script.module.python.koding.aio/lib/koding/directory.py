@@ -18,6 +18,7 @@
 import sys
 import urllib
 import xbmc
+import xbmcaddon
 import xbmcgui
 import xbmcplugin
 
@@ -25,13 +26,13 @@ dialog = xbmcgui.Dialog()
 mode   = ''
 #----------------------------------------------------------------
 # TUTORIAL #
-def Add_Dir(name, url, mode, folder=False, icon='', fanart='', description='N/A', info_labels={}, set_art={}, set_property={"IsPlayable":"true"}, content_type='', context_items=None, context_override=False, playlist=False, playable=False):
+def Add_Dir(name, url, mode, folder=False, icon='', fanart='', description='', info_labels={}, set_art={}, set_property={}, content_type='', context_items=None, context_override=False, playable=False):
     """
 This allows you to create a list item/folder inside your add-on.
 Please take a look at your addon default.py comments for more information
 (presuming you created one at http://totalrevolution.tv)
 
-CODE: Add_Dir(name, url, mode, [folder, icon, fanart, description, info_labels, content_type, context_items, context_override]))
+CODE: Add_Dir(name, url, mode, [folder, icon, fanart, description, info_labels, content_type, context_items, context_override, playable])
 
 AVAILABLE PARAMS:
 
@@ -86,8 +87,8 @@ AVAILABLE PARAMS:
     menu items but you can override this by setting this to True and then only your
     context menu items will show.
 
-    playlist  -  By default this is set to False but if set to True the item will be added
-    to the current playlist.
+    playable  -  By default this is set to False but if set to True kodi will just try
+    and play this item natively with no extra fancy functions.
 
 EXAMPLE:
 my_context = [('Music','xbmc.executebuiltin("ActivateWindow(music)")'),('Programs','xbmc.executebuiltin("ActivateWindow(programs)")')]
@@ -102,18 +103,25 @@ Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=
 # ^^ The context_override is set to False which means the new items will appear alongside the default Kodi context menu items.
 ~"""
 
-    from __init__ import dolog
-    from systemtools import Data_Type
+    from __init__       import dolog
+    from systemtools    import Data_Type
+
+
+    module_id   =  'script.module.python.koding.aio'
+    this_module =  xbmcaddon.Addon(id=module_id)
 
     addon_handle = int(sys.argv[1])
 # Check we're in an appropriate section for the content type set
-    # dolog(xbmc.getInfoLabel('Window.Property(xmlfile)'))
-    # song_only_modes  = ['songs','artist','album','song','music']
-    # video_only_modes = ['sets','tvshows','seasons','actors','directors','unknown','video','set','movie','tvshow','season','episode']
-    # if xbmc.getInfoLabel('Window.Property(xmlfile)') == 'MyVideoNav.xml' and content_type in song_only_modes:
-    #     content_type = ''
-    # if xbmc.getInfoLabel('Window.Property(xmlfile)') == 'MyMusicNav.xml' and content_type in video_only_modes:
-    #     content_type = ''
+    dolog(xbmc.getInfoLabel('Window.Property(xmlfile)'))
+    song_only_modes  = ['songs','artist','album','song','music']
+    video_only_modes = ['sets','tvshows','seasons','actors','directors','unknown','video','set','movie','tvshow','season','episode']
+    if xbmc.getInfoLabel('Window.Property(xmlfile)') == 'MyVideoNav.xml' and content_type in song_only_modes:
+        content_type = ''
+    if xbmc.getInfoLabel('Window.Property(xmlfile)') == 'MyMusicNav.xml' and content_type in video_only_modes:
+        content_type = ''
+
+    if description == '':
+        description = this_module.getLocalizedString(30837)
 
     if Data_Type(info_labels) != 'dict':
         dialog.ok('WRONG INFO LABELS', 'Please check documentation, these should be sent through as a dictionary.')
@@ -124,51 +132,50 @@ Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=
     if Data_Type(set_property) != 'dict':
         dialog.ok('WRONG SET_PROPERTY', 'Please check documentation, these should be sent through as a dictionary.')
      
-    # xbmcplugin.setContent(addon_handle, 'songs')
-
 # Set the default title, filename and plot if not sent through already via info_labels
     try:
-        info_labels["title"]
+        title = info_labels["Title"]
+        if title == '':
+            info_labels["Title"] = name
     except:
-        info_labels['title'] = name
+        info_labels["Title"] = name
 
     try:
-        info_labels["filename"]
+        filename = info_labels["FileName"]
+        # if filename == '':
+        #     info_labels["FileName"] = name
     except:
-        info_labels['filename'] = name
+        info_labels["FileName"] = name
 
     try:
-        info_labels["plot"]
+        plot = info_labels["plot"]
+        if plot == '':
+            info_labels["plot"] = description
     except:
-        info_labels['plot'] = description
-
+        info_labels["plot"] = description
 # Set default thumbnail image used for listing (if not sent through via set_art)
     try:
         set_art["icon"]
     except:
-        set_art['icon'] = icon
+        set_art["icon"] = icon
 
 # Set default Fanart if not already sent through via set_property
     try:
         set_property["Fanart_Image"]
     except:
-        set_property['Fanart_Image'] = fanart
+        set_property["Fanart_Image"] = fanart
 
 # Set the main listitem properties
-    liz = xbmcgui.ListItem(label=name, label2=description, iconImage=icon, thumbnailImage=icon)
+    liz = xbmcgui.ListItem(label=name, iconImage=icon, thumbnailImage=icon)
 
-    xbmc.log('##### SETTING PARAMS FOR: %s'%name,2)
 # Set the infolabels
-    liz.setInfo(type=content_type, infoLabels = info_labels)
-    xbmc.log('### SETTING INFO LABELS:'+repr(info_labels),2)
+    liz.setInfo(type=content_type, infoLabels=info_labels)
 
 # Set the artwork
     liz.setArt(set_art)
-    xbmc.log('### SETTING ART:'+repr(set_art),2)
 
 # Loop through the set_property list and set each item in there
     for item in set_property.items():
-        xbmc.log('SETTING PROPERTY: %s:%s'%(item[0], item[1]),2)
         liz.setProperty(item[0], item[1])
 
 # Add a context item (if details for context items are sent through)
@@ -185,11 +192,9 @@ Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=
     
     if folder:
         xbmcplugin.addDirectoryItem(handle=addon_handle,url=u,listitem=liz,isFolder=True)
-    
-    elif playlist:
-        playlist.add(url, liz)
 
     elif playable:
+        liz.setProperty('IsPlayable', 'true')
         xbmcplugin.addDirectoryItem(handle=addon_handle,url=url,listitem=liz,isFolder=False) 
 
     else:
@@ -203,9 +208,9 @@ def Default_Mode():
 # TUTORIAL #
 def Grab_Params(extras, keys = '', separator = '<~>'):
     """
-This will allow you to send multiple values through via the Add_Dir
-function just as one string (url). This is then split up into however
-many values you want.
+This will allow you to send multiple values through as a string and
+split at a common separator. The return will be a dictionary you can
+easily access the values from.
 
 CODE: Grab_Params(extras, keys, [separator]))
 

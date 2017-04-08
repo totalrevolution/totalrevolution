@@ -362,10 +362,10 @@ D I R E C T O R Y   F U N C T I O N S
 ------------------------------------------------------------------------------------------
 
 ADD DIRECTORY ITEM:
-This allows you to create a list item/folder inside your add-on. Please take a look at your addon default.py
-comments for more information (presuming you created one at http://totalrevolution.tv)
+This allows you to create a list item/folder inside your add-on. Please take a look at your addon
+default.py comments for more information (presuming you created one at http://totalrevolution.tv)
 
-	CODE: Add_Dir(name, url, mode, [folder, icon, fanart, description, info_labels, content_type, context_items, context_override]))
+	CODE: Add_Dir(name, url, mode, [folder, icon, fanart, description, info_labels, content_type, context_items, context_override, playable]))
 
 	AVAILABLE PARAMS:
 
@@ -420,8 +420,8 @@ comments for more information (presuming you created one at http://totalrevoluti
 	    menu items but you can override this by setting this to True and then only your
 	    context menu items will show.
 
-	    playlist  -  By default this is set to False but if set to True the item will be added
-	    to the current playlist.
+	    playable  -  By default this is set to False but if set to True kodi will just try
+	    and play this item natively with no extra fancy functions.
 
 	EXAMPLE:
 		my_context = [('Music','xbmc.executebuiltin("ActivateWindow(music)")'),('Programs','xbmc.executebuiltin("ActivateWindow(programs)")')]

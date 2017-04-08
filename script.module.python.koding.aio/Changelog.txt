@@ -1,4 +1,9 @@
+v.0.5.1:
+- Fixed up the Add_Dir function so it's now showing correct infolabels (hopefully!)
+
 v.0.5:
+- Added auto infolabel generation to the Play_Video function (thanks midraal)
+- Re-coded Add_Dir so it now takes context menus and dictionaries for params
 - Cleaned up and improved a lot of the guides
 - Fixed Play_Video so it also works with audio
 - Improved Grab_Log, can now filter and also have clean formatted text

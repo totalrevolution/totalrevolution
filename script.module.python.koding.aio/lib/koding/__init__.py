@@ -132,8 +132,8 @@ koding.dolog(string='Quick test to see if this gets printed to the log', my_debu
     import xbmc
     global DEBUG
     global ADDON_ID
-    if DEBUG == 'true' or my_debug:
-        xbmc.log(ADDON_ID+': '+string, 2)
+    # if DEBUG == 'true' or my_debug:
+    xbmc.log(ADDON_ID+': '+string, 2)
 #----------------------------------------------------------------
 def Check_Addons(addons):
     """ internal command ~"""

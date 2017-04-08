@@ -15,7 +15,7 @@
 
 <addon id="script.module.python.koding.aio"
    name="Python Koding AIO"
-   version="0.4.7"
+   version="0.5.1"
    provider-name="TotalRevolution, noobsandnerds">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
@@ -28,7 +28,7 @@
     <description lang="en">Python Koding AIO contains a bunch of time saving modules that allows for quick and simple development. Although developed at totalrevolution.tv this also contains unique features which hook into the noobsandnerds.com framework so a big thanks to the team and users who keep the portals updated.</description>
     <disclaimer lang="en"></disclaimer>
     <language></language>
-    <license>http://creativecommons.org/licenses/by-nc-nd/4.0</license>
+    <license>Creative Commons 4.0-NC-ND</license>
     <forum>http://noobsandnerds.com</forum>
     <website>http://noobsandnerds.com</website>
     <source></source>

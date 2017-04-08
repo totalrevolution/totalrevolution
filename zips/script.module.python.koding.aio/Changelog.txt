@@ -1,15 +1,16 @@
-v.0.4.7:
-- Updated the database functions (thanks to midraal)
-- Cleaned up some tutorials
+v.0.5.1:
+- Fixed up the Add_Dir function so it's now showing correct infolabels (hopefully!)
 
-v.0.4.6:
+v.0.5:
+- Added auto infolabel generation to the Play_Video function (thanks midraal)
+- Re-coded Add_Dir so it now takes context menus and dictionaries for params
 - Cleaned up and improved a lot of the guides
 - Fixed Play_Video so it also works with audio
 - Improved Grab_Log, can now filter and also have clean formatted text
 - Added Notify (A simple notification popup)
 - Added Sleep_If_Active (pauses code until a specific window closes)
 - Added Move_Tree (Moves directory from a to b)
-- Added Update_Addons (Checks for new unzipped addons and enables or can just perform a standard force refresh on repos)
+- Added Toggle_Addons (enables/disables add-ons)
 
 - Added various database functions (thanks to midraal), details below:
 -- Add_To_Table (adds a row to the table stored in your addons addon_data folder)

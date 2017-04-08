@@ -171,37 +171,28 @@ else:
     try:    import simplejson as json
     except: import json
 
-    plot = xbmc.getInfoLabel('listitem.plot')
-    plot = xbmc.getInfoLabel('listitem.title')
-    xbmc.log('### PLOT: %s  |  TITLE: %s' % (plot, title),2)
+    meta = {}
+    for i in ['title', 'originaltitle', 'tvshowtitle', 'year', 'season', 'episode', 'genre', 'rating', 'votes',
+              'director', 'writer', 'plot', 'tagline']:
+        try:
+            meta[i] = xbmc.getInfoLabel('listitem.%s' % i)
+        except:
+            pass
+    meta = dict((k, v) for k, v in meta.iteritems() if not v == '')
+    if 'title' not in meta:
+        meta['title'] = xbmc.getInfoLabel('listitem.label')
+    icon = xbmc.getInfoLabel('listitem.icon')
+    icon = xbmc.getInfoLabel('listitem.icon')
+    item = xbmcgui.ListItem(path=video, iconImage=icon, thumbnailImage=icon)
+    if content == "music":
+        try:
+            meta['artist'] = xbmc.getInfoLabel('listitem.artist')
+            item.setInfo(type='Music', infoLabels={'title': meta['title'], 'artist': meta['artist']})
+        except:
+            item.setInfo(type='Video', infoLabels=meta)
 
-
-    # meta = {}
-    # for i in ['title', 'originaltitle', 'tvshowtitle', 'year', 'season', 'episode', 'genre', 'rating', 'votes',
-    #           'director', 'writer', 'plot', 'tagline']:
-    #     # try:
-    #     meta[i] = xbmc.getInfoLabel('listitem.%s' % i)
-    #     xbmc.log('### %s: %s'% (i, xbmc.getInfoLabel('listitem.%s' % i)),2)
-    #     # except:
-    #     #     pass
-    # meta = dict((k, v) for k, v in meta.iteritems() if not v == '')
-    # if 'title' not in meta:
-    #     meta['title'] = xbmc.getInfoLabel('listitem.label')
-    # icon = xbmc.getInfoLabel('listitem.icon')
-    # item = xbmcgui.ListItem(path=video, iconImage=icon, thumbnailImage=icon)
-    # try:
-    #     item.setArt({'icon': icon})
-    # except:
-    #     pass
-    # if content == "music":
-    #     try:
-    #         meta['artist'] = xbmc.getInfoLabel('listitem.artist')
-    #         item.setInfo(type='Music', infoLabels={'title': meta['title'], 'artist': meta['artist']})
-    #     except:
-    #         item.setInfo(type='Video', infoLabels=meta)
-
-    # else:
-    #     item.setInfo(type='Video', infoLabels=meta)
+    else:
+        item.setInfo(type='Video', infoLabels=meta)
 
     playback = False
     if showbusy:
