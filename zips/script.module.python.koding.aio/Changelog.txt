@@ -1,3 +1,6 @@
+v.0.5.2:
+- Added requests dependency which had somehow been ommitted
+
 v.0.5.1:
 - Fixed up the Add_Dir function so it's now showing correct infolabels (hopefully!)
 
