@@ -20,21 +20,24 @@ import sys
 try: from sqlite3 import dbapi2 as database
 except: from pysqlite2 import dbapi2 as database
 
-import xbmcvfs
 import xbmc
 import xbmcaddon
+import xbmcgui
+import xbmcvfs
 
-
+# Put this in a try statement, when called from a service it will throw an error otherwise
 try:
-    ADDON_ID     =  xbmcaddon.Addon().getAddonInfo('id')
+    try:
+        ADDON_ID     =  xbmcaddon.Addon().getAddonInfo('id')
+    except:
+        ADDON_ID     =  sys.argv[2]
+
+    AddonVersion     = xbmcaddon.Addon(id=ADDON_ID).getAddonInfo('version')
+    profile_path     = xbmc.translatePath(xbmcaddon.Addon(id=ADDON_ID).getAddonInfo('profile'))
+    addon_db_path    = os.path.join(profile_path,'database.db')
 except:
-    ADDON_ID     =  sys.argv[2]
+    pass
 
-AddonVersion     =  xbmcaddon.Addon(id=ADDON_ID).getAddonInfo('version')
-
-profile_path     = xbmc.translatePath(xbmcaddon.Addon(id=ADDON_ID).getAddonInfo('profile'))
-
-addon_db_path    = os.path.join(profile_path,'database.db')
 dbcur, dbcon     = None, None
 #----------------------------------------------------------------
 def _connect_to_db():
@@ -82,7 +85,7 @@ AVAILABLE PARAMS:
 
     abort_on_error  -  Default is set to False but set to True if you want to abort
     the process when it hits an error.
-    
+	
 EXAMPLE CODE:
 create_specs = {"columns":{"name":"TEXT", "id":"TEXT"}}
 koding.Create_Table("test_table", create_specs)

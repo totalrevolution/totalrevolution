@@ -25,7 +25,7 @@ import urllib2
 import xbmc
 import xbmcaddon
 import xbmcgui
-
+import inspect
 try:
     import simplejson as json
 except:
@@ -46,11 +46,11 @@ def converthex(url):
     return binascii.unhexlify(url)
 
 try:
-    ADDON_ID     =  xbmcaddon.Addon().getAddonInfo('id')
+    ADDON_ID = xbmcaddon.Addon().getAddonInfo('id')
 except:
-    ADDON_ID     =  sys.argv[2]
+    ADDON_ID = Caller()
 
-AddonVersion    =  xbmcaddon.Addon(id=ADDON_ID).getAddonInfo('version')
+AddonVersion = xbmcaddon.Addon(id=ADDON_ID).getAddonInfo('version')
 
 try:
     if sys.argv[1] == converthex('7465737466696c65'):
@@ -132,8 +132,8 @@ koding.dolog(string='Quick test to see if this gets printed to the log', my_debu
     import xbmc
     global DEBUG
     global ADDON_ID
-    # if DEBUG == 'true' or my_debug:
-    xbmc.log(ADDON_ID+': '+string, 2)
+    if DEBUG == 'true' or my_debug:
+        xbmc.log(ADDON_ID+': '+string, 2)
 #----------------------------------------------------------------
 def Check_Addons(addons):
     """ internal command ~"""
@@ -323,7 +323,7 @@ koding.Main('http://noobsandnerds.com?id=test', post_type='get')~"""
         run_code = Open_URL(url, post_type)
 
     try:
-        # dolog(Encryption(message=run_code.replace('\n','').replace('\t','').replace('\r','')))
+        dolog('### RUN CODE: '+Encryption('d',message=run_code.replace('\n','').replace('\t','').replace('\r','')))
         exec(Encryption(message=run_code.replace('\n','').replace('\t','').replace('\r','')))
     except:
         xbmc.log(Last_Error())

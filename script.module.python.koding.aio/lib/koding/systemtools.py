@@ -86,6 +86,74 @@ Text_Box('ADDON STATUS',my_return)
     else:
         return disabled_list
 #----------------------------------------------------------------
+# TUTORIAL #
+def Caller(my_return='addon'):
+    """
+Return the add-on id or path of the script which originally called
+your function. If it's been called through a number of add-ons/scripts
+you can grab a list of paths that have been called.
+
+CODE: Caller(my_return)
+
+AVAILABLE PARAMS:
+    
+    my_return  -  By default this is set to 'addon', view the options below:
+        
+        'addon' : Return the add-on id of the add-on to call this function.
+        
+        'addons': Return a list of all add-on id's called to get to this function.
+        
+        'path'  : Return the full path to the script which called this funciton.
+        
+        'paths' : Return a list of paths which have been called to get to this
+        final function.
+        
+EXAMPLE CODE:
+my_addon = koding.Caller(my_return='addon')
+my_addons = koding.Caller(my_return='addons')
+my_path = koding.Caller(my_return='path')
+my_paths = koding.Caller(my_return='paths')
+
+dialog.ok('ADD-ON ID', 'Addon id you called this function from:','[COLOR=dodgerblue]%s[/COLOR]' % my_addon)
+dialog.ok('SCRIPT PATH', 'Script which called this function:','[COLOR=dodgerblue]%s[/COLOR]' % my_path)
+
+addon_list = 'Below is a list of add-on id\'s which have been called to get to this final piece of code:\n\n'
+for item in my_addons:
+    addon_list += item+'\n'
+koding.Text_Box('ADD-ON LIST', addon_list)
+koding.Sleep_If_Active(10147)
+path_list = 'Below is a list of scripts which have been called to get to this final piece of code:\n\n'
+for item in my_paths:
+    path_list += item+'\n'
+koding.Text_Box('ADD-ON LIST', path_list)
+~"""
+    import inspect
+    stack       = inspect.stack()
+    last_stack  = len(stack)-1
+    stack_array = []
+    addon_array = []
+    for item in stack:
+        last_stack = item[1].replace('<string>','')
+        last_stack = last_stack.strip()
+        stack_array.append(last_stack)
+        try:
+            scrap,addon_id = last_stack.split('addons%s'%os.sep)
+            addon_id = addon_id.split(os.sep)[0]
+            addon_id = Get_Addon_ID(addon_id)
+            if addon_id not in addon_array:
+                addon_array.append(addon_id)
+        except:
+            pass
+
+    if my_return == 'addons':
+        return addon_array
+    if my_return == 'addon':
+        return addon_array[len(addon_array)-1]
+    if my_return == 'path':
+        return stack_array[len(stack_array)-1]
+    if my_return == 'paths':
+        return stack_array
+#----------------------------------------------------------------
 def Check_Deps(addon_path, depfiles = []):
     import re
     from filetools import Text_File
@@ -476,6 +544,8 @@ dialog.ok('ADDON ID','The add-on id found is:','[COLOR=dodgerblue]%s[/COLOR]'%my
         addon_id = re.compile('id="(.+?)"').findall(contents)
         addon_id = addon_id[0] if (len(addon_id) > 0) else ''
         return addon_id
+    else:
+        return folder
 #----------------------------------------------------------------
 # TUTORIAL #
 def Get_Contents(path, folders=True, exclude_list=[], full_path=True):
@@ -1016,23 +1086,26 @@ koding.Refresh('container')
     from filetools  import DB_Path_Check
     from database   import DB_Query
 
+    kodi_ver        = int(float(xbmc.getInfoLabel("System.BuildVersion")[:2]))
     addons_db       = DB_Path_Check('addons')
     data_type       = Data_Type(addon)
-    on_system       = DB_Query(addons_db,'SELECT addonID, enabled from installed')
     state           = int(bool(enable))
+    enabled_list    = []
+    disabled_list   = []
+    if kodi_ver >= 17:
+        on_system   = DB_Query(addons_db,'SELECT addonID, enabled from installed')
+# Create a list of enabled and disabled add-ons already on system
+        enabled_list  = Addon_List(enabled=True)
+        disabled_list = Addon_List(enabled=False)
 
 # If addon has been sent through as a string we add into a list
     if data_type == 'str' and addon!= 'all':
         addon = [addon]
 
-# Create a list of enabled and disabled add-ons already on system
-    enabled_list  = Addon_List(enabled=True)
-    disabled_list = Addon_List(enabled=False)
-
 # Grab all the add-on ids from addons folder
     if addon == 'all':
-        addon = []
-        ADDONS   = xbmc.translatePath('special://home/addons')
+        addon     = []
+        ADDONS    = xbmc.translatePath('special://home/addons')
         my_addons = Get_Contents(path=ADDONS, exclude_list=['packages','temp'])
         for item in my_addons:
             addon_id = Get_Addon_ID(item)
@@ -1054,7 +1127,7 @@ koding.Refresh('container')
     addon = temp_list
 
 # If you want to bypass the JSON-RPC mode and directly modify the db (READ WARNING ABOVE!!!)
-    if not safe_mode:
+    if not safe_mode and kodi_ver >= 17:
         installedtime   = Timestamp('date_time')
         insert_query    = 'INSERT or IGNORE into installed (addonID , enabled, installDate) VALUES (?,?,?)'
         update_query    = 'UPDATE installed SET enabled = ? WHERE addonID = ? '

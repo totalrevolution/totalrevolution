@@ -21,7 +21,6 @@ import sys
 import xbmc
 import xbmcgui
 
-# from __init__ import dolog
 from systemtools import Last_Error
 
 dp       = xbmcgui.DialogProgress()
