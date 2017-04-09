@@ -1,3 +1,6 @@
+v.0.5.2.1:
+- Added sys import in database module which stops the error when run from service.
+
 v.0.5.2:
 - Added requests dependency which had somehow been ommitted
 
