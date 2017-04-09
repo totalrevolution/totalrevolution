@@ -26,7 +26,8 @@ import xbmcplugin
 
 from directory      import Add_Dir, Grab_Params
 from filetools      import Find_In_Text, Text_File
-from guitools       import Text_Box, Sleep_If_Active
+from guitools       import Text_Box, Show_Busy
+from systemtools    import Sleep_If_Window_Active
 from video          import Play_Video
 from web            import Open_URL
 

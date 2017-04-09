@@ -864,37 +864,6 @@ koding.Refresh(r_mode=['addons~3000', 'repos~2000', 'profile'], profile_name='de
             xbmc.sleep(sleeper)
 #----------------------------------------------------------------
 # TUTORIAL #
-def Show_Busy(status=True, sleep=0):
-    """
-This will show/hide a "working" symbol.
-
-CODE: Show_Busy([status, sleep])
-
-AVAILABLE PARAMS:
-
-    status - This optional, by default it's True which means the "working"
-    symbol appears. False will disable.
-
-    sleep  -  If set the busy symbol will appear for <sleep> amount of
-    milliseconds and then disappear.
-
-EXAMPLE CODE:
-dialog.ok('BUSY SYMBOL','Press OK to show a busy dialog which restricts any user interaction. We have added a sleep of 5 seconds at which point it will disable.')
-koding.Show_Busy(sleep=5000)
-dialog.ok('BUSY SYMBOL','We will now do the same but with slightly different code')
-koding.Show_Busy(status=True)
-xbmc.sleep(5000)
-koding.Show_Busy(status=False)
-~"""
-    if status:
-        xbmc.executebuiltin("ActivateWindow(busydialog)")
-        if sleep:
-            xbmc.sleep(sleep)
-            xbmc.executebuiltin("Dialog.Close(busydialog)")
-    else:
-        xbmc.executebuiltin("Dialog.Close(busydialog)")
-#----------------------------------------------------------------
-# TUTORIAL #
 def Set_Setting(setting_type, setting, value = ''):
     """
 Use this to set built-in kodi settings via JSON or set skin settings. The value paramater is only required for JSON and string commands. Available options are below:
@@ -982,6 +951,99 @@ koding.Set_Setting('kodi_setting', 'lookandfeel.enablerssfeeds', 'false')
     except Exception as e:
         xbmc.log(Last_Error())
         xbmc.log(str(e))
+#----------------------------------------------------------------    
+# TUTORIAL #
+def Sleep_If_Window_Active(window_type=10147):
+    """
+This will allow you to pause code while a specific window is open.
+
+CODE: koding.Sleep_If_Window_Active(window_type)
+
+AVAILABLE PARAMS:
+
+    window_type  -  This is the window xml name you want to check for, if it's
+    active then the code will sleep until it becomes inactive. By default this
+    is set to the custom text box (10147). You can find a list of window ID's
+    here: http://kodi.wiki/view/Window_IDs
+
+EXAMPLE CODE:
+koding.Text_Box('EXAMPLE TEXT','This is just an example, normally a text box would not pause code and the next command would automatically run immediately over the top of this.')
+koding.Sleep_If_Window_Active(10147) # This is the window id for the text box
+dialog.ok('WINDOW CLOSED','The window has now been closed so this dialog code has now been initiated')
+~"""
+    from __init__ import dolog
+    windowactive = False
+    counter      = 0
+
+    if window_type == 'yesnodialog' or window_type == 10100:
+        count = 30
+    else:
+        count = 10
+    
+    okwindow = False
+
+# Do not get stuck in an infinite loop. Check x amount of times and if condition isn't met after x amount it quits
+    while not okwindow and counter < count:
+        xbmc.sleep(100)
+        dolog('### %s not active - sleeping (%s)' % (window_type, counter))
+        okwindow = xbmc.getCondVisibility('Window.IsActive(%s)' % window_type)
+        counter += 1
+
+# Window is active
+    while okwindow:
+        okwindow = xbmc.getCondVisibility('Window.IsActive(%s)' % window_type)
+        xbmc.sleep(250)
+
+    return okwindow
+#----------------------------------------------------------------    
+# TUTORIAL #
+def Sleep_If_Function_Active(function, args=[], kill_time=30, show_busy=True):
+    """
+This will allow you to pause code while a specific function is
+running in the background.
+
+CODE: koding.Sleep_If_Function_Active(function, args, kill_time)
+
+AVAILABLE PARAMS:
+
+    function  -  This is the function you want to run. This does
+    not require brackets, you only need the function name.
+
+    args  -  These are the arguments you want to send through to
+    the function, these need to be sent through as a list.
+
+    kill_time - By default this is set to 30. This is the maximum
+    time in seconds you want to wait for a response. If the max.
+    time is reached before the function completes you will get
+    a response of False.
+
+    show_busy - By default this is set to True so you'll get a busy
+    working dialog appear while the function is running. Set to
+    false if you'd rather not have this.
+
+EXAMPLE CODE:
+def Open_Test_URL(url):
+    koding.Open_URL(url)
+
+dialog.ok('SLEEP IF FUNCTION ACTIVE','We will now attempt to read a 20MB zip and then give up after 10 seconds.','Press OK to continue.')
+koding.Sleep_If_Function_Active(function=Open_Test_URL, args=['http://download.thinkbroadband.com/20MB.zip'], kill_time=10, show_busy=True)
+dialog.ok('FUNCTION COMPLETE','Of course we cannot read that file in just 10 seconds so we\'ve given up!')
+~"""
+    from guitools import Show_Busy
+    import threading
+    if show_busy:
+        Show_Busy(True)
+    my_thread = threading.Thread(target=function, args=args)
+    my_thread.start()
+    thread_alive = True
+    counter = 0
+    while thread_alive and counter <= kill_time:
+        xbmc.sleep(1000)
+        thread_alive = my_thread.isAlive()
+        xbmc.log('%s thread alive for %s seconds' % (function, counter))
+        counter += 1
+    Show_Busy(False)
+    return thread_alive
 #----------------------------------------------------------------
 # TUTORIAL #
 def Timestamp(mode = 'integer'):
@@ -1032,7 +1094,7 @@ dialog.ok('CURRENT TIME','Integer: %s' % integer_time, 'Epoch: %s' % epoch_time,
         return now
 #----------------------------------------------------------------
 # TUTORIAL #
-def Toggle_Addons(addon='all', enable=True, safe_mode=True, exclude_list=[], new_only=True):
+def Toggle_Addons(addon='all', enable=True, safe_mode=True, exclude_list=[], new_only=True, refresh=True):
     """
 Send through either a list of add-on ids or one single add-on id.
 The add-ons sent through will then be added to the addons*.db
@@ -1138,7 +1200,8 @@ koding.Refresh('container')
                 DB_Query(addons_db, update_query, [state, item])
         except:
             dolog(Last_Error())
-        Refresh()
+        if refresh:
+            Refresh()
 
 # Using the safe_mode (JSON-RPC)
     else:
@@ -1174,4 +1237,6 @@ koding.Refresh('container')
             if addon_set:
                 dolog('%s now %s' % (my_addon, log_value))
                 final_enabled.append(addon)
+    if refresh:
+        Refresh('container')
 #----------------------------------------------------------------

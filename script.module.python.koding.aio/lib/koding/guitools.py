@@ -194,48 +194,37 @@ EXAMPLE CODE:
 koding.Notify(title='TEST NOTIFICATION', message='This is a quick 5 second test', duration=5000)
 ~"""
     xbmc.executebuiltin('XBMC.Notification(%s, %s, %s, %s)' % (title , message , duration, icon))
-#----------------------------------------------------------------    
+#----------------------------------------------------------------
 # TUTORIAL #
-def Sleep_If_Active(window_type):
+def Show_Busy(status=True, sleep=0):
     """
-This will allow you to pause code while a specific window is open.
+This will show/hide a "working" symbol.
 
-CODE: koding.Sleep_If_Active(window_type)
+CODE: Show_Busy([status, sleep])
 
 AVAILABLE PARAMS:
 
-    window_type  -  This is the window xml name you want to check for, if it's
-    active then the code will sleep until it becomes inactive.
+    status - This optional, by default it's True which means the "working"
+    symbol appears. False will disable.
+
+    sleep  -  If set the busy symbol will appear for <sleep> amount of
+    milliseconds and then disappear.
 
 EXAMPLE CODE:
-koding.Text_Box('EXAMPLE TEXT','This is just an example, normally a text box would not pause code and the next command would automatically run immediately over the top of this.')
-koding.Sleep_If_Active(10147) # This is the window id for the text box
-dialog.ok('WINDOW CLOSED','The window has now been closed so this dialog code has now been initiated')
+dialog.ok('BUSY SYMBOL','Press OK to show a busy dialog which restricts any user interaction. We have added a sleep of 5 seconds at which point it will disable.')
+koding.Show_Busy(sleep=5000)
+dialog.ok('BUSY SYMBOL','We will now do the same but with slightly different code')
+koding.Show_Busy(status=True)
+xbmc.sleep(5000)
+koding.Show_Busy(status=False)
 ~"""
-    from __init__ import dolog
-    windowactive = False
-    counter      = 0
-
-    if window_type == 'yesnodialog':
-        count = 30
+    if status:
+        xbmc.executebuiltin("ActivateWindow(busydialog)")
+        if sleep:
+            xbmc.sleep(sleep)
+            xbmc.executebuiltin("Dialog.Close(busydialog)")
     else:
-        count = 10
-    
-    okwindow = False
-
-# Do not get stuck in an infinite loop. Check x amount of times and if condition isn't met after x amount it quits
-    while not okwindow and counter < count:
-        xbmc.sleep(100)
-        dolog('### %s not active - sleeping (%s)' % (window_type, counter))
-        okwindow = xbmc.getCondVisibility('Window.IsActive(%s)' % window_type)
-        counter += 1
-
-# Window is active
-    while okwindow:
-        okwindow = xbmc.getCondVisibility('Window.IsActive(%s)' % window_type)
-        xbmc.sleep(250)
-
-    return okwindow
+        xbmc.executebuiltin("Dialog.Close(busydialog)")
 #----------------------------------------------------------------    
 # TUTORIAL #
 def Text_Box(header, message):

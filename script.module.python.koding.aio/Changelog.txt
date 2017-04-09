@@ -1,3 +1,8 @@
+v.0.5.5:
+- Added Sleep_If_Function_Active() which will sleep until the previously called
+function has completed.
+- Renamed Sleep_If_Active() to Sleep_If_Window_Active()
+
 v.0.5.4:
 - Fixed Open_URL function which was broken in last push
 

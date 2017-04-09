@@ -21,7 +21,8 @@ import xbmc
 import xbmcgui
 
 from __init__    import dolog
-from systemtools import Last_Error, Show_Busy
+from guitools    import Show_Busy
+from systemtools import Last_Error
 
 dp            = xbmcgui.DialogProgress()
 check_started = xbmc.translatePath('special://profile/addon_data/script.module.python.koding.aio/temp/playback_in_progress')
