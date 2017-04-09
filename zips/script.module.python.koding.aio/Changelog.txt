@@ -1,3 +1,6 @@
+v.0.5.4:
+- Fixed Open_URL function which was broken in last push
+
 v.0.5.3:
 - Added new Caller() function
 - Changed the way the addon id is pulled so it works when called from scripts.

@@ -147,43 +147,11 @@ koding.Text_Box('CONTENTS OF WEB PAGE',url_contents)~"""
     import xbmc
     import xbmcaddon
 
-    from __init__ import converthex, dolog, Encryption
+    from __init__       import converthex, dolog, Encryption, ADDON_ID, ADDON_ORIG, LOGIN, FORUM, USERNAME, PASSWORD, KODI_VER
+    from systemtools    import Caller
 
-    try:
-        ADDON_ID     =  xbmcaddon.Addon().getAddonInfo('id')
-    except:
-        ADDON_ID     =  sys.argv[2]
-
-    AddonVersion    =  xbmcaddon.Addon(id=ADDON_ID).getAddonInfo('version')
-
-    try:
-        if sys.argv[1] == converthex('7465737466696c65'):
-            ADDON_ID  =  ADDON_ID+'.test'
-    except:
-        pass
-
-    if ADDON_ID.endswith(converthex('2e74657374')):
-        ORIG_ID      =  ADDON_ID[:-5]
-    else:
-        ORIG_ID      = ADDON_ID
-
-    TestID           =  ADDON_ID
-    if not ADDON_ID.endswith(converthex('2e74657374')):
-        TestID       =  ADDON_ID+converthex('2e74657374')
-
-    ADDON_ORIG       =  xbmcaddon.Addon(id=ORIG_ID)
-    LOGIN            =  ADDON_ORIG.getSetting(converthex('6c6f67696e'))
-    FORUM            =  ADDON_ORIG.getSetting(converthex('666f72756d'))
-    USERNAME         =  ADDON_ORIG.getSetting(converthex('757365726e616d65')).replace(' ','%20') if LOGIN == 'true' else ''
-    PASSWORD         =  ADDON_ORIG.getSetting(converthex('70617373776f7264')) if LOGIN == 'true' else ''
-    KODI_VER         =  int(float(xbmc.getInfoLabel("System.BuildVersion")[:2]))
-
-    if FORUM == converthex('556e6f6666696369616c204b6f646920537570706f7274'):
-        FORUM = 'k'
-    if FORUM == converthex('436f6d6d756e697479204275696c647320537570706f7274'):
-        FORUM = 'c'
-
-    payload = {}
+    AddonVersion = xbmcaddon.Addon(id=ADDON_ID).getAddonInfo('version')
+    payload      = {}
 
 # If the url sent through is not http then we presume it's hitting the NaN page
     if not url.startswith(converthex('68747470')):
