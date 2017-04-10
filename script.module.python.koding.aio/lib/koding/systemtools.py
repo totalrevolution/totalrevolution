@@ -121,7 +121,7 @@ addon_list = 'Below is a list of add-on id\'s which have been called to get to t
 for item in my_addons:
     addon_list += item+'\n'
 koding.Text_Box('ADD-ON LIST', addon_list)
-koding.Sleep_If_Active(10147)
+koding.Sleep_If_Window_Active(10147)
 path_list = 'Below is a list of scripts which have been called to get to this final piece of code:\n\n'
 for item in my_paths:
     path_list += item+'\n'
@@ -1002,7 +1002,7 @@ def Sleep_If_Function_Active(function, args=[], kill_time=30, show_busy=True):
 This will allow you to pause code while a specific function is
 running in the background.
 
-CODE: koding.Sleep_If_Function_Active(function, args, kill_time)
+CODE: koding.Sleep_If_Function_Active(function, args, kill_time, show_busy)
 
 AVAILABLE PARAMS:
 

@@ -32,6 +32,13 @@ This allows you to create a list item/folder inside your add-on.
 Please take a look at your addon default.py comments for more information
 (presuming you created one at http://totalrevolution.tv)
 
+TOP TIP: If you want to send multiple variables through to a function just
+send through as a dictionary encapsulated in quotation marks. In the function
+you can then use the following code to access them:
+
+params = eval(url)
+^ That will then give you a dictionary where you can just pull each variable and value from.
+
 CODE: Add_Dir(name, url, mode, [folder, icon, fanart, description, info_labels, content_type, context_items, context_override, playable])
 
 AVAILABLE PARAMS:

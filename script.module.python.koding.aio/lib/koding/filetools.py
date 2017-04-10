@@ -269,25 +269,71 @@ koding.Delete_Files(filepath=delete_path, filetype='.txt', subdirectories=True)
         xbmc.log('### Cannot delete files as directory does not exist: %s' % filepath)
 #----------------------------------------------------------------
 # TUTORIAL #
-def Delete_Folders(filepath=''):
+def Delete_Folders(filepath='', ignore=[]):
     """
-Completely delete a folder and all it's sub-folders
+Completely delete a folder and all it's sub-folders. With the ability to add
+an ignore list for any folders/files you don't want removed.
 
-CODE: Delete_Folders(filepath)
+CODE: Delete_Folders(filepath, [ignore])
 
 AVAILABLE PARAMS:
     
     (*) filepath  -  Use the physical path you want to remove (not special://)
 
-WARNING: This is an extremely powerful and dangerous tool! If you wipe your whole system
-by putting in the wrong path then it's your own stupid fault!
+    ignore  -  A list of paths you want to ignore. These need to be sent
+    through as physical paths so just use xbmc.translatePath when creating
+    your list and these can be folder paths or filepaths.
+
+WARNING: This is an extremely powerful and dangerous tool! If you wipe important
+system files from your system by putting in the wrong path then I'm afraid that's
+your own stupid fault! A check has been put in place so you can't accidentally
+wipe the whole root.
 
 EXAMPLE CODE:
-delete_path = xbmc.translatePath('special://profile/addon_data/test')
-if dialog.yesno('DELETE FOLDER','The following folder will now be removed:', '/userdata/addon_data/test/','Do you want to continue?'):
-    koding.Delete_Folders(delete_path)
+delete_path = xbmc.translatePath('special://profile/py_koding_test')
+
+# Create new test directory to remove
+if not os.path.exists(delete_path):
+    os.makedirs(delete_path)
+
+# Fill it with some dummy files
+file1 = os.path.join(delete_path,'file1.txt')
+file2 = os.path.join(delete_path,'file2.txt')
+file3 = os.path.join(delete_path,'file3.txt')
+koding.Dummy_File(dst=file1, size=10, size_format='kb')
+koding.Dummy_File(dst=file2, size=10, size_format='kb')
+koding.Dummy_File(dst=file3, size=10, size_format='kb')
+
+dialog.ok('TEST FILE CREATED','If you look in your addon_data folder you should now see a new test folder containing 3 dummy files. The folder name is \'py_koding_test\'.')
+if dialog.yesno('DELETE FOLDER','Everything except file1.txt will now be removed from:', '/userdata/py_koding_test/','Do you want to continue?'):
+    koding.Delete_Folders(filepath=delete_path, ignore=[file1])
 ~"""
-    if os.path.exists(filepath) and filepath != '':
+    exclude_list = ['','/','\\','C:/','storage']
+
+# Check you're not trying to wipe root!
+    if filepath in exclude_list:
+        dialog.ok('FILEPATH REQUIRED','You\'ve attempted to remove files but forgot to pass through a valid filepath. Luckily this failsafe check is in place or you could have wiped your whole system!')
+
+# If there's some ignore files we run through deleting everything but those files
+    elif len(ignore) > 0:
+        for root, dirs, files in os.walk(filepath, topdown=False):
+            if not root in ignore:
+                for file in files:
+                    file_path = os.path.join(root,file)
+                    if file_path not in ignore:
+                        try:
+                            os.remove(file_path)
+                        except:
+                            pass
+
+                if len(os.listdir(root)) == 0:
+                    try:
+                        os.rmdir(root)
+                    except:
+                        pass
+
+# If a simple complete wipe of a directory and all sub-directories is required we use this
+    elif os.path.exists(filepath) and filepath != '':
         shutil.rmtree(filepath, ignore_errors=True)
         xbmc.executebuiltin('Container.Refresh')
 #----------------------------------------------------------------
