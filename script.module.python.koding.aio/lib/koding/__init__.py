@@ -31,6 +31,7 @@ try:
 except:
     import json
 
+from android        import *
 from database       import *
 from directory      import *
 from filetools      import *

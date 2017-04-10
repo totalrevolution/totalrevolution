@@ -18,6 +18,64 @@ IF you're using the special features which hook into the noobsandnerds framework
 
 ------------------------------------------------------------------------------------------
 
+A N D R O I D   S P E C I F I C
+
+------------------------------------------------------------------------------------------
+
+ANDROID APP SETTINGS:
+Open up the settings for an installed Android app.
+
+	CODE: App_Settings(apk_id)
+
+	AVAILABLE PARAMS:
+
+	    (*) apk_id  -  The id of the app you want to open the settings for.
+
+	EXAMPLE CODE:
+		dialog.ok('FACEBOOK SETTINGS','We will now open the settings for the Facebook app')
+		koding.App_Settings(apk_id='com.facebook.katana')
+
+------------------------------------------------------------------------------------------
+
+INSTALLED APPS:
+Return a list of apk id's installed on system
+
+	CODE: My_Apps()
+
+	EXAMPLE CODE:
+		my_apps = koding.My_Apps()
+		choice = dialog.select('CHOOSE AN APK', my_apps)
+		if choice >= 0:
+		    koding.App_Settings(apk_id=my_apps[choice])
+
+------------------------------------------------------------------------------------------
+
+START ANDROID APP:
+Open an Android application
+
+	CODE: Start_App(apk_id)
+
+	AVAILABLE PARAMS:
+
+	    (*) apk_id  -  The id of the app you want to open.
+
+	EXAMPLE CODE:
+		dialog.ok('OPEN FACEBOOK','Presuming you have Facebook installed and this is an Android system we will now open that apk')
+		koding.Start_App(apk_id='com.facebook.katana')
+
+------------------------------------------------------------------------------------------
+
+UNINSTALL ANDROID APP
+Uninstall and Android app
+
+	CODE: Uninstall_APK(apk_id)
+
+	EXAMPLE CODE:
+		if dialog.yesno('UNINSTALL FACEBOOK','Would you like to uninstall the Facebook app from your system?'):
+		    koding.Uninstall_APK(apk_id='com.facebook.katana')
+
+------------------------------------------------------------------------------------------
+
 D A T A B A S E S
 
 ------------------------------------------------------------------------------------------
@@ -1070,6 +1128,17 @@ Return the size of a folder path including sub-directories, this can be returned
 		HOME = xbmc.translatePath('special://home')
 		home_size = Folder_Size(HOME, 'mb')
 		dialog.ok('Folder Size','KODI HOME: %s MB' % home_size)
+
+------------------------------------------------------------------------------------------
+
+FORCE CLOSE:
+Force close Kodi, should only be used in extreme circumstances.
+
+	CODE: Force_Close()
+
+	EXAMPLE CODE:
+		if dialog.yesno('FORCE CLOSE','Are you sure you want to forcably close Kodi? This could potentially cause corruption if system tasks are taking place in background.'):
+		    koding.Force_Close()
 
 ------------------------------------------------------------------------------------------
 

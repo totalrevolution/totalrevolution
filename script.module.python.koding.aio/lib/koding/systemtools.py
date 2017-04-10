@@ -518,6 +518,19 @@ dialog.ok('FILE NAME','Path checked:',file_path,'File Name: [COLOR=dodgerblue]%s
     return path_array[-1]
 #----------------------------------------------------------------
 # TUTORIAL #
+def Force_Close():
+    """
+Force close Kodi, should only be used in extreme circumstances.
+
+CODE: Force_Close()
+
+EXAMPLE CODE:
+if dialog.yesno('FORCE CLOSE','Are you sure you want to forcably close Kodi? This could potentially cause corruption if system tasks are taking place in background.'):
+    koding.Force_Close()
+~"""
+    os._exit(1)
+#----------------------------------------------------------------
+# TUTORIAL #
 def Get_Addon_ID(folder):
     """
 If you know the folder name of an add-on but want to find out the

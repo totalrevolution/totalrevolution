@@ -1,3 +1,8 @@
+v.0.5.9:
+- Added Android functions for opening, uninstalling and listing installed apps.
+- Added Android function for opening into a specific apps settings.
+- Added Force_Close() function
+
 v.0.5.8:
 - Added Running_App() function which returns the name of current running app.
 - Added Fresh_Install() function which will wipe your current install.
