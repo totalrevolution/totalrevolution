@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="script.module.python.koding.aio"
    name="Python Koding AIO"
-   version="0.5.7"
+   version="0.5.8"
    provider-name="TotalRevolution, noobsandnerds">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
@@ -18,7 +18,9 @@
     <license>Creative Commons 4.0-NC-ND</license>
     <forum>http://noobsandnerds.com/support/showthread.php?tid=17614</forum>
     <website>http://noobsandnerds.com</website>
-    <news>Added Delete_Crashlogs function</news>
+    <news>
+- Added Running_App() function which returns the name of current running app.
+- Added Fresh_Install() function which will wipe your current install.</news>
     <source></source>
   </extension>  
 </addon>

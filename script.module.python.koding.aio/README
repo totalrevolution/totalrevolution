@@ -758,6 +758,21 @@ This function extract a zip or tar file and return true or false so unlike the b
 
 ------------------------------------------------------------------------------------------
 
+FRESH INSTALL:
+Attempt to completely wipe your install. Currently this only supports LE/OE/Android. On LE/OE it will
+perform a hard reset and on Android it will wipe the data for the current running app (untested).
+
+	CODE:  Fresh_Install()
+
+	EXAMPLE CODE:
+		if dialog.yesno('TOTAL WIPEOUT!','This will attempt give you a totally fresh install of Kodi.','Are you sure you want to continue?'):
+		    if dialog.yesno('[COLOR=gold]FINAL CHANCE!!![/COLOR]','If you click Yes this WILL attempt to wipe your install', '[COLOR=dodgerblue]ARE YOU 100% CERTAIN YOU WANT TO WIPE?[/COLOR]'):
+		        clean_state = koding.Fresh_Install()
+		        if not clean_state:
+		            dialog.ok('SYSTEM NOT SUPPORTED','Your platform is not yet supported by this function, you will have to manually wipe.')
+
+------------------------------------------------------------------------------------------
+
 MOVE A DIRECTORY:
 Move a directory including all sub-directories to a new location.
 This will automatically create the new location if it doesn't already
@@ -1238,6 +1253,18 @@ the order you want them to be executed.
 	EXAMPLE CODE:
 		dialog.ok('RELOAD SKIN','We will now attempt to update the addons, pause 3s, update repos and pause 2s then reload the default profile. Press OK to continue.')
 		koding.Refresh(r_mode=['addons~3000', 'repos~2000', 'profile'], profile_name='default')
+
+------------------------------------------------------------------------------------------
+
+RUNNING APP:
+Return the Kodi app name you're running, useful for fork compatibility
+
+	CODE: Running_App()
+
+	EXAMPLE CODE:
+		my_kodi = koding.Running_App()
+		kodi_ver = xbmc.getInfoLabel("System.BuildVersion")
+		dialog.ok('KODI VERSION','You are running:','[COLOR=dodgerblue]%s[/COLOR] - v.%s' % (my_kodi, kodi_ver))
 
 ------------------------------------------------------------------------------------------
 

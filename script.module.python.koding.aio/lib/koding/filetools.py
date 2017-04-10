@@ -497,6 +497,32 @@ else:
 
 #----------------------------------------------------------------
 # TUTORIAL #
+def Fresh_Install():
+    """
+Attempt to completely wipe your install. Currently this only supports
+LE/OE/Android. On LE/OE it will perform a hard reset and on Android it
+will wipe the data for the current running app (untested)
+
+CODE:  Fresh_Install()
+
+EXAMPLE CODE:
+if dialog.yesno('TOTAL WIPEOUT!','This will attempt give you a totally fresh install of Kodi.','Are you sure you want to continue?'):
+    if dialog.yesno('[COLOR=gold]FINAL CHANCE!!![/COLOR]','If you click Yes this WILL attempt to wipe your install', '[COLOR=dodgerblue]ARE YOU 100% CERTAIN YOU WANT TO WIPE?[/COLOR]'):
+        clean_state = koding.Fresh_Install()
+        if not clean_state:
+            dialog.ok('SYSTEM NOT SUPPORTED','Your platform is not yet supported by this function, you will have to manually wipe.')
+~"""
+    if xbmc.getCondVisibility("System.HasAddon(service.libreelec.settings)") or xbmc.getCondVisibility("System.HasAddon(service.openelec.settings)"):
+        resetpath='storage/.cache/reset_oe'
+        Text_File(resetpath,'w')
+        xbmc.executebuiltin('reboot')
+    elif xbmc.getCondVisibility('System.Platform.Android'):
+        running   = koding.Running_App()
+        cleanwipe = subprocess.Popen(['exec ''pm clear '+str(running)+''], executable='/system/bin/sh', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=preexec_fn).communicate()[0]
+    else:
+        return False
+#----------------------------------------------------------------
+# TUTORIAL #
 def Find_In_Text(content, start, end, show_errors = True):
     """
 Regex through some text and return a list of matches.

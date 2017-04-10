@@ -806,7 +806,7 @@ executed in by putting first in your r_mode. For example if you
 want to refresh addons then repo and then the profile you would
 send through a list in the order you want them to be executed.
 
-CODE: koding.Refresh(r_mode, [profile])
+CODE: Refresh(r_mode, [profile])
 
 AVAILABLE PARAMS:
 
@@ -864,11 +864,34 @@ koding.Refresh(r_mode=['addons~3000', 'repos~2000', 'profile'], profile_name='de
             xbmc.sleep(sleeper)
 #----------------------------------------------------------------
 # TUTORIAL #
+def Running_App():
+    """
+Return the Kodi app name you're running, useful for fork compatibility
+
+CODE: Running_App()
+
+EXAMPLE CODE:
+my_kodi = koding.Running_App()
+kodi_ver = xbmc.getInfoLabel("System.BuildVersion")
+dialog.ok('KODI VERSION','You are running:','[COLOR=dodgerblue]%s[/COLOR] - v.%s' % (my_kodi, kodi_ver))
+~"""
+    root_folder = xbmc.translatePath('special://xbmc')
+    xbmc.log(root_folder)
+    if '/cache' in root_folder:
+        root_folder = root_folder.split('/cache')[0]
+    root_folder = root_folder.split('/')
+    if root_folder[len(root_folder)-1] == '':
+        root_folder.pop()
+    finalitem   = len(root_folder)-1
+    running     = root_folder[finalitem]
+    return running
+#----------------------------------------------------------------
+# TUTORIAL #
 def Set_Setting(setting_type, setting, value = ''):
     """
 Use this to set built-in kodi settings via JSON or set skin settings. The value paramater is only required for JSON and string commands. Available options are below:
 
-CODE: koding.Set_Setting(setting, setting_type, [value])
+CODE: Set_Setting(setting, setting_type, [value])
 
 AVAILABLE PARAMS:
     
@@ -957,7 +980,7 @@ def Sleep_If_Window_Active(window_type=10147):
     """
 This will allow you to pause code while a specific window is open.
 
-CODE: koding.Sleep_If_Window_Active(window_type)
+CODE: Sleep_If_Window_Active(window_type)
 
 AVAILABLE PARAMS:
 
@@ -1002,7 +1025,7 @@ def Sleep_If_Function_Active(function, args=[], kill_time=30, show_busy=True):
 This will allow you to pause code while a specific function is
 running in the background.
 
-CODE: koding.Sleep_If_Function_Active(function, args, kill_time, show_busy)
+CODE: Sleep_If_Function_Active(function, args, kill_time, show_busy)
 
 AVAILABLE PARAMS:
 
@@ -1050,7 +1073,7 @@ def Timestamp(mode = 'integer'):
     """
 This will return the timestamp in various formats. By default it returns as "integer" mode but other options are listed below:
 
-CODE: koding.Timestamp(mode)
+CODE: Timestamp(mode)
 mode is optional, by default it's set as integer
 
 AVAILABLE VALUES:

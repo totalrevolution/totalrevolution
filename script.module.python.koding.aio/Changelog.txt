@@ -1,3 +1,7 @@
+v.0.5.8:
+- Added Running_App() function which returns the name of current running app.
+- Added Fresh_Install() function which will wipe your current install.
+
 v.0.5.7:
 - Added Delete_Crashlogs() function.
 
