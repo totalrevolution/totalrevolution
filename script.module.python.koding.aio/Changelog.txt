@@ -1,3 +1,6 @@
+v.0.5.7:
+- Added Delete_Crashlogs() function.
+
 v.0.5.6:
 - Improved Delete_Folders function, can now send through an ignore list for
 file/folder paths you don't want removed.

@@ -644,6 +644,33 @@ CODE: Create_Paths(path)
 
 ------------------------------------------------------------------------------------------
 
+DELETE CRASHLOGS
+Delete all kodi crashlogs. This function will retun the amount of successfully removed crashlogs.
+
+	CODE: Delete_Crashlogs([extra_paths])
+
+	AVAILABLE PARAMS:
+	    extra_paths  -  By default this will search for crashlogs for xbmc,
+	    kodi and spmc. If you want to add compatibility for other forks of
+	    Kodi please send through a list of the files you want deleted. The
+	    format to use needs to be like example shown below.
+
+
+	EXAMPLE CODE:
+		# Lets setup some extra crashlog types for tvmc and ftmc kodi forks
+		log_path =  xbmc.translatePath('special://logpath/')
+		tvmc_path = os.path.join(log_path,'tvmc_crashlog*.*')
+		ftmc_path = os.path.join(log_path,'ftmc_crashlog*.*')
+
+
+		deleted_files = koding.Delete_Crashlogs(extra_paths=[tvmc_path, ftmc_path])
+		if deleted_files > 0:
+		    dialog.ok('CRASHLOGS DELETED','Congratulations, a total of %s crashlogs have been deleted.')
+		else:
+		    dialog.ok('NO CRASHLOGS','No crashlogs could be found on the system.')
+
+------------------------------------------------------------------------------------------
+
 DELETE FILES IN PATH:
 Delete all specific filetypes in a path (including sub-directories)
 

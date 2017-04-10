@@ -136,11 +136,8 @@ EXAMPLE CODE:
 koding.Convert_Special()
 ~"""    
     import urllib
-
     for root, dirs, files in os.walk(filepath):
-        
         for file in files:
-            
             if file.endswith(".xml") or file.endswith(".hash") or file.endswith("properies") or file.endswith(".ini"):
                 contents     = Text_File(os.path.join(root,file), 'r')
                 encodedpath  = urllib.quote(HOME)
@@ -218,6 +215,48 @@ dialog.ok('ADDONS DB','The path to the current addons database is:',dbpath)
                 finalfile = lastmodified
                 gooddb   = mydb
     return gooddb
+#---------------------------------------------------------------------------------------------------
+# TUTORIAL #
+def Delete_Crashlogs(extra_paths=[]):
+    """
+Delete all kodi crashlogs. This function will retun the amount of successfully removed crashlogs.
+
+CODE: Delete_Crashlogs([extra_paths])
+
+AVAILABLE PARAMS:
+    extra_paths  -  By default this will search for crashlogs for xbmc,
+    kodi and spmc. If you want to add compatibility for other forks of
+    Kodi please send through a list of the files you want deleted. The
+    format to use needs to be like example shown below.
+
+EXAMPLE CODE:
+# Lets setup some extra crashlog types for tvmc and ftmc kodi forks
+log_path =  xbmc.translatePath('special://logpath/')
+tvmc_path = os.path.join(log_path,'tvmc_crashlog*.*')
+ftmc_path = os.path.join(log_path,'ftmc_crashlog*.*')
+
+
+deleted_files = koding.Delete_Crashlogs(extra_paths=[tvmc_path, ftmc_path])
+if deleted_files > 0:
+    dialog.ok('CRASHLOGS DELETED','Congratulations, a total of %s crashlogs have been deleted.')
+else:
+    dialog.ok('NO CRASHLOGS','No crashlogs could be found on the system.')
+~"""
+    import glob
+    log_path =  xbmc.translatePath('special://logpath/')
+    xbmc_path = (os.path.join(log_path, 'xbmc_crashlog*.*'))
+    kodi_path = (os.path.join(log_path, 'kodi_crashlog*.*'))
+    spmc_path = (os.path.join(log_path, 'spmc_crashlog*.*'))
+    paths = [xbmc_path, kodi_path, spmc_path]
+    total = 0
+    for items in paths:
+        for file in glob.glob(items):
+            try:
+                 os.remove(file)
+                 total+=1
+            except:
+                pass
+    return total
 #----------------------------------------------------------------
 # TUTORIAL #
 def Delete_Files(filepath = HOME, filetype = '*.txt', subdirectories=False):
