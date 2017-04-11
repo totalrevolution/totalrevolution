@@ -661,6 +661,60 @@ dialog.ok('Folder Size','KODI HOME: %s MB' % home_size)
         return "%.4f" % (float(finalsize / 1024) / 1024 / 1024 / 1024)
 #----------------------------------------------------------------
 # TUTORIAL #
+def md5_check(src):
+    """
+Return the md5 value of file or directory, this will return just one unique value.
+
+CODE: md5_check(src)
+
+AVAILABLE PARAMS:
+
+    (*) src  -  This is source directory/file you want the md5 value of.
+
+EXAMPLE CODE:
+home = xbmc.translatePath('special://home')
+home_md5 = koding.md5_check(home)
+dialog.ok('md5 Check', 'The md5 of your home folder is:', home_md5)
+
+guisettings = xbmc.translatePath('special://profile/guisettings.xml')
+guisettings_md5 = koding.md5_check(guisettings)
+dialog.ok('md5 Check', 'The md5 of your guisettings.xml:', guisettings_md5)
+~"""
+    import hashlib
+    import os
+
+    SHAhash = hashlib.md5()
+    if not os.path.exists (src):
+        return -1
+
+# If source is a file
+    if not os.path.isdir(src):
+        return hashlib.md5(open(src,'rb').read()).hexdigest()
+
+# If source is a directory
+    else:
+        try:
+            for root, dirs, files in os.walk(src):
+              for names in files:
+                filepath = os.path.join(root,names)
+                try:
+                  f1 = open(filepath, 'rb')
+                except:
+                  f1.close()
+                  continue
+
+            while 1:
+# Read file in as little chunks
+              buf = f1.read(4096)
+              if not buf : break
+              SHAhash.update(hashlib.md5(buf).hexdigest())
+            f1.close()
+        except:
+            return -2
+
+        return SHAhash.hexdigest()
+#----------------------------------------------------------------
+# TUTORIAL #
 def Move_Tree(src, dst, dp=None):
     """
 Move a directory including all sub-directories to a new location.

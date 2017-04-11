@@ -1,3 +1,6 @@
+v.0.5.9.1:
+- Added md5_check() function to return md5 value of file or folder.
+
 v.0.5.9:
 - Added Android functions for opening, uninstalling and listing installed apps.
 - Added Android function for opening into a specific apps settings.

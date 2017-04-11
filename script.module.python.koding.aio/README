@@ -1276,6 +1276,26 @@ Return details of the last error produced, perfect for try/except statements
 
 ------------------------------------------------------------------------------------------
 
+MD5 CHECK:
+Return the md5 value of file or directory, this will return just one unique value.
+
+	CODE: md5_check(src)
+
+	AVAILABLE PARAMS:
+
+	    (*) src  -  This is source directory/file you want the md5 value of.
+
+	EXAMPLE CODE:
+		home = xbmc.translatePath('special://home')
+		home_md5 = koding.md5_check(home)
+		dialog.ok('md5 Check', 'The md5 of your home folder is:', home_md5)
+
+		guisettings = xbmc.translatePath('special://profile/guisettings.xml')
+		guisettings_md5 = koding.md5_check(guisettings)
+		dialog.ok('md5 Check', 'The md5 of your guisettings.xml:', guisettings_md5)
+
+------------------------------------------------------------------------------------------
+
 PATH TO CURRENT "LIVE" DATABASE:
 If you need to find out the current "real" database in use then this is the function for you. It will scan for a specific database type (e.g. addons) and return the path to the one which was last updated. This is particularly useful if the system's previously updated to a newer version rather than a fresh install - or if they've installed a "build" which contained old databases.
 
