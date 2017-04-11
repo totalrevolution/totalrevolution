@@ -87,6 +87,60 @@ Text_Box('ADDON STATUS',my_return)
         return disabled_list
 #----------------------------------------------------------------
 # TUTORIAL #
+def ASCII_Check(sourcefile=xbmc.translatePath('special://home'), dp=False):
+    """
+Return a list of files found containing non ASCII characters in the filename.
+
+CODE: ASCII_Check([sourcefile, dp])
+
+AVAILABLE PARAMS:
+    
+    sourcefile  -  The folder you want to scan, by default it's set to the
+    Kodi home folder.
+        
+    dp  -  Optional DialogProgress, by default this is False. If you want
+    to show a dp make sure you initiate an instance of xbmcgui.DialogProgress()
+    and send through as the param.
+        
+EXAMPLE CODE:
+home = xbmc.translatePath('special://home')
+progress = xbmcgui.DialogProgress()
+progress.create('ASCII CHECK')
+my_return = ASCII_Check(sourcefile=home, dp=progress)
+if len(my_return) > 0:
+    dialog.select('NON ASCII FILES', my_return)
+else:
+    dialog.ok('ASCII CHECK CLEAN','Congratulations!','There weren\'t any non-ASCII files found on this system.')
+~"""
+    rootlen      = len(sourcefile)
+    for_progress = []
+    final_array  = []
+    ITEM         = []
+
+    for base, dirs, files in os.walk(sourcefile):
+        for file in files:
+            ITEM.append(file)   
+    N_ITEM =len(ITEM)
+    
+    for base, dirs, files in os.walk(sourcefile):
+        dirs[:] = [d for d in dirs]
+        files[:] = [f for f in files]
+        
+        for file in files:
+            for_progress.append(file) 
+            progress = len(for_progress) / float(N_ITEM) * 100
+            if dp:
+                dp.update(0,"Checking for non ASCII files",'[COLOR yellow]%s[/COLOR]'%d, 'Please Wait')
+            
+            try:
+                file.encode('ascii')
+
+            except UnicodeDecodeError:
+                badfile = (str(base)+'/'+str(file)).replace('\\','/').replace(':/',':\\')
+                final_array.append(badfile)
+    return final_array
+#----------------------------------------------------------------
+# TUTORIAL #
 def Caller(my_return='addon'):
     """
 Return the add-on id or path of the script which originally called
@@ -1080,6 +1134,133 @@ dialog.ok('FUNCTION COMPLETE','Of course we cannot read that file in just 10 sec
         counter += 1
     Show_Busy(False)
     return thread_alive
+#----------------------------------------------------------------
+# TUTORIAL #
+def System(command, function=''):
+    """
+This is just a simplified method of grabbing certain Kodi infolabels, paths
+and booleans as well as performing some basic built in kodi functions.
+We have a number of regularly used functions added to a dictionary which can
+quickly be called via this function or you can use this function to easily
+run a command not currently in the dictionary. Just use one of the
+many infolabels, builtin commands or conditional visibilities available:
+
+info: http://kodi.wiki/view/InfoLabels
+bool: http://kodi.wiki/view/List_of_boolean_conditions
+
+CODE: System(command, [function])
+
+AVAILABLE PARAMS:
+    
+    (*) command  -  This is the command you want to perform, below is a list
+    of all the default commands you can choose from, however you can of course
+    send through your own custom command if using the function option (details
+    at bottom of page)
+
+    AVAILABLE VALUES:
+
+        'addonid'       : Returns the FOLDER id of the current add-on. Please note could differ from real add-on id.
+        'addonname'     : Returns the current name of the add-on
+        'builddate'     : Return the build date for the current running version of Kodi
+        'cpu'           : Returns the CPU usage as a percentage
+        'cputemp'       : Returns the CPU temperature in farenheit or celcius depending on system settings
+        'currentlabel'  : Returns the current label of the item in focus
+        'currenticon'   : Returns the name of the current icon
+        'currentpos'    : Returns the current list position of focused item
+        'currentpath'   : Returns the url called by Kodi for the focused item
+        'currentrepo'   : Returns the repo of the current focused item
+        'currentskin'   : Returns the FOLDER id of the skin. Please note could differ from actual add-on id
+        'date'          : Returns the date (Tuesday, April 11, 2017)
+        'debug'         : Toggles debug mode on/off
+        'freeram'       : Returns the amount of free memory available (in MB)
+        'freespace'     : Returns amount of free space on storage in this format: 10848 MB Free
+        'hibernate'     : Hibernate system, please note not all systems are capable of waking from hibernation
+        'internetstate' : Returns True or False on whether device is connected to internet
+        'ip'            : Return the current LOCAL IP address (not your public IP)
+        'kernel'        : Return details of the system kernel
+        'language'      : Return the language currently in use
+        'mac'           : Return the mac address, will only return the mac currently in use (Wi-Fi OR ethernet, not both)
+        'numitems'      : Return the total amount of list items curently in focus
+        'profile'       : Return the currently running profile name
+        'quit'          : Quit Kodi
+        'reboot'        : Reboot the system
+        'restart'       : Restart Kodi (Windows/Linux only)
+        'shutdown'      : Shutdown the system
+        'sortmethod'    : Return the current list sort method
+        'sortorder'     : Return the current list sort order
+        'systemname'    : Return a clean friendly name for the system
+        'time'          : Return the current time in this format: 2:05 PM
+        'usedspace'     : Return the amount of used space on the storage in this format: 74982 MB Used
+        'version'       : Return the current version of Kodi, this may need cleaning up as it contains full file details
+        'viewmode'      : Return the current list viewmode
+        'weatheraddon'  : Return the current plugin being used for weather
+
+
+    function  -  This is optional and default is set to a blank string which will
+    allow you to use the commands listed above but if set you can use your own
+    custom commands by setting this to one of the values below.
+
+    AVAILABLE VALUES:
+
+        'bool' : This will allow you to send through a xbmc.getCondVisibility() command
+        'info' : This will allow you to send through a xbmc.getInfoLabel() command
+        'exec' : This will allow you to send through a xbmc.executebuiltin() command
+
+EXAMPLE CODE:
+current_time = koding.System(command='time')
+current_label = koding.System(command='currentlabel')
+is_folder = koding.System(command='ListItem.IsFolder', function='bool')
+dialog.ok('PULLED DETAILS','The current time is %s' % current_time, 'Folder status of list item [COLOR=dodgerblue]%s[/COLOR]: %s' % (current_label, is_folder),'^ A zero means False, as in it\'s not a folder.')
+~"""
+    params = {
+    'addonid'       :'xbmc.getInfoLabel("Container.PluginName")',
+    'addonname'     :'xbmc.getInfoLabel("Container.FolderName")',
+    'builddate'     :'xbmc.getInfoLabel("System.BuildDate")',
+    'cpu'           :'xbmc.getInfoLabel("System.CpuUsage")',
+    'cputemp'       :'xbmc.getInfoLabel("System.CPUTemperature")',
+    'currentlabel'  :'xbmc.getInfoLabel("System.CurrentControl")',
+    'currenticon'   :'xbmc.getInfoLabel("ListItem.Icon")',
+    'currentpos'    :'xbmc.getInfoLabel("Container.CurrentItem")',
+    'currentpath'   :'xbmc.getInfoLabel("Container.FolderPath")',
+    'currentrepo'   :'xbmc.getInfoLabel("Container.Property(reponame)")',
+    'currentskin'   :'xbmc.getSkinDir()',
+    'date'          :'xbmc.getInfoLabel("System.Date")',
+    'debug'         :'xbmc.executebuiltin("ToggleDebug")',
+    'freeram'       :'xbmc.getFreeMem()',
+    'freespace'     :'xbmc.getInfoLabel("System.FreeSpace")',
+    'hibernate'     :'xbmc.executebuiltin("Hibernate")',
+    'internetstate' :'xbmc.getInfoLabel("System.InternetState")',
+    'ip'            :'xbmc.getIPAddress()',
+    'kernel'        :'xbmc.getInfoLabel("System.KernelVersion")',
+    'language'      :'xbmc.getInfoLabel("System.Language")',
+    'mac'           :'xbmc.getInfoLabel("Network.MacAddress")',
+    'numitems'      :'xbmc.getInfoLabel("Container.NumItems")',
+    'profile'       :'xbmc.getInfoLabel("System.ProfileName")',
+    'quit'          :'xbmc.executebuiltin("Quit")',
+    'reboot'        :'xbmc.executebuiltin("Reboot")',
+    'restart'       :'xbmc.restart()', # Windows/Linux only
+    'shutdown'      :'xbmc.shutdown()',
+    'sortmethod'    :'xbmc.getInfoLabel("Container.SortMethod")',
+    'sortorder'     :'xbmc.getInfoLabel("Container.SortOrder")',
+    'systemname'    :'xbmc.getInfoLabel("System.FriendlyName")',
+    'time'          :'xbmc.getInfoLabel("System.Time")',
+    'usedspace'     :'xbmc.getInfoLabel("System.UsedSpace")',
+    'version'       :'xbmc.getInfoLabel("System.BuildVersion")',
+    'viewmode'      :'xbmc.getInfoLabel("Container.Viewmode")',
+    'weatheraddon'  :'xbmc.getInfoLabel("Weather.plugin")',
+    }
+
+    if function == '': newcommand = params[command]
+    elif function == 'info': newcommand = 'xbmc.getInfoLabel("%s")' % command
+    elif function == 'bool': newcommand = 'xbmc.getCondVisibility("%s")' % command
+    elif function == 'exec': newcommand = 'xbmc.getCondVisibility("%s")' % command
+    else:
+        dialog.ok('INCORRECT PARAMS','The following command has been called:','koding.System(%s,[COLOR=dodgerblue]%s[/COLOR])'%(command, function),'^ The wrong function has been sent through, please double check the section highlighted in blue.')
+
+    try:
+        return eval(newcommand)
+    except:
+        return 'error'
 #----------------------------------------------------------------
 # TUTORIAL #
 def Timestamp(mode = 'integer'):

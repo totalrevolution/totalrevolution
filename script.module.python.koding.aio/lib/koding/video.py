@@ -145,7 +145,7 @@ play the video whereas Check_Playback does not actually try to
 play a video - it will just return True/False on whether or not
 a video is currently playing.
 
-CODE: Play_Video(video, [showbusy])
+CODE: Play_Video(video, [showbusy, content])
 
 AVAILABLE PARAMS:
 
@@ -157,6 +157,10 @@ AVAILABLE PARAMS:
     busy dialog. Set to False if you prefer this not to appear but do
     bare in mind a user may navigate to another section and try playing
     something else if they think this isn't doing anything.
+
+    content  -  By default this is set to 'video', however if you're
+    passing through audio you may want to set this to 'music' so the
+    system can correctly set the tags for artist, song etc.
 
 EXAMPLE CODE:
 isplaying = koding.Play_Video('http://totalrevolution.tv/videos/python_koding/Browse_To_Folder.mov')

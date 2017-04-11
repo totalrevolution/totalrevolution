@@ -1,3 +1,10 @@
+v.0.5.9.3:
+- Added System() function which allow easy access to various xbmc commands.
+- Cleaned up the README file.
+
+v.0.5.9.2:
+- Added ASCII_Check() function, will return a list of non-ASCII filenames found.
+
 v.0.5.9.1:
 - Added md5_check() function to return md5 value of file or folder.
 
