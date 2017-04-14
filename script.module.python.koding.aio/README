@@ -297,46 +297,6 @@ IMPORTANT: Do not confuse this with the Browse_To_File function
 
 ------------------------------------------------------------------------------------------
 
-CALLER(S) OF FUNCTION:
-Return the add-on id or path of the script which originally called your function. If it's been called through
-a number of add-ons/scripts you can grab a list of paths that have been called.
-
-	CODE: Caller(my_return)
-
-	AVAILABLE PARAMS:
-	    
-	    my_return  -  By default this is set to 'addon', view the options below:
-	        
-	        'addon' : Return the add-on id of the add-on to call this function.
-	        
-	        'addons': Return a list of all add-on id's called to get to this function.
-	        
-	        'path'  : Return the full path to the script which called this funciton.
-	        
-	        'paths' : Return a list of paths which have been called to get to this
-	        final function.
-	        
-	EXAMPLE CODE:
-		my_addon = koding.Caller(my_return='addon')
-		my_addons = koding.Caller(my_return='addons')
-		my_path = koding.Caller(my_return='path')
-		my_paths = koding.Caller(my_return='paths')
-
-		dialog.ok('ADD-ON ID', 'Addon id you called this function from:','[COLOR=dodgerblue]%s[/COLOR]' % my_addon)
-		dialog.ok('SCRIPT PATH', 'Script which called this function:','[COLOR=dodgerblue]%s[/COLOR]' % my_path)
-
-		addon_list = 'Below is a list of add-on id\'s which have been called to get to this final piece of code:\n\n'
-		for item in my_addons:
-		    addon_list += item+'\n'
-		koding.Text_Box('ADD-ON LIST', addon_list)
-		koding.Sleep_If_Window_Active(10147)
-		path_list = 'Below is a list of scripts which have been called to get to this final piece of code:\n\n'
-		for item in my_paths:
-		    path_list += item+'\n'
-		koding.Text_Box('ADD-ON LIST', path_list)
-
-------------------------------------------------------------------------------------------
-
 COUNTDOWN TIMER:
 Bring up a countdown timer and return true if waited or false if cancelled.
 
@@ -895,6 +855,40 @@ S Y S T E M   B A S E D   F U N C T I O N S
 
 ------------------------------------------------------------------------------------------
 
+ADDON GENRE DICTIONARY:
+Return a dictionary of add-ons which match a specific genre.
+
+* THIS IS A PREMIUM FEATURE FOR ADDONS EXCLUSIVELY SUPPORTED AT NOOBSANDNERDS
+If you'd like to hook into this please take a look at the following URL:
+https://raw.githubusercontent.com/noobsandnerds/noobsandnerds/master/repository.nanaddons/README.txt
+
+	CODE: Addon_Genre([genre])
+
+	AVAILABLE PARAMS:
+	    
+	    genre  -  By default this is set to 'adult' which will return
+	    a dictionary of all known adult add-ons. For a full list of all
+	    the available genres you can filter by take a look at the Add-on Portal
+	    link below. If you click on each of the genre links then look at the
+	    url you'll be able to see the name to use. For example if you click on
+	    "Dev Tools" you'll see the url shows as 'devtools' and that's what you'd
+	    send through to this function if you only wanted those to show.
+	    http://noobsandnerds.com/addons/category/genres/
+
+	EXAMPLE CODE:
+		space_addons = Addon_Genre(genre='space')
+		my_return = 'LIST OF AVAILABLE SPACE BASED ADD-ONS:\n\n'
+
+		# Convert the dictionary into a list:
+		space_addons = space_addons.items()
+
+		for item in space_addons:
+		    my_return += '[COLOR=gold]Name:[/COLOR] %s   |   [COLOR=dodgerblue]ID:[/COLOR] %s\n' % (item[0],item[1])
+		    
+		Text_Box('SPACE ADD-ONS',my_return)
+
+------------------------------------------------------------------------------------------
+
 ADDON LISTS:
 Return a list of enabled or disabled add-ons found in the database.
 
@@ -961,6 +955,46 @@ Return a list of files found containing non ASCII characters in the filename.
 		    dialog.select('NON ASCII FILES', my_return)
 		else:
 		    dialog.ok('ASCII CHECK CLEAN','Congratulations!','There weren\'t any non-ASCII files found on this system.')
+
+------------------------------------------------------------------------------------------
+
+CALLER(S) OF FUNCTION:
+Return the add-on id or path of the script which originally called your function. If it's been called through
+a number of add-ons/scripts you can grab a list of paths that have been called.
+
+	CODE: Caller(my_return)
+
+	AVAILABLE PARAMS:
+	    
+	    my_return  -  By default this is set to 'addon', view the options below:
+	        
+	        'addon' : Return the add-on id of the add-on to call this function.
+	        
+	        'addons': Return a list of all add-on id's called to get to this function.
+	        
+	        'path'  : Return the full path to the script which called this funciton.
+	        
+	        'paths' : Return a list of paths which have been called to get to this
+	        final function.
+	        
+	EXAMPLE CODE:
+		my_addon = koding.Caller(my_return='addon')
+		my_addons = koding.Caller(my_return='addons')
+		my_path = koding.Caller(my_return='path')
+		my_paths = koding.Caller(my_return='paths')
+
+		dialog.ok('ADD-ON ID', 'Addon id you called this function from:','[COLOR=dodgerblue]%s[/COLOR]' % my_addon)
+		dialog.ok('SCRIPT PATH', 'Script which called this function:','[COLOR=dodgerblue]%s[/COLOR]' % my_path)
+
+		addon_list = 'Below is a list of add-on id\'s which have been called to get to this final piece of code:\n\n'
+		for item in my_addons:
+		    addon_list += item+'\n'
+		koding.Text_Box('ADD-ON LIST', addon_list)
+		koding.Sleep_If_Window_Active(10147)
+		path_list = 'Below is a list of scripts which have been called to get to this final piece of code:\n\n'
+		for item in my_paths:
+		    path_list += item+'\n'
+		koding.Text_Box('ADD-ON LIST', path_list)
 
 ------------------------------------------------------------------------------------------
 

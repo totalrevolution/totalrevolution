@@ -25,7 +25,56 @@ import xbmcgui
 
 import filetools
 
-dialog = xbmcgui.Dialog()
+#----------------------------------------------------------------
+# TUTORIAL #
+def Addon_Genre(genre='adult'):
+    """
+[COLOR=gold]PREMIUM FEATURE FOR ADDONS EXCLUSIVELY SUPPORTED AT NOOBSANDNERDS[/COLOR]
+Return a dictionary of add-ons which match a specific genre.
+
+CODE: Addon_Genre([genre])
+
+AVAILABLE PARAMS:
+    
+    genre  -  By default this is set to 'adult' which will return
+    a dictionary of all known adult add-ons. For a full list of all
+    the available genres you can filter by take a look at the Add-on Portal
+    link below. If you click on each of the genre links then look at the
+    url you'll be able to see the name to use. For example if you click on
+    "Dev Tools" you'll see the url shows as 'devtools' and that's what you'd
+    send through to this function if you only wanted those to show.
+    http://noobsandnerds.com/addons/category/genres/
+
+EXAMPLE CODE:
+space_addons = Addon_Genre(genre='space')
+my_return = 'LIST OF AVAILABLE SPACE BASED ADD-ONS:\n\n'
+
+# Convert the dictionary into a list:
+space_addons = space_addons.items()
+for item in space_addons:
+    my_return += '[COLOR=gold]Name:[/COLOR] %s   |   [COLOR=dodgerblue]ID:[/COLOR] %s\n' % (item[0],item[1])
+Text_Box('SPACE ADD-ONS',my_return)
+~"""
+    import binascii
+    from __init__  import Main
+    from filetools import Text_File
+    dialog = xbmcgui.Dialog()
+    local_path = binascii.hexlify(genre)
+    final_path = xbmc.translatePath('special://profile/addon_data/script.module.python.koding.aio/cookies/%s'%local_path)
+    if os.path.exists(final_path):
+        modified = os.path.getmtime(final_path)
+        old = int(modified)
+        now = int(Timestamp('epoch'))
+# Add a 24hr wait so we don't kill server
+        if now > (modified+86400):
+            Main('addon_list|g:%s'%genre)
+
+# Create new file if it doesn't exist
+    else:
+        Main('addon_list|g:%s'%genre)
+
+    addon_list = eval(binascii.unhexlify(Text_File(final_path, 'r')))
+    return addon_list
 #----------------------------------------------------------------
 # TUTORIAL #
 def Addon_List(enabled=True, inc_new=False):
