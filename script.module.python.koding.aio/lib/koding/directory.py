@@ -26,7 +26,7 @@ dialog = xbmcgui.Dialog()
 mode   = ''
 #----------------------------------------------------------------
 # TUTORIAL #
-def Add_Dir(name, url, mode, folder=False, icon='', fanart='', description='', info_labels={}, set_art={}, set_property={}, content_type='', context_items=None, context_override=False, playable=False):
+def Add_Dir(name, url='', mode='', folder=False, icon='', fanart='', description='', info_labels={}, set_art={}, set_property={}, content_type='', context_items=None, context_override=False, playable=False):
     """
 This allows you to create a list item/folder inside your add-on.
 Please take a look at your addon default.py comments for more information
@@ -45,10 +45,12 @@ AVAILABLE PARAMS:
 
     (*) name  -  This is the name you want to show for the list item
 
-    (*) url   -  This is a temporary global variable (string), when you click on
-    another list item it will change to whatever you have that set to
+    url   -  This is a temporary global variable (string), when you click on
+    another list item it will change to whatever you have that set to. If you
+    send through a url starting with plugin:// the item will open up into
+    that plugin path.
 
-    (*) mode  -  The mode you want to open when this item is clicked, this is set
+    mode  -  The mode you want to open when this item is clicked, this is set
     in your master_modes dictionary (see template add-on linked above)
 
     folder       -  This is an optional boolean, by default it's set to False.
@@ -197,7 +199,10 @@ Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=
     u += "&fanart="         +urllib.quote_plus(fanart)
     u += "&description="    +urllib.quote_plus(description)
     
-    if folder:
+    if url.startswith('plugin://'):
+        xbmcplugin.addDirectoryItem(handle=addon_handle,url=url,listitem=liz,isFolder=True) 
+
+    elif folder:
         xbmcplugin.addDirectoryItem(handle=addon_handle,url=u,listitem=liz,isFolder=True)
 
     elif playable:

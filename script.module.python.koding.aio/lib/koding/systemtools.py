@@ -954,32 +954,49 @@ dialog.ok('KODI VERSION','You are running:','[COLOR=dodgerblue]%s[/COLOR] - v.%s
     return running
 #----------------------------------------------------------------
 # TUTORIAL #
-def Set_Setting(setting_type, setting, value = ''):
+def Set_Setting(setting, setting_type='kodi_setting', value = 'true'):
     """
-Use this to set built-in kodi settings via JSON or set skin settings. The value paramater is only required for JSON and string commands. Available options are below:
+Use this to set built-in kodi settings via JSON or set skin settings.
 
-CODE: Set_Setting(setting, setting_type, [value])
+CODE: Set_Setting(setting, [setting_type, value])
 
 AVAILABLE PARAMS:
     
-    setting_type - The type of setting type you want to change, available types are:
+    setting_type - The type of setting type you want to change. By default
+    it's set to 'kodi_setting', see below for more info.
 
-        string (sets a skin string, requires a value)
-        bool_true (sets a skin boolean to true, no value required)
-        bool_false (sets a skin boolean to false, no value required)
-        (!) kodi_setting (sets values found in guisettings.xml)
-        (!) addon_enable (enables/disables an addon. setting = addon_id, value = true/false)
-        (!) json (WIP - setitng = method, value = params, see documentation on JSON-RPC API here: http://kodi.wiki/view/JSON-RPC_API)
+    AVAILALE VALUES:
 
-        (!) = These will return True or False if successful
+        'string' : sets a skin string, requires a value.
 
-setting - This is the name of the setting you want to change, it could be a setting from the kodi settings or a skin based setting.
+        'bool_true' :  sets a skin boolean to true, no value required.
 
-value: This is the value you want to change the setting to.
+        'bool_false' sets a skin boolean to false, no value required.
+        
+        'kodi_setting' : sets values found in guisettings.xml. Requires
+        a string of 'true' or 'false' for the value paramater.
+        
+        'addon_enable' : enables/disables an addon. Requires a string of
+        'true' (enable) or 'false' (disable) as the value. You will get a
+        return of True/False on whether successul. Depending on your requirements
+        you may prefer to use the Toggle_Addons function.
+
+        'json' : WIP - setitng = method, value = params, see documentation on
+        JSON-RPC API here: http://kodi.wiki/view/JSON-RPC_API)
+
+    setting - This is the name of the setting you want to change, it could be a
+    setting from the kodi settings or a skin based setting. If you're wanting
+    to enable/disable an add-on this is set as the add-on id.
+
+    value: This is the value you want to change the setting to. By default this
+    is set to 'true'.
 
 
 EXAMPLE CODE:
-koding.Set_Setting('kodi_setting', 'lookandfeel.enablerssfeeds', 'false')
+if dialog.yesno('RSS FEEDS','Would you like to enable or disable your RSS feeds?',yeslabel='ENABLE',nolabel='DISABLE'):
+    koding.Set_Setting(setting_type='kodi_setting', setting='lookandfeel.enablerssfeeds', value='true')
+else:
+    koding.Set_Setting(setting_type='kodi_setting', setting='lookandfeel.enablerssfeeds', value='false')
 ~"""
     try:    import simplejson as json
     except: import json
@@ -1134,6 +1151,42 @@ dialog.ok('FUNCTION COMPLETE','Of course we cannot read that file in just 10 sec
         counter += 1
     Show_Busy(False)
     return thread_alive
+#----------------------------------------------------------------
+# TUTORIAL #
+def String(code='', source=''):
+    """
+This will return the relevant language skin as set in the
+resources/language folder for your add-on. By default you'll get
+the language string returned from your current running add-on
+but if you send through another add-on id you can grab from
+any add-on or even the built-in kodi language strings.
+
+CODE: String(code, [source])
+
+AVAILABLE PARAMS:
+
+    (*) code  -  This is the language string code set in your strings.po file.
+
+    source  -  By default this is set to a blank string and will
+    use your current add-on id. However if you want to pull the string
+    from another add-on just enter the add-on id in here. If you'd prefer
+    to pull from the built-in kodi resources files just set as 'system'.
+
+EXAMPLE CODE:
+kodi_string = koding.String(code=10140, source='system')
+koding_string = koding.String(code=30825, source='script.module.python.koding.aio')
+dialog.ok('SYSTEM STRING','The string [COLOR=dodgerblue]10140[/COLOR] pulled from the default system language resources is:','[COLOR=gold]%s[/COLOR]' % kodi_string)
+dialog.ok('PYTHON KODING STRING','The string [COLOR=dodgerblue]30825[/COLOR] pulled from the Python Koding language resources is:','[COLOR=gold]%s[/COLOR]' % koding_string)
+~"""
+    import xbmcaddon
+    if source == '':
+        source = Caller()
+    if source != 'system':
+        addon_id = xbmcaddon.Addon(id=source)
+        mystring = addon_id.getLocalizedString(code)
+    else:
+        mystring = xbmc.getLocalizedString(code)
+    return mystring
 #----------------------------------------------------------------
 # TUTORIAL #
 def System(command, function=''):
@@ -1350,6 +1403,9 @@ AVAILABLE PARAMS:
     add-ons which have deliberately been disabled by the end user are
     not affected.
 
+    refresh  - By default this is set to True, it will refresh the
+    current container and also force a local update on your add-ons db.
+
 EXAMPLE CODE:
 xbmc.executebuiltin('ActivateWindow(Videos, addons://sources/video/)')
 xbmc.sleep(2000)
@@ -1378,8 +1434,12 @@ koding.Refresh('container')
         disabled_list = Addon_List(enabled=False)
 
 # If addon has been sent through as a string we add into a list
+    if data_type == 'unicode':
+        addon = addon.encode('utf8')
+        data_type = Data_Type(addon)
+
     if data_type == 'str' and addon!= 'all':
-        addon = [addon]
+        addon = [addon,'']
 
 # Grab all the add-on ids from addons folder
     if addon == 'all':
@@ -1455,5 +1515,5 @@ koding.Refresh('container')
                 dolog('%s now %s' % (my_addon, log_value))
                 final_enabled.append(addon)
     if refresh:
-        Refresh('container')
+        Refresh(['addons','container'])
 #----------------------------------------------------------------
