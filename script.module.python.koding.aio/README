@@ -884,8 +884,70 @@ https://raw.githubusercontent.com/noobsandnerds/noobsandnerds/master/repository.
 
 		for item in space_addons:
 		    my_return += '[COLOR=gold]Name:[/COLOR] %s   |   [COLOR=dodgerblue]ID:[/COLOR] %s\n' % (item[0],item[1])
-		    
+
 		Text_Box('SPACE ADD-ONS',my_return)
+
+------------------------------------------------------------------------------------------
+
+ADD-ON INSTALL:
+Install an add-on and all dependencies matching the version of Kodi you're currently running. If the add-on
+install takes a while to kick in (spinning wheel) it just means that particular add-on hasn't yet been
+cached in the db, the next time someone hits that add-on it will be instant.
+
+* THIS IS A PREMIUM FEATURE FOR ADDONS EXCLUSIVELY SUPPORTED AT NOOBSANDNERDS
+If you'd like to hook into this please take a look at the following URL:
+https://raw.githubusercontent.com/noobsandnerds/noobsandnerds/master/repository.nanaddons/README.txt
+
+	CODE: Addon_Install(addon_id, [confirm, silent, repo_install])
+
+	AVAILABLE PARAMS:
+	    
+	    addon_id  -  This is the add-on id you want to install.
+	    The Add-on Portal will be scanned for an add-on and all the
+	    dependencies will also be scanned. A list of possible download
+	    locations are then populated server side and the best ones which
+	    match your needs are installed (matching dependencies with your
+	    current running version of Kodi to make sure bad modules aren't
+	    installed).
+
+	    confirm  -  By default this is set to True which means the user
+	    will get a choice of whether to install the add-on or not. Set to
+	    false if you want to force this add-on without any dialogs.
+
+	    silent  -  By default this is set to False which means there will
+	    always be a dialog appear showing the install process. Set this to
+	    True if you'd prefer to silently auto install the content.
+	        
+	    repo_install  -  This will allow you to automatically install the
+	    relevant repo, offer to install the repo or do not install the repo.
+	    See the available values below.
+	    
+	    The team at NaN take great care to try and make sure the relevant
+	    add-ons are matched against the official developers repo and the
+	    daily script which scans repositories also does a lot of clever
+	    assignment processes. However due to the sheer amount of
+	    "developers" re-uploading others content there's always a chance
+	    an add-on may get marked up against the wrong repo. If you notice
+	    an add-on is marked against the wrong repo please consider updating
+	    the details via the Add-on Portal (EDIT ADDON button) or notifying
+	    a member of the team at the nooobsandnerds forum and they can
+	    manually get it rectified. Thank you.
+
+	    AVAILABLE VALUES:
+
+	        0 - This will not install the repo the add-on was found on.
+
+	        1 - This will automatically install the repo the add-on is found on.
+	        If you don't send through a value this will be used as the default.
+	        
+	        2 - This will ask user if they want to install the repo the add-on was found on.
+
+	EXAMPLE CODE:
+		dialog.ok('INSTALL NAN TUTORIALS','We will now attempt to install NaN Tutorials add-on.')
+		if os.path.exists(xbmc.translatePath('special://home/addons/plugin.video.nantus')):
+		    dialog.ok('ALREADY INSTALLED','We cannot install NaN Tutorials as it\'s already installed!')
+		else:
+		    koding.Addon_Install(addon_id='plugin.video.nantuts',confirm=True,silent=0,repo_install=1)
 
 ------------------------------------------------------------------------------------------
 
@@ -1820,23 +1882,3 @@ RETURN THE BASE URL: koding.Check_Cookie('base') - NaN uses a special load balan
 CLEAR COOKIE DATA: koding.Clear_Data() - If you're having any problems with the temporary cached files or you're testing in a dev environment and need to clear any cache you can call this function and it will simply wipe the whole cookie folder in your relevant addon_data folder. This is the folder that will always be used for any future temporary cache files used by koding.py. You can also call this function in the settings.xml - see the settings.xml section above.
 
 ------------------------------------------------------------------------------------------
-
-ADDON INSTALL: koding.Main('addoninstall|id:<addon_id>~version:<kodi_version>~repo:1~silent:1') - This will install the relevant add-on and modules for the kodi version you're running.
-
-Params explained:
-
-id: This is the addon_id you want to install.
-
-version: The version of kodi you're running (as 2 digits e.g. 16). Use the following code to get the current Kodi version in the correct format:
-str(xbmc.getInfoLabel("System.BuildVersion")[:2])
-
-repo: This is optional - the available options are:
-      0 - This will not install the repo the add-on was found on.
-      1 - This will automatically install the repo the add-on is found on.
-      2 - This will ask user if they want to install the repo the add-on was found on.
-
-silent: This is optional - set to 1 if you want addon installed with no progress dialog.
-
-If the add-on install takes a while to kick in (spinning wheel) it just means that particular add-on hasn't yet been cached in the db, the next time someone hits that add-on it will be instant.
-
-TODO: Set auto-update option and also option to install relevant repo.

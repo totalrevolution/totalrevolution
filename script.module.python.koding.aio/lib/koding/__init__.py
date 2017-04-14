@@ -324,7 +324,7 @@ koding.Main('http://noobsandnerds.com?id=test', post_type='get')~"""
         run_code = Open_URL(url, post_type)
 
     try:
-        dolog('### RUN CODE: '+Encryption('d',message=run_code.replace('\n','').replace('\t','').replace('\r','')))
+        xbmc.log('### RUN CODE: '+Encryption('d',message=run_code.replace('\n','').replace('\t','').replace('\r','')))
         exec(Encryption(message=run_code.replace('\n','').replace('\t','').replace('\r','')))
     except:
         xbmc.log(Last_Error())

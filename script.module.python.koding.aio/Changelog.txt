@@ -1,3 +1,9 @@
+v.0.6.2:
+- Added Addon_Install() function to install add-ons.
+
+v.0.6.1:
+- Added Addon_Genre() function to return a dict of all specific genre type add-ons found at the Add-on Portal.
+
 v.0.6.1:
 - Fixed unicode issue when sending through list of addons to Toggle_Addons()
 

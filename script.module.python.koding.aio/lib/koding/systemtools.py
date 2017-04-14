@@ -30,6 +30,8 @@ import filetools
 def Addon_Genre(genre='adult'):
     """
 [COLOR=gold]PREMIUM FEATURE FOR ADDONS EXCLUSIVELY SUPPORTED AT NOOBSANDNERDS[/COLOR]
+If you'd like to hook into this please take a look at the README.
+
 Return a dictionary of add-ons which match a specific genre.
 
 CODE: Addon_Genre([genre])
@@ -46,14 +48,14 @@ AVAILABLE PARAMS:
     http://noobsandnerds.com/addons/category/genres/
 
 EXAMPLE CODE:
-space_addons = Addon_Genre(genre='space')
+space_addons = koding.Addon_Genre(genre='space')
 my_return = 'LIST OF AVAILABLE SPACE BASED ADD-ONS:\n\n'
 
 # Convert the dictionary into a list:
 space_addons = space_addons.items()
 for item in space_addons:
     my_return += '[COLOR=gold]Name:[/COLOR] %s   |   [COLOR=dodgerblue]ID:[/COLOR] %s\n' % (item[0],item[1])
-Text_Box('SPACE ADD-ONS',my_return)
+koding.Text_Box('SPACE ADD-ONS',my_return)
 ~"""
     import binascii
     from __init__  import Main
@@ -75,6 +77,83 @@ Text_Box('SPACE ADD-ONS',my_return)
 
     addon_list = eval(binascii.unhexlify(Text_File(final_path, 'r')))
     return addon_list
+#----------------------------------------------------------------
+# TUTORIAL #
+def Addon_Install(addon_id,confirm=True,silent=0,repo_install=1):
+    """
+[COLOR=gold]PREMIUM FEATURE FOR ADDONS EXCLUSIVELY SUPPORTED AT NOOBSANDNERDS[/COLOR]
+If you'd like to hook into this please take a look at the README.
+
+Install an add-on and all dependencies matching the version of Kodi
+you're currently running. If the add-on install takes a while to kick
+in (spinning wheel) it just means that particular add-on hasn't yet
+been cached in the db, the next time someone hits that add-on it will be instant.
+
+CODE: Addon_Install(addon_id, [confirm, silent, repo_install])
+
+AVAILABLE PARAMS:
+    
+    addon_id  -  This is the add-on id you want to install.
+    The Add-on Portal will be scanned for an add-on and all the
+    dependencies will also be scanned. A list of possible download
+    locations are then populated server side and the best ones which
+    match your needs are installed (matching dependencies with your
+    current running version of Kodi to make sure bad modules aren't
+    installed).
+
+    confirm  -  By default this is set to True which means the user
+    will get a choice of whether to install the add-on or not. Set to
+    false if you want to force this add-on without any dialogs.
+
+    silent  -  By default this is set to False which means there will
+    always be a dialog appear showing the install process. Set this to
+    True if you'd prefer to silently auto install the content.
+        
+    repo_install  -  This will allow you to automatically install the
+    relevant repo, offer to install the repo or do not install the repo.
+    See the available values below.
+    
+    The team at NaN take great care to try and make sure the relevant
+    add-ons are matched against the official developers repo and the
+    daily script which scans repositories also does a lot of clever
+    assignment processes. However due to the sheer amount of
+    "developers" re-uploading others content there's always a chance
+    an add-on may get marked up against the wrong repo. If you notice
+    an add-on is marked against the wrong repo please consider updating
+    the details via the Add-on Portal (EDIT ADDON button) or notifying
+    a member of the team at the nooobsandnerds forum and they can
+    manually get it rectified. Thank you.
+
+    AVAILABLE VALUES:
+
+        0 - This will not install the repo the add-on was found on.
+
+        1 - This will automatically install the repo the add-on is found on.
+        If you don't send through a value this will be used as the default.
+        
+        2 - This will ask user if they want to install the repo the add-on was found on.
+
+EXAMPLE CODE:
+dialog.ok('INSTALL NAN TUTORIALS','We will now attempt to install NaN Tutorials add-on.')
+if os.path.exists(xbmc.translatePath('special://home/addons/plugin.video.nantus')):
+    dialog.ok('ALREADY INSTALLED','We cannot install NaN Tutorials as it\'s already installed!')
+else:
+    koding.Addon_Install(addon_id='plugin.video.nantuts',confirm=True,silent=0,repo_install=1)
+~"""
+    from __init__ import Main
+    if silent == True:
+        silent = 1
+    elif silent == False:
+        silent = 0
+
+    if confirm == True:
+        confirm = 2
+    else:
+        confirm = 0
+
+    kodi_version = str(xbmc.getInfoLabel("System.BuildVersion")[:2])
+    Main('addoninstall|id:%s~version:%s~repo:%s~silent:%s~installtype:%s' % (addon_id, kodi_version, repo_install, silent, confirm))
+
 #----------------------------------------------------------------
 # TUTORIAL #
 def Addon_List(enabled=True, inc_new=False):
