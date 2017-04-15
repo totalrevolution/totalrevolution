@@ -1,3 +1,14 @@
+v.0.6.5:
+- Added Addon_Info() function to return various built in add-on values.
+- Added Addon_Setting() function to set/retrieve an add-on setting.
+- Added new Add-on section to the README.
+
+v.0.6.4:
+- Added subprocess import for fresh_install.
+
+v.0.6.3:
+- Typo in Android check for fresh_install, hopefully fixed.
+
 v.0.6.2:
 - Added Addon_Install() function to install add-ons.
 

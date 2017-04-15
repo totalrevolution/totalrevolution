@@ -13,7 +13,9 @@
 # please make sure you give approptiate credit in your add-on description (noobsandnerds.com)
 # 
 # Please make sure you've read and understood the license, this code can NOT be used commercially
-# and it can NOT be modified and redistributed. Thank you.
+# and it can NOT be modified and redistributed. If you're found to be in breach of this license
+# then any affected add-ons will be blacklisted and will not be able to work on the same system
+# as any other add-ons which use this code. Thank you for your cooperation.
 
 import os
 import shutil
@@ -512,12 +514,14 @@ if dialog.yesno('TOTAL WIPEOUT!','This will attempt give you a totally fresh ins
         if not clean_state:
             dialog.ok('SYSTEM NOT SUPPORTED','Your platform is not yet supported by this function, you will have to manually wipe.')
 ~"""
+    from systemtools import Running_App
     if xbmc.getCondVisibility("System.HasAddon(service.libreelec.settings)") or xbmc.getCondVisibility("System.HasAddon(service.openelec.settings)"):
         resetpath='storage/.cache/reset_oe'
         Text_File(resetpath,'w')
         xbmc.executebuiltin('reboot')
     elif xbmc.getCondVisibility('System.Platform.Android'):
-        running   = koding.Running_App()
+        import subprocess
+        running   = Running_App()
         cleanwipe = subprocess.Popen(['exec ''pm clear '+str(running)+''], executable='/system/bin/sh', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=preexec_fn).communicate()[0]
     else:
         return False

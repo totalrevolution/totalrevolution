@@ -13,7 +13,9 @@
 # please make sure you give approptiate credit in your add-on description (noobsandnerds.com)
 # 
 # Please make sure you've read and understood the license, this code can NOT be used commercially
-# and it can NOT be modified and redistributed. Thank you.
+# and it can NOT be modified and redistributed. If you're found to be in breach of this license
+# then any affected add-ons will be blacklisted and will not be able to work on the same system
+# as any other add-ons which use this code. Thank you for your cooperation.
 
 import datetime
 import os
@@ -77,6 +79,39 @@ koding.Text_Box('SPACE ADD-ONS',my_return)
 
     addon_list = eval(binascii.unhexlify(Text_File(final_path, 'r')))
     return addon_list
+#----------------------------------------------------------------
+# TUTORIAL #
+def Addon_Info(id='',addon_id=''):
+    """
+Retrieve details about an add-on, lots of built-in values are available
+such as path, version, name etc.
+
+CODE: Addon_Setting(id, [addon_id])
+
+AVAILABLE PARAMS:
+            
+    (*) id  -  This is the name of the id you want to retrieve.
+    The list of built in id's you can use (current as of 15th April 2017)
+    are: author, changelog, description, disclaimer, fanart. icon, id, name,
+    path, profile, stars, summary, type, version
+
+    addon_id  -  By default this will use your current add-on id but you
+    can access any add-on you want by entering an id in here.
+    
+EXAMPLE CODE:
+dialog.ok('ADD-ON INFO','We will now try and pull name and version details for our current running add-on.')
+version = koding.Addon_Info(id='version')
+name = koding.Addon_Info(id='name')
+dialog.ok('NAME AND VERSION','[COLOR=dodgerblue]Add-on Name:[/COLOR] %s' % name,'[COLOR=dodgerblue]Version:[/COLOR] %s' % version)
+~"""
+    import xbmcaddon
+    if addon_id == '':
+        addon_id = Caller()
+    ADDON = xbmcaddon.Addon(id=addon_id)
+    if id == '':
+        dialog.ok('ENTER A VALID ID','You\'ve called the Addon_Info function but forgot to add an ID. Please correct your code and enter a valid id to pull info on (e.g. "version")')
+    else:
+        return ADDON.getAddonInfo(id=id)
 #----------------------------------------------------------------
 # TUTORIAL #
 def Addon_Install(addon_id,confirm=True,silent=0,repo_install=1):
@@ -213,6 +248,42 @@ Text_Box('ADDON STATUS',my_return)
         return enabled_list
     else:
         return disabled_list
+#----------------------------------------------------------------
+# TUTORIAL #
+def Addon_Setting(setting='',value='',addon_id=''):
+    """
+Change or retrieve an add-on setting.
+
+CODE: Addon_Setting(setting, [value, addon_id])
+
+AVAILABLE PARAMS:
+            
+    (*) setting  -  This is the name of the setting you want to access, by
+    default this function will return the value but if you add the
+    value param shown below it will CHANGE the setting.
+
+    value  -  If set this will change the setting above to whatever value
+    is in here.
+
+    addon_id  -  By default this will use your current add-on id but you
+    can access any add-on you want by entering an id in here.
+    
+EXAMPLE CODE:
+dialog.ok('ADDON SETTING','We will now try and pull the language settings for the YouTube add-on')
+if os.path.exists(xbmc.translatePath('special://home/addons/plugin.video.youtube')):
+    my_setting = koding.Addon_Setting(setting='youtube.language',addon_id='plugin.video.youtube')
+    dialog.ok('YOUTUBE SETTING','[COLOR=dodgerblue]Setting name:[/COLOR] youtube.language','[COLOR=dodgerblue]Value:[/COLOR] %s' % my_setting)
+else:
+    dialog.ok('YOUTUBE NOT INSTALLED','Sorry we cannot run this example as you don\'t have YouTube installed.')
+~"""
+    import xbmcaddon
+    if addon_id == '':
+        addon_id = Caller()
+    ADDON = xbmcaddon.Addon(id=addon_id)
+    if value == '':
+        return ADDON.getSetting(setting)
+    else:
+        ADDON.setSetting(id=setting, value=value)
 #----------------------------------------------------------------
 # TUTORIAL #
 def ASCII_Check(sourcefile=xbmc.translatePath('special://home'), dp=False):
