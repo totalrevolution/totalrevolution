@@ -1,4 +1,5 @@
 v.0.8:
+- Edited Default_Setting function so it can return a dictionary of all defaults
 - Added the ability to send through various params to Add_Dir
 - Added new routing (thanks to midraal for PR)
 - Added Remove_From_Table function

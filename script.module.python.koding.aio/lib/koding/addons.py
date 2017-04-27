@@ -376,13 +376,15 @@ def Check_Deps(addon_path, depfiles = []):
 def Default_Setting(setting='',addon_id='',reset=False):
     """
 This will return the DEFAULT value for a setting (as set in resources/settings.xml)
-and optionally reset the current value back to this default.
+and optionally reset the current value back to this default. If you pass through
+the setting as blank it will return a dictionary of all default settings.
 
 CODE:  Default_Setting(setting, [addon_id, reset])
 
 AVAILABLE PARAMS:
 
     setting  -  The setting you want to retreive the value for.
+    Leave blank to return a dictionary of all settings
 
     addon_id  -  This is optional, if not set it will use the current id.
 
@@ -398,22 +400,33 @@ else:
     dialog.ok('YOUTUBE NOT INSTALLED','We cannot run this example as it uses the YouTube add-on which has not been found on your system.')
 ~"""
     import re
-    from filetools import Text_File
+    from filetools   import Text_File
+    from systemtools import Data_Type
+
     if addon_id == '':
         addon_id = Caller()
-    if setting == '':
-        dialog.ok('SETTING REQUIRED','You\'ve attempted to call the Default_Setting function but have forgotten to send through a setting to check. Please check your syntax and try again.')
+    values = {}
     addon_path = Addon_Info(id='path',addon_id=addon_id)
     settings_path = os.path.join(addon_path,'resources','settings.xml')
     content = Text_File(settings_path,'r').splitlines()
     for line in content:
-        if 'id="%s"'%setting in line:
-            value = re.compile('default="(.+?)"').findall(line)
+        if 'id="' in line and 'default="' in line:
+            idx = re.compile('id="(.*?)"').findall(line)
+            idx = idx[0] if (len(idx) > 0) else ''
+            value = re.compile('default="(.*?)"').findall(line)
             value = value[0] if (len(value) > 0) else ''
-            break
+            if setting != '' and idx == setting:
+                values = value
+                break
+            elif idx != '' and value != '' and setting == '':
+                values[idx] = value
     if reset:
-        Addon_Setting(addon_id=addon_id,setting=setting,value=value)
-    return value
+        if Data_Type(values) == 'dict':
+            for item in values.items():
+                Addon_Setting(addon_id=addon_id,setting=item[0],value=item[1])
+        elif setting != '':
+            Addon_Setting(addon_id=addon_id,setting=setting,value=value)
+    return values
 #----------------------------------------------------------------
 # TUTORIAL #
 def Dependency_Check(addon_id = 'all', recursive = False):
