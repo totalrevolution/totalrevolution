@@ -172,6 +172,11 @@ os.remove(addon_db_path)
     sql_string = sql_string[:-2]
     sql_string += ");"
     _execute_db_string(sql_string)
+
+
+def Remove_Table(table):
+    sql_string = "DROP TABLE IF EXISTS %s;" % table
+    _execute_db_string(sql_string)
 #----------------------------------------------------------------
 # TUTORIAL #
 def DB_Query(db_path, query, values=''):
