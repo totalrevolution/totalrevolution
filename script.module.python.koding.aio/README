@@ -218,13 +218,32 @@ Change or retrieve an add-on setting.
 ADDON SETTINGS - OPEN:
 By default this will open the current add-on settings but if you pass through an addon_id it will open the settings for that add-on.
 
-	CODE: Open_Settings([addon_id, stop_script])
+	CODE: Open_Settings([addon_id, focus, click, stop_script])
 
 	AVAILABLE PARAMS:
 
-		addon_id    - This optional, it can be any any installed add-on id. If nothing is passed through the current add-on settings will be opened.
+	    addon_id    - This optional, it can be any any installed add-on id. If nothing is passed
+	    through the current add-on settings will be opened.
 
-		stop_script - By default this is set to True, as soon as the addon settings are opened the current script will stop running. If you pass through as False then the script will continue running in the background - opening settings does not pause a script, Kodi just see's it as another window being opened.
+	    focus  -  This is optional, if not set the settings will just open to the first item
+	    in the list (normal behaviour). However if you want to open to a specific category and
+	    setting then enter the number in here separated by a dot. So for example if we want to
+	    focus on the 2nd category and 3rd setting in the list we'd send through focus='2.3'
+
+	    click  -  If you want the focused item to automatically be clicked set this to True.
+
+	    stop_script - By default this is set to True, as soon as the addon settings are opened
+	    the current script will stop running. If you pass through as False then the script will
+	    continue running in the background - opening settings does not pause a script, Kodi just
+	    see's it as another window being opened.
+
+	EXAMPLE CODE:
+		youtube_path = xbmc.translatePath('special://home/addons/plugin.video.youtube')
+		if os.path.exists(youtube_path):
+		    dialog.ok('YOUTUBE SETTINGS','We will now open the YouTube settings.','We will focus on category 2, setting 3 AND send a click.')
+		    koding.Open_Settings(addon_id='plugin.video.youtube',focus='2.3',click=True,stop_script=True)
+		else:
+		    dialog.ok('YOUTUBE NOT INSTALLED','We cannot run this example as it uses the YouTube add-on which has not been found on your system.')
 
 ------------------------------------------------------------------------------------------
 
@@ -265,6 +284,31 @@ a number of add-ons/scripts you can grab a list of paths that have been called.
 		for item in my_paths:
 		    path_list += item+'\n'
 		koding.Text_Box('ADD-ON LIST', path_list)
+
+------------------------------------------------------------------------------------------
+
+DEFAULT SETTING:
+This will return the DEFAULT value for a setting (as set in resources/settings.xml)
+and optionally reset the current value back to this default.
+
+	CODE:  Default_Setting(setting, [addon_id, reset])
+
+	AVAILABLE PARAMS:
+
+	    setting  -  The setting you want to retreive the value for.
+
+	    addon_id  -  This is optional, if not set it will use the current id.
+
+	    reset  -  By default this is set to False but if set to true and it will
+	    reset the current value to the default.
+
+	EXAMPLE CODE:
+		youtube_path = xbmc.translatePath('special://home/addons/plugin.video.youtube')
+		if os.path.exists(youtube_path):
+		    my_value = koding.Default_Setting(setting='youtube.region', addon_id='plugin.video.youtube', reset=False)
+		    dialog.ok('YOUTUBE SETTING','Below is a default setting for plugin.video.youtube:','Setting: [COLOR=dodgerblue]youtube.region[/COLOR]','Value: [COLOR=dodgerblue]%s[/COLOR]' % my_value)
+		else:
+		    dialog.ok('YOUTUBE NOT INSTALLED','We cannot run this example as it uses the YouTube add-on which has not been found on your system.')
 
 ------------------------------------------------------------------------------------------
 
@@ -333,15 +377,15 @@ installed add-ons. The dictionary will contain "addonid" and "type" e.g. 'xbmc.p
 ------------------------------------------------------------------------------------------
 
 TOGGLE ADD-ONS:
-Send through either a list of add-on ids or one single add-on id. The add-ons sent through will then
-be added to the addons*.db and enabled or disabled (depending on state sent through).
+Send through either a list of add-on ids or one single add-on id. The add-ons sent through will then be added
+to the addons*.db and enabled or disabled (depending on state sent through).
 
 WARNING: If safe_mode is set to False this directly edits the addons*.db rather than using JSON-RPC.
-Although directly amending the db is a lot quicker there is no guarantee it won't cause severe problems
-in later versions of Kodi (this was created for v.17). DO NOT set safe_mode to False unless you 100%
-understand the consequences!
+Although directly amending the db is a lot quicker there is no guarantee it won't cause severe problems in
+later versions of Kodi (this was created for v17). DO NOT set safe_mode to False unless you 100% understand
+the consequences!
 
-	CODE:  Toggle_Addons([addon, enable, safe_mode, exclude_list, new_only])
+	CODE:  Toggle_Addons([addon, enable, safe_mode, exclude_list, new_only, refresh])
 
 	AVAILABLE PARAMS:
 
@@ -368,6 +412,9 @@ understand the consequences!
 	    add-ons which have deliberately been disabled by the end user are
 	    not affected.
 
+	    refresh  - By default this is set to True, it will refresh the
+	    current container and also force a local update on your add-ons db.
+
 	EXAMPLE CODE:
 		xbmc.executebuiltin('ActivateWindow(Videos, addons://sources/video/)')
 		xbmc.sleep(2000)
@@ -377,7 +424,6 @@ understand the consequences!
 		xbmc.sleep(2000)
 		dialog.ok('ENABLE YOUTUBE','When you click OK we will enable YouTube (if installed)')
 		koding.Toggle_Addons(addon='plugin.video.youtube', enable=True, safe_mode=True, exclude_list=[], new_only=False)
-		koding.Refresh('container')
 
 ------------------------------------------------------------------------------------------
 
@@ -608,6 +654,22 @@ Remove entries in the db table at /userdata/addon_data/<your_addon_id>/database.
 		    final_results += 'ID: %s | Name: %s\n'%(item["id"], item["name"])
 		koding.Text_Box('NEW DB CONTENTS', final_results)
 		os.remove(addon_db_path)
+
+------------------------------------------------------------------------------------------
+
+REMOVE TABLE:
+Use with caution, this will completely remove a database table and all of it's contents. The only
+database you can access with this command is your add-ons own database at:
+/userdata/addon_data/<your_addon_id>/database.db
+
+	CODE:  Remove_Table(table)
+
+	AVAILABLE PARAMS:
+
+	    (*) table  -  This is the name of the table you want to permanently delete.
+
+	EXAMPLE CODE:
+		koding.Remove_Table('my_test_table')
 
 ------------------------------------------------------------------------------------------
 
@@ -912,6 +974,56 @@ this a little better.
 
 ------------------------------------------------------------------------------------------
 
+ROUTE:
+Use this to set a function in your master_modes dictionary.
+This is to be used for Add_Dir() items, see the example below.
+
+	CODE: route(mode, [args])
+
+	AVAILABLE PARAMS:
+	            
+	    (*) mode  -  This must be set, it needs to be a custom string.
+	    This is the string you'd use in your Add_Dir command to call
+	    the function.
+
+	    args  -  This is optional but if the function you're calling
+	    requires extra paramaters you can add them in here. Just add them
+	    as a list of strings. Example: args=['name','artwork','description']
+
+
+BELOW IS AN EXAMPLE OF HOW TO CALL THE CODE IN YOUR MAIN ADDON PY FILE:
+
+@route(mode="test", args=["name","desc"])
+def Test_Function(name,desc):
+    dialog.ok('This is a test function', name, desc')
+
+koding.Add_Dir(name='Test Dialog', url='{"name":"My Test Function", "desc" : "Its ALIVE!!!"}', mode='test')
+koding.run()
+
+------------------------------------------------------------------------------------------
+
+RUN:
+This needs to be called at the bottom of your code in the main default.py
+
+This checks the modes called in Add_Dir and does all the clever stuff
+in the background which assigns those modes to functions and sends
+through the various params.
+
+Just after this command you need to make
+sure you set the endOfDirectory (as shown below).
+
+
+	CODE: run([default])
+	xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+	AVAILABLE PARAMS:
+	    
+	    default  -  This is the default mode you want the add-on to open
+	    into, it's set as "main" by default. If you have a different mode
+	    name you want to open into just edit accordingly.
+
+------------------------------------------------------------------------------------------
+
 F I L E   T O O L S
 
 ------------------------------------------------------------------------------------------
@@ -1153,6 +1265,40 @@ perform a hard reset and on Android it will wipe the data for the current runnin
 		        clean_state = koding.Fresh_Install()
 		        if not clean_state:
 		            dialog.ok('SYSTEM NOT SUPPORTED','Your platform is not yet supported by this function, you will have to manually wipe.')
+
+------------------------------------------------------------------------------------------
+
+GET CONTENTS OF A PATH (INC. SUB-DIRECTORIES)
+Return a list of either files or folders in a given path.
+
+	CODE:  Get_Contents(path, [folders, subfolders, exclude_list, full_path, filter])
+
+	AVAILABLE PARAMS:
+	    
+	    (*) path  -  This is the path you want to search, no sub-directories are scanned.
+	    
+	    folders  -  By default this is set to True and the returned list will only
+	    show folders. If set to False the returned list will show files only.
+
+	    exclude_list  -  Optionally you can add a list of items you don't want returned
+
+	    full_path  -  By default the entries in the returned list will contain the full
+	    path to the folder/file. If you only want the file/folder name set this to False.
+
+	    subfolders  -  By default this is set to False but if set to true it will check
+	    all sub-directories and not just the directory sent through.
+
+	    filter  -  If you want to only return files ending in a specific string you
+	    can add details here. For example to only show '.xml' files you would send
+	    through filter='.xml'.
+
+	EXAMPLE CODE:
+		ADDONS = xbmc.translatePath('special://home/addons')
+		addon_folders = koding.Get_Contents(path=ADDONS, folders=True, exclude_list=['packages','temp'], full_path=False)
+		results = ''
+		for item in addon_folders:
+		    results += 'FOLDER: [COLOR=dodgerblue]%s[/COLOR]\n'%item
+		koding.Text_Box('ADDON FOLDERS','Below is a list of folders found in the addons folder (excluding packages and temp):\n\n%s'%results)
 
 ------------------------------------------------------------------------------------------
 
@@ -1586,6 +1732,26 @@ the order you want them to be executed.
 	EXAMPLE CODE:
 		dialog.ok('RELOAD SKIN','We will now attempt to update the addons, pause 3s, update repos and pause 2s then reload the default profile. Press OK to continue.')
 		koding.Refresh(r_mode=['addons~3000', 'repos~2000', 'profile'], profile_name='default')
+
+------------------------------------------------------------------------------------------
+
+GET USER ID & GROUP ID:
+A simple function to set user id and group id to the current running App for system commands. For example if you're
+using the subprocess command you could send through the preexec_fn paramater as koding.Run_As_Kodi. This function
+will also return the uid and gid in form of a dictionary.
+
+CODE: Get_ID([setid])
+
+AVAILABLE PARAMS:
+    
+    (*) setid  -  By default this is set to False but if set to True it
+    will set the ids (to be used for subprocess commands)
+
+EXAMPLE CODE:
+ids = Get_ID(setid=False)
+uid = ids['uid']
+gid = ids['gid']
+dialog.ok('USER & GROUP ID','User ID: %s'%uid, 'Group ID: %s'%gid)
 
 ------------------------------------------------------------------------------------------
 

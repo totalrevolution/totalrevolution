@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 # script.module.python.koding.aio
 # Python Koding AIO (c) by whufclee (info@totalrevolution.tv)
@@ -103,6 +103,7 @@ def Download_Progress(numblocks, blocksize, filesize, dp, start_time):
     if dp:
         if dp.iscanceled(): 
             dp.close()
+        dp.close()
 #----------------------------------------------------------------    
 # TUTORIAL #
 def Get_Extension(url):
@@ -149,8 +150,8 @@ koding.Text_Box('CONTENTS OF WEB PAGE',url_contents)~"""
     import xbmc
     import xbmcaddon
 
-    from __init__       import converthex, dolog, Encryption, ADDON_ID, ADDON_ORIG, LOGIN, FORUM, USERNAME, PASSWORD, KODI_VER
-    from systemtools    import Caller
+    from __init__       import converthex, dolog, Encryption, ADDON_ID, LOGIN, FORUM, USERNAME, PASSWORD, KODI_VER
+    from addons         import Caller
 
     AddonVersion = xbmcaddon.Addon(id=ADDON_ID).getAddonInfo('version')
     payload      = {}

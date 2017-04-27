@@ -148,7 +148,7 @@ koding.Convert_Special()
                 Text_File(os.path.join(root, file), 'w', newfile)
 #----------------------------------------------------------------    
 # TUTORIAL #
-def Create_Paths(path):
+def Create_Paths(path=''):
     """
 Send through a path to a file, if the directories required do not exist this will create them.
 
@@ -157,8 +157,7 @@ CODE: Create_Paths(path)
 AVAILABLE PARAMS:
 
     (*) path  -  This is the full path including the filename. The path
-    sent through will be split up at every instance of '/' so if you
-    only want to send through a directory you MUST include a trailing '/'
+    sent through will be split up at every instance of '/'
 
 EXAMPLE CODE:
 my_path = xbmc.translatePath('special://home/test/testing/readme.txt')
@@ -166,25 +165,16 @@ koding.Create_Paths(path=my_path)
 dialog.ok('PATH CREATED','Check in your Kodi home folder and you should now have sub-folders of /test/testing/.','[COLOR=gold]Press ok to remove these folders.[/COLOR]')
 shutil.rmtree(xbmc.translatePath('special://home/test'))
 ~"""
-    newdirs = []
-    directories = path.split('/')
-    directories.pop()
-
-# Remove any blanks in the array (eg /storage on linux creates a blank entry at start of array)
-    if directories[0] == '':
-        directories[1] = '/'+directories[1]
-    for item in directories:
-        if item != '':
-            newdirs.append(item)
-
-    rootpath = HOME
-    for d in newdirs:
-        rootpath = os.path.join(rootpath, d)
-        if not os.path.exists(rootpath):
-            try:
-                os.makedirs(rootpath)
-            except:
-                pass
+    if path != '' and not os.path.isdir(path) and not os.path.exists(path):
+        root_path = path.split(os.sep)
+        if root_path[-1] == '':
+            root_path.pop()
+        root_path.pop()
+        final_path = ''
+        for item in root_path:
+            final_path = os.path.join(final_path,item)
+        if not os.path.exists(final_path):
+            os.makedirs(final_path)
 #----------------------------------------------------------------    
 # TUTORIAL #
 def DB_Path_Check(db_path):
@@ -514,7 +504,7 @@ if dialog.yesno('TOTAL WIPEOUT!','This will attempt give you a totally fresh ins
         if not clean_state:
             dialog.ok('SYSTEM NOT SUPPORTED','Your platform is not yet supported by this function, you will have to manually wipe.')
 ~"""
-    from systemtools import Running_App
+    from systemtools import Running_App, Run_As_Kodi
     if xbmc.getCondVisibility("System.HasAddon(service.libreelec.settings)") or xbmc.getCondVisibility("System.HasAddon(service.openelec.settings)"):
         resetpath='storage/.cache/reset_oe'
         Text_File(resetpath,'w')
@@ -522,7 +512,7 @@ if dialog.yesno('TOTAL WIPEOUT!','This will attempt give you a totally fresh ins
     elif xbmc.getCondVisibility('System.Platform.Android'):
         import subprocess
         running   = Running_App()
-        cleanwipe = subprocess.Popen(['exec ''pm clear '+str(running)+''], executable='/system/bin/sh', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=preexec_fn).communicate()[0]
+        cleanwipe = subprocess.Popen(['exec ''pm clear '+str(running)+''], executable='/system/bin/sh', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=Run_As_Kodi).communicate()[0]
     else:
         return False
 #----------------------------------------------------------------
@@ -663,6 +653,82 @@ dialog.ok('Folder Size','KODI HOME: %s MB' % home_size)
         return "%.3f" % (float(finalsize / 1024) / 1024 / 1024)
     elif filesize == 'tb':
         return "%.4f" % (float(finalsize / 1024) / 1024 / 1024 / 1024)
+#----------------------------------------------------------------
+# TUTORIAL #
+def Get_Contents(path,folders=True,subfolders=False,exclude_list=[],full_path=True,filter=''):
+    """
+Return a list of either files or folders in a given path.
+
+CODE:  Get_Contents(path, [folders, subfolders, exclude_list, full_path, filter])
+
+AVAILABLE PARAMS:
+    
+    (*) path  -  This is the path you want to search, no sub-directories are scanned.
+    
+    folders  -  By default this is set to True and the returned list will only
+    show folders. If set to False the returned list will show files only.
+
+    exclude_list  -  Optionally you can add a list of items you don't want returned
+
+    full_path  -  By default the entries in the returned list will contain the full
+    path to the folder/file. If you only want the file/folder name set this to False.
+
+    subfolders  -  By default this is set to False but if set to true it will check
+    all sub-directories and not just the directory sent through.
+
+    filter  -  If you want to only return files ending in a specific string you
+    can add details here. For example to only show '.xml' files you would send
+    through filter='.xml'.
+
+EXAMPLE CODE:
+ADDONS = xbmc.translatePath('special://home/addons')
+addon_folders = koding.Get_Contents(path=ADDONS, folders=True, exclude_list=['packages','temp'], full_path=False)
+results = ''
+for item in addon_folders:
+    results += 'FOLDER: [COLOR=dodgerblue]%s[/COLOR]\n'%item
+koding.Text_Box('ADDON FOLDERS','Below is a list of folders found in the addons folder (excluding packages and temp):\n\n%s'%results)
+~"""
+    final_list = []
+# Check all items in the given path
+    if not subfolders:
+        for item in os.listdir(path):
+            item_path = os.path.join(path,item)
+            if folders and os.path.isdir(item_path) and item not in exclude_list:
+                if full_path:
+                    final_list.append(item_path)
+                else:
+                    final_list.append(item)
+
+            elif not folders and not os.path.isdir(item_path) and item not in exclude_list:
+                if full_path:
+                    final_list.append(item_path)
+                else:
+                    final_list.append(item)
+
+# Traverse through all subfolders
+    else:
+        for root, dirnames, filenames in os.walk(path):
+            if not folders:
+                for filename in filenames:
+                    file_path = os.path.join(root, filename)
+                    if filter=='':
+                        if full_path:
+                            final_list.append(file_path)
+                        else:
+                            final_list.append(filename)
+
+                    elif file_path.endswith(filter):
+                        if full_path:
+                            final_list.append(file_path)
+                        else:
+                            final_list.append(filename)
+            else:
+                for dirname in dirnames:
+                    if full_path:
+                        final_list.append(os.path.join(root, dirname))
+                    else:
+                        final_list.append(dirname)
+    return final_list
 #----------------------------------------------------------------
 # TUTORIAL #
 def md5_check(src):
