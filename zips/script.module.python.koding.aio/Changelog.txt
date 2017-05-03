@@ -1,3 +1,6 @@
+v.0.8.2:
+- Added Sleep_If_Playback_Active() function, this pauses code until playback stops
+
 v.0.8.1:
 - Fixed the Open_Settings, wasn't opening the caller id correctly
 

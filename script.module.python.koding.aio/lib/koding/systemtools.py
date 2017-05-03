@@ -731,50 +731,6 @@ else:
         xbmc.log(str(e))
 #----------------------------------------------------------------    
 # TUTORIAL #
-def Sleep_If_Window_Active(window_type=10147):
-    """
-This will allow you to pause code while a specific window is open.
-
-CODE: Sleep_If_Window_Active(window_type)
-
-AVAILABLE PARAMS:
-
-    window_type  -  This is the window xml name you want to check for, if it's
-    active then the code will sleep until it becomes inactive. By default this
-    is set to the custom text box (10147). You can find a list of window ID's
-    here: http://kodi.wiki/view/Window_IDs
-
-EXAMPLE CODE:
-koding.Text_Box('EXAMPLE TEXT','This is just an example, normally a text box would not pause code and the next command would automatically run immediately over the top of this.')
-koding.Sleep_If_Window_Active(10147) # This is the window id for the text box
-dialog.ok('WINDOW CLOSED','The window has now been closed so this dialog code has now been initiated')
-~"""
-    from __init__ import dolog
-    windowactive = False
-    counter      = 0
-
-    if window_type == 'yesnodialog' or window_type == 10100:
-        count = 30
-    else:
-        count = 10
-    
-    okwindow = False
-
-# Do not get stuck in an infinite loop. Check x amount of times and if condition isn't met after x amount it quits
-    while not okwindow and counter < count:
-        xbmc.sleep(100)
-        dolog('### %s not active - sleeping (%s)' % (window_type, counter))
-        okwindow = xbmc.getCondVisibility('Window.IsActive(%s)' % window_type)
-        counter += 1
-
-# Window is active
-    while okwindow:
-        okwindow = xbmc.getCondVisibility('Window.IsActive(%s)' % window_type)
-        xbmc.sleep(250)
-
-    return okwindow
-#----------------------------------------------------------------    
-# TUTORIAL #
 def Sleep_If_Function_Active(function, args=[], kill_time=30, show_busy=True):
     """
 This will allow you to pause code while a specific function is
@@ -822,6 +778,50 @@ dialog.ok('FUNCTION COMPLETE','Of course we cannot read that file in just 10 sec
         counter += 1
     Show_Busy(False)
     return thread_alive
+#----------------------------------------------------------------    
+# TUTORIAL #
+def Sleep_If_Window_Active(window_type=10147):
+    """
+This will allow you to pause code while a specific window is open.
+
+CODE: Sleep_If_Window_Active(window_type)
+
+AVAILABLE PARAMS:
+
+    window_type  -  This is the window xml name you want to check for, if it's
+    active then the code will sleep until it becomes inactive. By default this
+    is set to the custom text box (10147). You can find a list of window ID's
+    here: http://kodi.wiki/view/Window_IDs
+
+EXAMPLE CODE:
+koding.Text_Box('EXAMPLE TEXT','This is just an example, normally a text box would not pause code and the next command would automatically run immediately over the top of this.')
+koding.Sleep_If_Window_Active(10147) # This is the window id for the text box
+dialog.ok('WINDOW CLOSED','The window has now been closed so this dialog code has now been initiated')
+~"""
+    from __init__ import dolog
+    windowactive = False
+    counter      = 0
+
+    if window_type == 'yesnodialog' or window_type == 10100:
+        count = 30
+    else:
+        count = 10
+    
+    okwindow = False
+
+# Do not get stuck in an infinite loop. Check x amount of times and if condition isn't met after x amount it quits
+    while not okwindow and counter < count:
+        xbmc.sleep(100)
+        dolog('### %s not active - sleeping (%s)' % (window_type, counter))
+        okwindow = xbmc.getCondVisibility('Window.IsActive(%s)' % window_type)
+        counter += 1
+
+# Window is active
+    while okwindow:
+        okwindow = xbmc.getCondVisibility('Window.IsActive(%s)' % window_type)
+        xbmc.sleep(250)
+
+    return okwindow
 #----------------------------------------------------------------
 # TUTORIAL #
 def String(code='', source=''):

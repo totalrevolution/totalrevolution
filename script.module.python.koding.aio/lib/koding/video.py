@@ -360,3 +360,21 @@ else:
     dolog('Playback status: %s' % playback)
     Show_Busy(False)
     return playback
+#----------------------------------------------------------------    
+# TUTORIAL #
+def Sleep_If_Playback_Active():
+    """
+This will allow you to pause code while kodi is playing audio or video
+
+CODE: Sleep_If_Playback_Active()
+
+EXAMPLE CODE:
+dialog.ok('PLAY A VIDEO','We will now attempt to play a video, once you stop this video you should see a dialog.ok message.')
+xbmc.Player().play('http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_720p_stereo.avi')
+koding.Sleep_If_Playback_Active()
+dialog.ok('PLAYBACK FINISHED','The playback has now been finished so this dialog code has now been initiated')
+~"""
+    isplaying = xbmc.Player().isPlaying()
+    while isplaying:
+        xbmc.sleep(500)
+        isplaying = xbmc.Player().isPlaying()
