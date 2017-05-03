@@ -218,6 +218,7 @@ koding.Text_Box('CONTENTS OF WEB PAGE',url_contents)
     dolog('### CODE: %s   |   REASON: %s' % (r.status_code, r.reason))
     if r.status_code >= 200 and r.status_code < 400:
         content = r.text.encode('utf-8')
+        dolog('content: %s'%content,2)
         if cookies:
             with open(Cookie_Jar, 'wb') as f:
                 pickle.dump(r.cookies, f)

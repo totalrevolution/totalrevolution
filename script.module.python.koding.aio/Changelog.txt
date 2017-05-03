@@ -1,3 +1,6 @@
+v.0.8.1:
+- Fixed the Open_Settings, wasn't opening the caller id correctly
+
 v.0.8:
 - Improved Open_URL. Added cookie, header, auth and timeout support
 - Edited Default_Setting function so it can return a dictionary of all defaults

@@ -1,22 +1,66 @@
-v.0.5.5:
+v.0.8.1:
+- Fixed the Open_Settings, wasn't opening the caller id correctly
+
+v.0.8:
+- Improved Open_URL. Added cookie, header, auth and timeout support
+- Edited Default_Setting function so it can return a dictionary of all defaults
+- Added the ability to send through various params to Add_Dir
+- Added new routing (thanks to midraal for PR)
+- Added Remove_From_Table function
+- Renamed Run_As_Kodi to Get_ID and changed function behaviour slightly
+- Split up add-on based functions into new addon module
+- Added some more documentation to the README
+
+v.0.7.5:
+- Rezipped, had used 7zip think that caused problems.
+
+v.0.7.4:
+- Fixed download dialog not auto-closing once complete. Last push didn't work correctly
+
+v.0.7.3:
+- Fixed the download function, wasn't automatically closing dialog once complete.
+
+v.0.7.2:
+- Tidied up the getSetting functions.
+- Fixed Create_Paths function.
+- Fixed the tutorials on Windows platforms, required url sending through as urlencoded then unencoded.
+
+v.0.7.1:
+- Added Run_As_Kodi() function which hopefully should fix Android Fresh_Install()
+- Improved Open_Settings(), can now focus on a specific item and also send an automated click on the focused item.
+
+v.0.7:
+- Added Addon_Info() function to return various built in add-on values.
+- Added Addon_Setting() function to set/retrieve an add-on setting.
+- Added new Add-on section to the README.
+- Added subprocess import for fresh_install.
+- Typo in Android check for fresh_install, hopefully fixed.
+- Added Addon_Install() function to install add-ons.
+- Added Addon_Genre() function to return a dict of all specific genre type add-ons found at the Add-on Portal.
+- Fixed unicode issue when sending through list of addons to Toggle_Addons()
+
+v.0.6:
+- Added ability to run another plugin via Add_Dir, just send mode as a blank string.
+- Added System() function which allow easy access to various xbmc commands.
+- Cleaned up the README file.
+- Added ASCII_Check() function, will return a list of non-ASCII filenames found.
+- Added md5_check() function to return md5 value of file or folder.
+- Added Android functions for opening, uninstalling and listing installed apps.
+- Added Android function for opening into a specific apps settings.
+- Added Force_Close() function
+- Added Running_App() function which returns the name of current running app.
+- Added Fresh_Install() function which will wipe your current install.
+- Added Delete_Crashlogs() function.
+- Improved Delete_Folders function, can now send through an ignore list for
+file/folder paths you don't want removed.
 - Added Sleep_If_Function_Active() which will sleep until the previously called
 function has completed.
 - Renamed Sleep_If_Active() to Sleep_If_Window_Active()
-
-v.0.5.4:
 - Fixed Open_URL function which was broken in last push
-
-v.0.5.3:
 - Added new Caller() function
 - Changed the way the addon id is pulled so it works when called from scripts.
-
-v.0.5.2:
 - Added requests dependency which had somehow been ommitted
-
-v.0.5.1:
 - Fixed up the Add_Dir function so it's now showing correct infolabels (hopefully!)
-
-v.0.5:
 - Added auto infolabel generation to the Play_Video function (thanks midraal)
 - Re-coded Add_Dir so it now takes context menus and dictionaries for params
 - Cleaned up and improved a lot of the guides
@@ -26,7 +70,6 @@ v.0.5:
 - Added Sleep_If_Active (pauses code until a specific window closes)
 - Added Move_Tree (Moves directory from a to b)
 - Added Toggle_Addons (enables/disables add-ons)
-
 - Added various database functions (thanks to midraal), details below:
 -- Add_To_Table (adds a row to the table stored in your addons addon_data folder)
 -- Create_Table (creates a table in your addons db)

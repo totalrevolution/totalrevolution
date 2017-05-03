@@ -577,7 +577,7 @@ koding.Text_Box('LIST OF VIDEO PLUGINS',final_string)
     return addon_dict
 #----------------------------------------------------------------
 # TUTORIAL #
-def Open_Settings(addon_id=sys.argv[0],focus='',click=False,stop_script=True):
+def Open_Settings(addon_id='',focus='',click=False,stop_script=True):
     """
 By default this will open the current add-on settings but if you pass through an addon_id it will open the settings for that add-on.
 
@@ -609,7 +609,8 @@ else:
     dialog.ok('YOUTUBE NOT INSTALLED','We cannot run this example as it uses the YouTube add-on which has not been found on your system.')
 ~"""
     import xbmcaddon
-
+    addon_id = Caller()
+    xbmc.log('ADDON ID: %s'%addon_id,2)
     xbmc.executebuiltin('Addon.OpenSettings(%s)' % addon_id)
     if focus != '':
         category, setting = focus.split('.')
