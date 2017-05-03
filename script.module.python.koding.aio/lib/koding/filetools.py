@@ -13,7 +13,9 @@
 # please make sure you give approptiate credit in your add-on description (noobsandnerds.com)
 # 
 # Please make sure you've read and understood the license, this code can NOT be used commercially
-# and it can NOT be modified and redistributed. Thank you.
+# and it can NOT be modified and redistributed. If you're found to be in breach of this license
+# then any affected add-ons will be blacklisted and will not be able to work on the same system
+# as any other add-ons which use this code. Thank you for your cooperation.
 
 import os
 import shutil
@@ -136,11 +138,8 @@ EXAMPLE CODE:
 koding.Convert_Special()
 ~"""    
     import urllib
-
     for root, dirs, files in os.walk(filepath):
-        
         for file in files:
-            
             if file.endswith(".xml") or file.endswith(".hash") or file.endswith("properies") or file.endswith(".ini"):
                 contents     = Text_File(os.path.join(root,file), 'r')
                 encodedpath  = urllib.quote(HOME)
@@ -149,7 +148,7 @@ koding.Convert_Special()
                 Text_File(os.path.join(root, file), 'w', newfile)
 #----------------------------------------------------------------    
 # TUTORIAL #
-def Create_Paths(path):
+def Create_Paths(path=''):
     """
 Send through a path to a file, if the directories required do not exist this will create them.
 
@@ -158,8 +157,7 @@ CODE: Create_Paths(path)
 AVAILABLE PARAMS:
 
     (*) path  -  This is the full path including the filename. The path
-    sent through will be split up at every instance of '/' so if you
-    only want to send through a directory you MUST include a trailing '/'
+    sent through will be split up at every instance of '/'
 
 EXAMPLE CODE:
 my_path = xbmc.translatePath('special://home/test/testing/readme.txt')
@@ -167,25 +165,16 @@ koding.Create_Paths(path=my_path)
 dialog.ok('PATH CREATED','Check in your Kodi home folder and you should now have sub-folders of /test/testing/.','[COLOR=gold]Press ok to remove these folders.[/COLOR]')
 shutil.rmtree(xbmc.translatePath('special://home/test'))
 ~"""
-    newdirs = []
-    directories = path.split('/')
-    directories.pop()
-
-# Remove any blanks in the array (eg /storage on linux creates a blank entry at start of array)
-    if directories[0] == '':
-        directories[1] = '/'+directories[1]
-    for item in directories:
-        if item != '':
-            newdirs.append(item)
-
-    rootpath = HOME
-    for d in newdirs:
-        rootpath = os.path.join(rootpath, d)
-        if not os.path.exists(rootpath):
-            try:
-                os.makedirs(rootpath)
-            except:
-                pass
+    if path != '' and not os.path.isdir(path) and not os.path.exists(path):
+        root_path = path.split(os.sep)
+        if root_path[-1] == '':
+            root_path.pop()
+        root_path.pop()
+        final_path = ''
+        for item in root_path:
+            final_path = os.path.join(final_path,item)
+        if not os.path.exists(final_path):
+            os.makedirs(final_path)
 #----------------------------------------------------------------    
 # TUTORIAL #
 def DB_Path_Check(db_path):
@@ -218,6 +207,48 @@ dialog.ok('ADDONS DB','The path to the current addons database is:',dbpath)
                 finalfile = lastmodified
                 gooddb   = mydb
     return gooddb
+#---------------------------------------------------------------------------------------------------
+# TUTORIAL #
+def Delete_Crashlogs(extra_paths=[]):
+    """
+Delete all kodi crashlogs. This function will retun the amount of successfully removed crashlogs.
+
+CODE: Delete_Crashlogs([extra_paths])
+
+AVAILABLE PARAMS:
+    extra_paths  -  By default this will search for crashlogs for xbmc,
+    kodi and spmc. If you want to add compatibility for other forks of
+    Kodi please send through a list of the files you want deleted. The
+    format to use needs to be like example shown below.
+
+EXAMPLE CODE:
+# Lets setup some extra crashlog types for tvmc and ftmc kodi forks
+log_path =  xbmc.translatePath('special://logpath/')
+tvmc_path = os.path.join(log_path,'tvmc_crashlog*.*')
+ftmc_path = os.path.join(log_path,'ftmc_crashlog*.*')
+
+
+deleted_files = koding.Delete_Crashlogs(extra_paths=[tvmc_path, ftmc_path])
+if deleted_files > 0:
+    dialog.ok('CRASHLOGS DELETED','Congratulations, a total of %s crashlogs have been deleted.')
+else:
+    dialog.ok('NO CRASHLOGS','No crashlogs could be found on the system.')
+~"""
+    import glob
+    log_path =  xbmc.translatePath('special://logpath/')
+    xbmc_path = (os.path.join(log_path, 'xbmc_crashlog*.*'))
+    kodi_path = (os.path.join(log_path, 'kodi_crashlog*.*'))
+    spmc_path = (os.path.join(log_path, 'spmc_crashlog*.*'))
+    paths = [xbmc_path, kodi_path, spmc_path]
+    total = 0
+    for items in paths:
+        for file in glob.glob(items):
+            try:
+                 os.remove(file)
+                 total+=1
+            except:
+                pass
+    return total
 #----------------------------------------------------------------
 # TUTORIAL #
 def Delete_Files(filepath = HOME, filetype = '*.txt', subdirectories=False):
@@ -269,25 +300,71 @@ koding.Delete_Files(filepath=delete_path, filetype='.txt', subdirectories=True)
         xbmc.log('### Cannot delete files as directory does not exist: %s' % filepath)
 #----------------------------------------------------------------
 # TUTORIAL #
-def Delete_Folders(filepath=''):
+def Delete_Folders(filepath='', ignore=[]):
     """
-Completely delete a folder and all it's sub-folders
+Completely delete a folder and all it's sub-folders. With the ability to add
+an ignore list for any folders/files you don't want removed.
 
-CODE: Delete_Folders(filepath)
+CODE: Delete_Folders(filepath, [ignore])
 
 AVAILABLE PARAMS:
     
     (*) filepath  -  Use the physical path you want to remove (not special://)
 
-WARNING: This is an extremely powerful and dangerous tool! If you wipe your whole system
-by putting in the wrong path then it's your own stupid fault!
+    ignore  -  A list of paths you want to ignore. These need to be sent
+    through as physical paths so just use xbmc.translatePath when creating
+    your list and these can be folder paths or filepaths.
+
+WARNING: This is an extremely powerful and dangerous tool! If you wipe important
+system files from your system by putting in the wrong path then I'm afraid that's
+your own stupid fault! A check has been put in place so you can't accidentally
+wipe the whole root.
 
 EXAMPLE CODE:
-delete_path = xbmc.translatePath('special://profile/addon_data/test')
-if dialog.yesno('DELETE FOLDER','The following folder will now be removed:', '/userdata/addon_data/test/','Do you want to continue?'):
-    koding.Delete_Folders(delete_path)
+delete_path = xbmc.translatePath('special://profile/py_koding_test')
+
+# Create new test directory to remove
+if not os.path.exists(delete_path):
+    os.makedirs(delete_path)
+
+# Fill it with some dummy files
+file1 = os.path.join(delete_path,'file1.txt')
+file2 = os.path.join(delete_path,'file2.txt')
+file3 = os.path.join(delete_path,'file3.txt')
+koding.Dummy_File(dst=file1, size=10, size_format='kb')
+koding.Dummy_File(dst=file2, size=10, size_format='kb')
+koding.Dummy_File(dst=file3, size=10, size_format='kb')
+
+dialog.ok('TEST FILE CREATED','If you look in your addon_data folder you should now see a new test folder containing 3 dummy files. The folder name is \'py_koding_test\'.')
+if dialog.yesno('DELETE FOLDER','Everything except file1.txt will now be removed from:', '/userdata/py_koding_test/','Do you want to continue?'):
+    koding.Delete_Folders(filepath=delete_path, ignore=[file1])
 ~"""
-    if os.path.exists(filepath) and filepath != '':
+    exclude_list = ['','/','\\','C:/','storage']
+
+# Check you're not trying to wipe root!
+    if filepath in exclude_list:
+        dialog.ok('FILEPATH REQUIRED','You\'ve attempted to remove files but forgot to pass through a valid filepath. Luckily this failsafe check is in place or you could have wiped your whole system!')
+
+# If there's some ignore files we run through deleting everything but those files
+    elif len(ignore) > 0:
+        for root, dirs, files in os.walk(filepath, topdown=False):
+            if not root in ignore:
+                for file in files:
+                    file_path = os.path.join(root,file)
+                    if file_path not in ignore:
+                        try:
+                            os.remove(file_path)
+                        except:
+                            pass
+
+                if len(os.listdir(root)) == 0:
+                    try:
+                        os.rmdir(root)
+                    except:
+                        pass
+
+# If a simple complete wipe of a directory and all sub-directories is required we use this
+    elif os.path.exists(filepath) and filepath != '':
         shutil.rmtree(filepath, ignore_errors=True)
         xbmc.executebuiltin('Container.Refresh')
 #----------------------------------------------------------------
@@ -410,6 +487,34 @@ else:
     else:
         dialog.ok(this_module.getLocalizedString(30965),this_module.getLocalizedString(30815) % _in)
 
+#----------------------------------------------------------------
+# TUTORIAL #
+def Fresh_Install():
+    """
+Attempt to completely wipe your install. Currently this only supports
+LE/OE/Android. On LE/OE it will perform a hard reset and on Android it
+will wipe the data for the current running app (untested)
+
+CODE:  Fresh_Install()
+
+EXAMPLE CODE:
+if dialog.yesno('TOTAL WIPEOUT!','This will attempt give you a totally fresh install of Kodi.','Are you sure you want to continue?'):
+    if dialog.yesno('[COLOR=gold]FINAL CHANCE!!![/COLOR]','If you click Yes this WILL attempt to wipe your install', '[COLOR=dodgerblue]ARE YOU 100% CERTAIN YOU WANT TO WIPE?[/COLOR]'):
+        clean_state = koding.Fresh_Install()
+        if not clean_state:
+            dialog.ok('SYSTEM NOT SUPPORTED','Your platform is not yet supported by this function, you will have to manually wipe.')
+~"""
+    from systemtools import Running_App, Run_As_Kodi
+    if xbmc.getCondVisibility("System.HasAddon(service.libreelec.settings)") or xbmc.getCondVisibility("System.HasAddon(service.openelec.settings)"):
+        resetpath='storage/.cache/reset_oe'
+        Text_File(resetpath,'w')
+        xbmc.executebuiltin('reboot')
+    elif xbmc.getCondVisibility('System.Platform.Android'):
+        import subprocess
+        running   = Running_App()
+        cleanwipe = subprocess.Popen(['exec ''pm clear '+str(running)+''], executable='/system/bin/sh', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=Run_As_Kodi).communicate()[0]
+    else:
+        return False
 #----------------------------------------------------------------
 # TUTORIAL #
 def Find_In_Text(content, start, end, show_errors = True):
@@ -548,6 +653,136 @@ dialog.ok('Folder Size','KODI HOME: %s MB' % home_size)
         return "%.3f" % (float(finalsize / 1024) / 1024 / 1024)
     elif filesize == 'tb':
         return "%.4f" % (float(finalsize / 1024) / 1024 / 1024 / 1024)
+#----------------------------------------------------------------
+# TUTORIAL #
+def Get_Contents(path,folders=True,subfolders=False,exclude_list=[],full_path=True,filter=''):
+    """
+Return a list of either files or folders in a given path.
+
+CODE:  Get_Contents(path, [folders, subfolders, exclude_list, full_path, filter])
+
+AVAILABLE PARAMS:
+    
+    (*) path  -  This is the path you want to search, no sub-directories are scanned.
+    
+    folders  -  By default this is set to True and the returned list will only
+    show folders. If set to False the returned list will show files only.
+
+    exclude_list  -  Optionally you can add a list of items you don't want returned
+
+    full_path  -  By default the entries in the returned list will contain the full
+    path to the folder/file. If you only want the file/folder name set this to False.
+
+    subfolders  -  By default this is set to False but if set to true it will check
+    all sub-directories and not just the directory sent through.
+
+    filter  -  If you want to only return files ending in a specific string you
+    can add details here. For example to only show '.xml' files you would send
+    through filter='.xml'.
+
+EXAMPLE CODE:
+ADDONS = xbmc.translatePath('special://home/addons')
+addon_folders = koding.Get_Contents(path=ADDONS, folders=True, exclude_list=['packages','temp'], full_path=False)
+results = ''
+for item in addon_folders:
+    results += 'FOLDER: [COLOR=dodgerblue]%s[/COLOR]\n'%item
+koding.Text_Box('ADDON FOLDERS','Below is a list of folders found in the addons folder (excluding packages and temp):\n\n%s'%results)
+~"""
+    final_list = []
+# Check all items in the given path
+    if not subfolders:
+        for item in os.listdir(path):
+            item_path = os.path.join(path,item)
+            if folders and os.path.isdir(item_path) and item not in exclude_list:
+                if full_path:
+                    final_list.append(item_path)
+                else:
+                    final_list.append(item)
+
+            elif not folders and not os.path.isdir(item_path) and item not in exclude_list:
+                if full_path:
+                    final_list.append(item_path)
+                else:
+                    final_list.append(item)
+
+# Traverse through all subfolders
+    else:
+        for root, dirnames, filenames in os.walk(path):
+            if not folders:
+                for filename in filenames:
+                    file_path = os.path.join(root, filename)
+                    if filter=='':
+                        if full_path:
+                            final_list.append(file_path)
+                        else:
+                            final_list.append(filename)
+
+                    elif file_path.endswith(filter):
+                        if full_path:
+                            final_list.append(file_path)
+                        else:
+                            final_list.append(filename)
+            else:
+                for dirname in dirnames:
+                    if full_path:
+                        final_list.append(os.path.join(root, dirname))
+                    else:
+                        final_list.append(dirname)
+    return final_list
+#----------------------------------------------------------------
+# TUTORIAL #
+def md5_check(src):
+    """
+Return the md5 value of file or directory, this will return just one unique value.
+
+CODE: md5_check(src)
+
+AVAILABLE PARAMS:
+
+    (*) src  -  This is source directory/file you want the md5 value of.
+
+EXAMPLE CODE:
+home = xbmc.translatePath('special://home')
+home_md5 = koding.md5_check(home)
+dialog.ok('md5 Check', 'The md5 of your home folder is:', home_md5)
+
+guisettings = xbmc.translatePath('special://profile/guisettings.xml')
+guisettings_md5 = koding.md5_check(guisettings)
+dialog.ok('md5 Check', 'The md5 of your guisettings.xml:', guisettings_md5)
+~"""
+    import hashlib
+    import os
+
+    SHAhash = hashlib.md5()
+    if not os.path.exists (src):
+        return -1
+
+# If source is a file
+    if not os.path.isdir(src):
+        return hashlib.md5(open(src,'rb').read()).hexdigest()
+
+# If source is a directory
+    else:
+        try:
+            for root, dirs, files in os.walk(src):
+              for names in files:
+                filepath = os.path.join(root,names)
+                try:
+                  f1 = open(filepath, 'rb')
+                except:
+                  f1.close()
+                  continue
+
+            while 1:
+# Read file in as little chunks
+              buf = f1.read(4096)
+              if not buf : break
+              SHAhash.update(hashlib.md5(buf).hexdigest())
+            f1.close()
+        except:
+            return -2
+
+        return SHAhash.hexdigest()
 #----------------------------------------------------------------
 # TUTORIAL #
 def Move_Tree(src, dst, dp=None):

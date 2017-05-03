@@ -13,7 +13,9 @@
 # please make sure you give approptiate credit in your add-on description (noobsandnerds.com)
 # 
 # Please make sure you've read and understood the license, this code can NOT be used commercially
-# and it can NOT be modified and redistributed. Thank you.
+# and it can NOT be modified and redistributed. If you're found to be in breach of this license
+# then any affected add-ons will be blacklisted and will not be able to work on the same system
+# as any other add-ons which use this code. Thank you for your cooperation.
 
 import datetime
 import os
@@ -25,147 +27,60 @@ import xbmcgui
 
 import filetools
 
-dialog = xbmcgui.Dialog()
 #----------------------------------------------------------------
 # TUTORIAL #
-def Addon_List(enabled=True, inc_new=False):
+def ASCII_Check(sourcefile=xbmc.translatePath('special://home'), dp=False):
     """
-Return a list of enabled or disabled add-ons found in the database.
+Return a list of files found containing non ASCII characters in the filename.
 
-CODE: Addon_List([enabled, inc_new])
+CODE: ASCII_Check([sourcefile, dp])
 
 AVAILABLE PARAMS:
     
-    enabled  -  By default this is set to True which means you'll
-    get a list of all the enabled add-ons found in addons*.db but
-    if you want a list of all the disabled ones just set this to
-    False.
-
-    inc_new  -  This will also add any new add-on folders found on
-    your system that aren't yet in the database (ie ones that have
-    been recently been manually extracted but not scanned in). By
-    default this is set to False.
+    sourcefile  -  The folder you want to scan, by default it's set to the
+    Kodi home folder.
+        
+    dp  -  Optional DialogProgress, by default this is False. If you want
+    to show a dp make sure you initiate an instance of xbmcgui.DialogProgress()
+    and send through as the param.
         
 EXAMPLE CODE:
-enabled_list = Addon_List(enabled=True)
-disabled_list = Addon_List(enabled=False)
-my_return = ''
-
-for item in enabled_list:
-    my_return += '[COLOR=lime]ENABLED:[/COLOR] %s\n' % item
-for item in disabled_list:
-    my_return += '[COLOR=red]DISABLED:[/COLOR] %s\n' % item
-Text_Box('ADDON STATUS',my_return)
+home = xbmc.translatePath('special://home')
+progress = xbmcgui.DialogProgress()
+progress.create('ASCII CHECK')
+my_return = ASCII_Check(sourcefile=home, dp=progress)
+if len(my_return) > 0:
+    dialog.select('NON ASCII FILES', my_return)
+else:
+    dialog.ok('ASCII CHECK CLEAN','Congratulations!','There weren\'t any non-ASCII files found on this system.')
 ~"""
-    from database   import DB_Query
-    from guitools   import Text_Box
-    from filetools  import DB_Path_Check
+    rootlen      = len(sourcefile)
+    for_progress = []
+    final_array  = []
+    ITEM         = []
+
+    for base, dirs, files in os.walk(sourcefile):
+        for file in files:
+            ITEM.append(file)   
+    N_ITEM =len(ITEM)
     
-    enabled_list  = []
-    disabled_list = []
-    addons_db     = DB_Path_Check('addons')
-    on_system     = DB_Query(addons_db,'SELECT addonID, enabled from installed')
-
-# Create a list of enabled and disabled add-ons already on system
-    for item in on_system:
-        if item["enabled"]:
-            enabled_list.append(item["addonID"])
-        else:
-            disabled_list.append(item["addonID"])
-
-    if inc_new:
-        ADDONS    = xbmc.translatePath('special://home/addons')
-        my_addons = Get_Contents(path=ADDONS, exclude_list=['packages','temp'])
-        for item in my_addons:
-            addon_id = Get_Addon_ID(item)
-            if not addon_id in enabled_list and not addon_id in disabled_list:
-                disabled_list.append(addon_id)
-
-    if enabled:
-        return enabled_list
-    else:
-        return disabled_list
-#----------------------------------------------------------------
-# TUTORIAL #
-def Caller(my_return='addon'):
-    """
-Return the add-on id or path of the script which originally called
-your function. If it's been called through a number of add-ons/scripts
-you can grab a list of paths that have been called.
-
-CODE: Caller(my_return)
-
-AVAILABLE PARAMS:
-    
-    my_return  -  By default this is set to 'addon', view the options below:
+    for base, dirs, files in os.walk(sourcefile):
+        dirs[:] = [d for d in dirs]
+        files[:] = [f for f in files]
         
-        'addon' : Return the add-on id of the add-on to call this function.
-        
-        'addons': Return a list of all add-on id's called to get to this function.
-        
-        'path'  : Return the full path to the script which called this funciton.
-        
-        'paths' : Return a list of paths which have been called to get to this
-        final function.
-        
-EXAMPLE CODE:
-my_addon = koding.Caller(my_return='addon')
-my_addons = koding.Caller(my_return='addons')
-my_path = koding.Caller(my_return='path')
-my_paths = koding.Caller(my_return='paths')
+        for file in files:
+            for_progress.append(file) 
+            progress = len(for_progress) / float(N_ITEM) * 100
+            if dp:
+                dp.update(0,"Checking for non ASCII files",'[COLOR yellow]%s[/COLOR]'%d, 'Please Wait')
+            
+            try:
+                file.encode('ascii')
 
-dialog.ok('ADD-ON ID', 'Addon id you called this function from:','[COLOR=dodgerblue]%s[/COLOR]' % my_addon)
-dialog.ok('SCRIPT PATH', 'Script which called this function:','[COLOR=dodgerblue]%s[/COLOR]' % my_path)
-
-addon_list = 'Below is a list of add-on id\'s which have been called to get to this final piece of code:\n\n'
-for item in my_addons:
-    addon_list += item+'\n'
-koding.Text_Box('ADD-ON LIST', addon_list)
-koding.Sleep_If_Active(10147)
-path_list = 'Below is a list of scripts which have been called to get to this final piece of code:\n\n'
-for item in my_paths:
-    path_list += item+'\n'
-koding.Text_Box('ADD-ON LIST', path_list)
-~"""
-    import inspect
-    stack       = inspect.stack()
-    last_stack  = len(stack)-1
-    stack_array = []
-    addon_array = []
-    for item in stack:
-        last_stack = item[1].replace('<string>','')
-        last_stack = last_stack.strip()
-        stack_array.append(last_stack)
-        try:
-            scrap,addon_id = last_stack.split('addons%s'%os.sep)
-            addon_id = addon_id.split(os.sep)[0]
-            addon_id = Get_Addon_ID(addon_id)
-            if addon_id not in addon_array:
-                addon_array.append(addon_id)
-        except:
-            pass
-
-    if my_return == 'addons':
-        return addon_array
-    if my_return == 'addon':
-        return addon_array[len(addon_array)-1]
-    if my_return == 'path':
-        return stack_array[len(stack_array)-1]
-    if my_return == 'paths':
-        return stack_array
-#----------------------------------------------------------------
-def Check_Deps(addon_path, depfiles = []):
-    import re
-    from filetools import Text_File
-    try:
-        readxml = Text_File(os.path.join(addon_path,'addon.xml'),'r')
-        dmatch   = re.compile('import addon="(.+?)"').findall(readxml)
-        for requires in dmatch:
-            if not 'xbmc.python' in requires and not requires in depfiles:
-                depfiles.append(requires)
-    except:
-        pass
-    return depfiles
+            except UnicodeDecodeError:
+                badfile = (str(base)+'/'+str(file)).replace('\\','/').replace(':/',':\\')
+                final_array.append(badfile)
+    return final_array
 #----------------------------------------------------------------
 # TUTORIAL #
 def Cleanup_String(my_string):
@@ -236,8 +151,8 @@ mytext = koding.Colour_Text(text=current_text, colour1='dodgerblue', colour2='wh
 xbmc.log(current_text)
 xbmc.log(mytext)
 dialog.ok('CURRENT TEXT', current_text)
-dialog.ok('NEW TEXT', mytext)~"""
-
+dialog.ok('NEW TEXT', mytext)
+~"""
     if text.startswith('[COLOR') and text.endswith('/COLOR]'):
         return text
 
@@ -424,67 +339,6 @@ koding.Text_Box('TEST RESULTS', my_return)
     return data_type
 #----------------------------------------------------------------
 # TUTORIAL #
-def Dependency_Check(addon_id = 'all', recursive = False):
-    """
-This will return a list of all dependencies required by an add-on.
-This information is grabbed directly from the currently installed addon.xml for that id.
-
-CODE:  Dependency_Check([addon_id, recursive])
-
-AVAILABLE PARAMS:
-
-    addon_id  -  This is optional, if not set it will return a list of every
-    dependency required from all installed add-ons. If you only want to
-    return results of one particular add-on then send through the id.
-
-    recursive  -  By default this is set to False but if set to true and you
-    also send through an individual addon_id it will return all dependencies
-    required for that addon id AND the dependencies of the dependencies.
-
-EXAMPLE CODE:
-current_id = xbmcaddon.Addon().getAddonInfo('id')
-dependencies = koding.Dependency_Check(addon_id=current_id, recursive=True)
-clean_text = ''
-for item in dependencies:
-    clean_text += item+'\n'
-koding.Text_Box('Modules required for %s'%current_id,clean_text)
-~"""
-    import xbmcaddon
-    import re
-    from filetools import Text_File
-    ADDONS = xbmc.translatePath('special://home/addons')
-    depfiles = []
-
-    if addon_id == 'all':
-        for name in os.listdir(ADDONS):
-            if name != 'packages' and name != 'temp':
-                try:
-                    addon_path = os.path.join(ADDONS,name)
-                    depfiles = Check_Deps(addon_path)
-                except:
-                    pass
-    else:
-        try:
-            addon_path = xbmcaddon.Addon(id=addon_id).getAddonInfo('path')
-        except:
-            addon_path = os.path.join(ADDONS,addon_id)
-
-        depfiles = Check_Deps(addon_path)
-
-        if recursive:
-            dep_path = None
-            for item in depfiles:
-                try:
-                    dep_path = xbmcaddon.Addon(id=item).getAddonInfo('path')
-                except:
-                    dep_path = os.path.join(ADDONS,item)
-
-            if dep_path:
-                depfiles = Check_Deps(dep_path)
-
-    return depfiles
-#----------------------------------------------------------------
-# TUTORIAL #
 def End_Path(path):
     """
 Split the path at every '/' and return the final file/folder name.
@@ -518,77 +372,45 @@ dialog.ok('FILE NAME','Path checked:',file_path,'File Name: [COLOR=dodgerblue]%s
     return path_array[-1]
 #----------------------------------------------------------------
 # TUTORIAL #
-def Get_Addon_ID(folder):
+def Force_Close():
     """
-If you know the folder name of an add-on but want to find out the
-addon id (it may not necessarily be the same as folder name) then
-you can use this function. Even if the add-on isn't enabled on the
-system this will regex out the add-on id.
+Force close Kodi, should only be used in extreme circumstances.
 
-CODE:  Get_Addon_ID(folder)
-
-AVAILABLE PARAMS:
-    
-    folder  -  This is folder name of the add-on. Just the name not the path.
+CODE: Force_Close()
 
 EXAMPLE CODE:
-my_id = koding.Get_Addon_ID(folder='script.module.python.koding.aio')
-dialog.ok('ADDON ID','The add-on id found is:','[COLOR=dodgerblue]%s[/COLOR]'%my_id)
+if dialog.yesno('FORCE CLOSE','Are you sure you want to forcably close Kodi? This could potentially cause corruption if system tasks are taking place in background.'):
+    koding.Force_Close()
 ~"""
-    from filetools import Text_File
-    import re
-    ADDONS = xbmc.translatePath('special://home/addons')
-    xmlpath = os.path.join(ADDONS, folder, 'addon.xml')
-    if os.path.exists(xmlpath):
-        contents = Text_File(xmlpath,'r')
-        addon_id = re.compile('id="(.+?)"').findall(contents)
-        addon_id = addon_id[0] if (len(addon_id) > 0) else ''
-        return addon_id
-    else:
-        return folder
+    os._exit(1)
 #----------------------------------------------------------------
 # TUTORIAL #
-def Get_Contents(path, folders=True, exclude_list=[], full_path=True):
+def Get_ID(setid=False):
     """
-Return a list of either files or folders in a given path.
+A simple function to set user id and group id to the current running App
+for system commands. For example if you're using the subprocess command
+you could send through the preexec_fn paramater as koding.Run_As_Kodi.
+This function will also return the uid and gid in form of a dictionary.
 
-CODE:  Get_Contents(path, [folders])
+CODE: Get_ID([setid])
 
 AVAILABLE PARAMS:
     
-    (*) path  -  This is the path you want to search, no sub-directories are scanned.
-    
-    folders  -  By default this is set to True and the returned list will only
-    show folders. If set to False the returned list will show files only.
-
-    exclude_list  -  Optionally you can add a list of items you don't want returned
-
-    full_path  -  By default the entries in the returned list will contain the full
-    path to the folder/file. If you only want the file/folder name set this to False.
+    (*) setid  -  By default this is set to False but if set to True it
+    will set the ids (to be used for subprocess commands)
 
 EXAMPLE CODE:
-ADDONS = xbmc.translatePath('special://home/addons')
-addon_folders = koding.Get_Contents(path=ADDONS, folders=True, exclude_list=['packages','temp'], full_path=False)
-results = ''
-for item in addon_folders:
-    results += 'FOLDER: [COLOR=dodgerblue]%s[/COLOR]\n'%item
-koding.Text_Box('ADDON FOLDERS','Below is a list of folders found in the addons folder (excluding packages and temp):\n\n%s'%results)
+ids = Get_ID(setid=False)
+uid = ids['uid']
+gid = ids['gid']
+dialog.ok('USER & GROUP ID','User ID: %s'%uid, 'Group ID: %s'%gid)
 ~"""
-    final_list = []
-    for item in os.listdir(path):
-        item_path = os.path.join(path,item)
-        if folders and os.path.isdir(item_path) and item not in exclude_list:
-            if full_path:
-                final_list.append(item_path)
-            else:
-                final_list.append(item)
-
-        elif not folders and not os.path.isdir(item_path) and item not in exclude_list:
-            if full_path:
-                final_list.append(item_path)
-            else:
-                final_list.append(item)
-    return final_list
+    uid = os.getuid()
+    gid = os.getgid()
+    if setid:
+        os.setgid(uid)
+        os.setuid(gid)
+    return {"uid":uid,"gid":gid}
 #----------------------------------------------------------------
 # TUTORIAL #
 def Grab_Log(log_type = 'std', formatting = 'original', sort_order = 'reverse'):
@@ -697,60 +519,6 @@ dialog.ok('ID GENERATOR','Password generated:', '', '[COLOR=dodgerblue]%s[/COLOR
     return ''.join(random.choice(chars) for _ in range(size))
 #----------------------------------------------------------------
 # TUTORIAL #
-def Installed_Addons(types='unknown', content ='unknown', properties = ''):
-    """
-This will send back a list of currently installed add-ons on the system.
-All the three paramaters you can send through to this function are optional,
-by default (without any params) this function will return a dictionary of all
-installed add-ons. The dictionary will contain "addonid" and "type" e.g. 'xbmc.python.pluginsource'.
-
-CODE: Installed_Addons([types, content, properties]):
-
-AVAILABLE PARAMS:
-
-    types       -  If you only want to retrieve details for specific types of add-ons
-    then use this filter. Unfortunately only one type can be filtered at a time,
-    it is not yet possible to filter multiple types all in one go. Please check
-    the official wiki for the add-on types avaialble but here is an example if
-    you only wanted to show installed repositories: koding.Installed_Addons(types='xbmc.addon.repository')
-
-    content     -  Just as above unfortunately only one content type can be filtered
-    at a time, you can filter by video,audio,image and executable. If you want to
-    only return installed add-ons which appear in the video add-ons section you
-    would use this: koding.Installed_Addons(content='video')
-
-    properties  -  By default a dictionary containing "addonid" and "type" will be
-    returned for all found add-ons meeting your criteria. However you can add any
-    properties in here available in the add-on xml (check official Wiki for properties
-    available). Unlike the above two options you can choose to add multiple properties
-    to your dictionary, see example below:
-    koding.Installed_Addons(properties='name,thumbnail,description')
-
-
-EXAMPLE CODE:
-my_video_plugins = koding.Installed_Addons(types='xbmc.python.pluginsource', content='video', properties='name')
-final_string = ''
-for item in my_video_plugins:
-    final_string += 'ID: %s | Name: %s\n'%(item["addonid"], item["name"])
-koding.Text_Box('LIST OF VIDEO PLUGINS',final_string)
-~"""
-    try:    import simplejson as json
-    except: import json
-
-    addon_dict = []
-    if properties != '':
-        properties = properties.replace(' ','')
-        properties = '"%s"' % properties
-        properties = properties.replace(',','","')
-    
-    query = '{"jsonrpc":"2.0", "method":"Addons.GetAddons","params":{"properties":[%s],"enabled":"all","type":"%s","content":"%s"}, "id":1}' % (properties,types,content)
-    response = xbmc.executeJSONRPC(query)
-    data = json.loads(response)
-    if "result" in data:
-        addon_dict = data["result"]["addons"]
-    return addon_dict
-#----------------------------------------------------------------
-# TUTORIAL #
 def Last_Error():
     """
 Return details of the last error produced, perfect for try/except statements
@@ -769,36 +537,6 @@ koding.Text_Box('ERROR MESSAGE',Last_Error())
     return error
 #----------------------------------------------------------------
 # TUTORIAL #
-def Open_Settings(addon_id=sys.argv[0], stop_script = True):
-    """
-By default this will open the current add-on settings but if you pass through an addon_id it will open the settings for that add-on.
-
-CODE: Open_Settings([addon_id, stop_script])
-
-AVAILABLE PARAMS:
-
-    addon_id    - This optional, it can be any any installed add-on id. If nothing is passed
-    through the current add-on settings will be opened.
-
-    stop_script - By default this is set to True, as soon as the addon settings are opened
-    the current script will stop running. If you pass through as False then the script will
-    continue running in the background - opening settings does not pause a script, Kodi just
-    see's it as another window being opened.
-
-EXAMPLE CODE:
-koding.Open_Settings('plugin.video.youtube')
-~"""
-    import xbmcaddon
-
-    ADDON = xbmcaddon.Addon(id=addon_id)
-    ADDON.openSettings(addon_id)
-    if stop_script:
-        try:
-            sys.exit()
-        except:
-            pass
-#----------------------------------------------------------------
-# TUTORIAL #
 def Refresh(r_mode=['addons', 'repos'], profile_name='default'):
     """
 Refresh a number of items in kodi, choose the order they are
@@ -806,7 +544,7 @@ executed in by putting first in your r_mode. For example if you
 want to refresh addons then repo and then the profile you would
 send through a list in the order you want them to be executed.
 
-CODE: koding.Refresh(r_mode, [profile])
+CODE: Refresh(r_mode, [profile])
 
 AVAILABLE PARAMS:
 
@@ -864,32 +602,72 @@ koding.Refresh(r_mode=['addons~3000', 'repos~2000', 'profile'], profile_name='de
             xbmc.sleep(sleeper)
 #----------------------------------------------------------------
 # TUTORIAL #
-def Set_Setting(setting_type, setting, value = ''):
+def Running_App():
     """
-Use this to set built-in kodi settings via JSON or set skin settings. The value paramater is only required for JSON and string commands. Available options are below:
+Return the Kodi app name you're running, useful for fork compatibility
 
-CODE: koding.Set_Setting(setting, setting_type, [value])
+CODE: Running_App()
+
+EXAMPLE CODE:
+my_kodi = koding.Running_App()
+kodi_ver = xbmc.getInfoLabel("System.BuildVersion")
+dialog.ok('KODI VERSION','You are running:','[COLOR=dodgerblue]%s[/COLOR] - v.%s' % (my_kodi, kodi_ver))
+~"""
+    root_folder = xbmc.translatePath('special://xbmc')
+    xbmc.log(root_folder)
+    if '/cache' in root_folder:
+        root_folder = root_folder.split('/cache')[0]
+    root_folder = root_folder.split('/')
+    if root_folder[len(root_folder)-1] == '':
+        root_folder.pop()
+    finalitem   = len(root_folder)-1
+    running     = root_folder[finalitem]
+    return running
+#----------------------------------------------------------------
+# TUTORIAL #
+def Set_Setting(setting, setting_type='kodi_setting', value = 'true'):
+    """
+Use this to set built-in kodi settings via JSON or set skin settings.
+
+CODE: Set_Setting(setting, [setting_type, value])
 
 AVAILABLE PARAMS:
     
-    setting_type - The type of setting type you want to change, available types are:
+    setting_type - The type of setting type you want to change. By default
+    it's set to 'kodi_setting', see below for more info.
 
-        string (sets a skin string, requires a value)
-        bool_true (sets a skin boolean to true, no value required)
-        bool_false (sets a skin boolean to false, no value required)
-        (!) kodi_setting (sets values found in guisettings.xml)
-        (!) addon_enable (enables/disables an addon. setting = addon_id, value = true/false)
-        (!) json (WIP - setitng = method, value = params, see documentation on JSON-RPC API here: http://kodi.wiki/view/JSON-RPC_API)
+    AVAILALE VALUES:
 
-        (!) = These will return True or False if successful
+        'string' : sets a skin string, requires a value.
 
-setting - This is the name of the setting you want to change, it could be a setting from the kodi settings or a skin based setting.
+        'bool_true' :  sets a skin boolean to true, no value required.
 
-value: This is the value you want to change the setting to.
+        'bool_false' sets a skin boolean to false, no value required.
+        
+        'kodi_setting' : sets values found in guisettings.xml. Requires
+        a string of 'true' or 'false' for the value paramater.
+        
+        'addon_enable' : enables/disables an addon. Requires a string of
+        'true' (enable) or 'false' (disable) as the value. You will get a
+        return of True/False on whether successul. Depending on your requirements
+        you may prefer to use the Toggle_Addons function.
+
+        'json' : WIP - setitng = method, value = params, see documentation on
+        JSON-RPC API here: http://kodi.wiki/view/JSON-RPC_API)
+
+    setting - This is the name of the setting you want to change, it could be a
+    setting from the kodi settings or a skin based setting. If you're wanting
+    to enable/disable an add-on this is set as the add-on id.
+
+    value: This is the value you want to change the setting to. By default this
+    is set to 'true'.
 
 
 EXAMPLE CODE:
-koding.Set_Setting('kodi_setting', 'lookandfeel.enablerssfeeds', 'false')
+if dialog.yesno('RSS FEEDS','Would you like to enable or disable your RSS feeds?',yeslabel='ENABLE',nolabel='DISABLE'):
+    koding.Set_Setting(setting_type='kodi_setting', setting='lookandfeel.enablerssfeeds', value='true')
+else:
+    koding.Set_Setting(setting_type='kodi_setting', setting='lookandfeel.enablerssfeeds', value='false')
 ~"""
     try:    import simplejson as json
     except: import json
@@ -957,7 +735,7 @@ def Sleep_If_Window_Active(window_type=10147):
     """
 This will allow you to pause code while a specific window is open.
 
-CODE: koding.Sleep_If_Window_Active(window_type)
+CODE: Sleep_If_Window_Active(window_type)
 
 AVAILABLE PARAMS:
 
@@ -1002,7 +780,7 @@ def Sleep_If_Function_Active(function, args=[], kill_time=30, show_busy=True):
 This will allow you to pause code while a specific function is
 running in the background.
 
-CODE: koding.Sleep_If_Function_Active(function, args, kill_time)
+CODE: Sleep_If_Function_Active(function, args, kill_time, show_busy)
 
 AVAILABLE PARAMS:
 
@@ -1046,11 +824,175 @@ dialog.ok('FUNCTION COMPLETE','Of course we cannot read that file in just 10 sec
     return thread_alive
 #----------------------------------------------------------------
 # TUTORIAL #
+def String(code='', source=''):
+    """
+This will return the relevant language skin as set in the
+resources/language folder for your add-on. By default you'll get
+the language string returned from your current running add-on
+but if you send through another add-on id you can grab from
+any add-on or even the built-in kodi language strings.
+
+CODE: String(code, [source])
+
+AVAILABLE PARAMS:
+
+    (*) code  -  This is the language string code set in your strings.po file.
+
+    source  -  By default this is set to a blank string and will
+    use your current add-on id. However if you want to pull the string
+    from another add-on just enter the add-on id in here. If you'd prefer
+    to pull from the built-in kodi resources files just set as 'system'.
+
+EXAMPLE CODE:
+kodi_string = koding.String(code=10140, source='system')
+koding_string = koding.String(code=30825, source='script.module.python.koding.aio')
+dialog.ok('SYSTEM STRING','The string [COLOR=dodgerblue]10140[/COLOR] pulled from the default system language resources is:','[COLOR=gold]%s[/COLOR]' % kodi_string)
+dialog.ok('PYTHON KODING STRING','The string [COLOR=dodgerblue]30825[/COLOR] pulled from the Python Koding language resources is:','[COLOR=gold]%s[/COLOR]' % koding_string)
+~"""
+    import xbmcaddon
+    from addons import Caller
+    if source == '':
+        source = Caller()
+    if source != 'system':
+        addon_id = xbmcaddon.Addon(id=source)
+        mystring = addon_id.getLocalizedString(code)
+    else:
+        mystring = xbmc.getLocalizedString(code)
+    return mystring
+#----------------------------------------------------------------
+# TUTORIAL #
+def System(command, function=''):
+    """
+This is just a simplified method of grabbing certain Kodi infolabels, paths
+and booleans as well as performing some basic built in kodi functions.
+We have a number of regularly used functions added to a dictionary which can
+quickly be called via this function or you can use this function to easily
+run a command not currently in the dictionary. Just use one of the
+many infolabels, builtin commands or conditional visibilities available:
+
+info: http://kodi.wiki/view/InfoLabels
+bool: http://kodi.wiki/view/List_of_boolean_conditions
+
+CODE: System(command, [function])
+
+AVAILABLE PARAMS:
+    
+    (*) command  -  This is the command you want to perform, below is a list
+    of all the default commands you can choose from, however you can of course
+    send through your own custom command if using the function option (details
+    at bottom of page)
+
+    AVAILABLE VALUES:
+
+        'addonid'       : Returns the FOLDER id of the current add-on. Please note could differ from real add-on id.
+        'addonname'     : Returns the current name of the add-on
+        'builddate'     : Return the build date for the current running version of Kodi
+        'cpu'           : Returns the CPU usage as a percentage
+        'cputemp'       : Returns the CPU temperature in farenheit or celcius depending on system settings
+        'currentlabel'  : Returns the current label of the item in focus
+        'currenticon'   : Returns the name of the current icon
+        'currentpos'    : Returns the current list position of focused item
+        'currentpath'   : Returns the url called by Kodi for the focused item
+        'currentrepo'   : Returns the repo of the current focused item
+        'currentskin'   : Returns the FOLDER id of the skin. Please note could differ from actual add-on id
+        'date'          : Returns the date (Tuesday, April 11, 2017)
+        'debug'         : Toggles debug mode on/off
+        'freeram'       : Returns the amount of free memory available (in MB)
+        'freespace'     : Returns amount of free space on storage in this format: 10848 MB Free
+        'hibernate'     : Hibernate system, please note not all systems are capable of waking from hibernation
+        'internetstate' : Returns True or False on whether device is connected to internet
+        'ip'            : Return the current LOCAL IP address (not your public IP)
+        'kernel'        : Return details of the system kernel
+        'language'      : Return the language currently in use
+        'mac'           : Return the mac address, will only return the mac currently in use (Wi-Fi OR ethernet, not both)
+        'numitems'      : Return the total amount of list items curently in focus
+        'profile'       : Return the currently running profile name
+        'quit'          : Quit Kodi
+        'reboot'        : Reboot the system
+        'restart'       : Restart Kodi (Windows/Linux only)
+        'shutdown'      : Shutdown the system
+        'sortmethod'    : Return the current list sort method
+        'sortorder'     : Return the current list sort order
+        'systemname'    : Return a clean friendly name for the system
+        'time'          : Return the current time in this format: 2:05 PM
+        'usedspace'     : Return the amount of used space on the storage in this format: 74982 MB Used
+        'version'       : Return the current version of Kodi, this may need cleaning up as it contains full file details
+        'viewmode'      : Return the current list viewmode
+        'weatheraddon'  : Return the current plugin being used for weather
+
+
+    function  -  This is optional and default is set to a blank string which will
+    allow you to use the commands listed above but if set you can use your own
+    custom commands by setting this to one of the values below.
+
+    AVAILABLE VALUES:
+
+        'bool' : This will allow you to send through a xbmc.getCondVisibility() command
+        'info' : This will allow you to send through a xbmc.getInfoLabel() command
+        'exec' : This will allow you to send through a xbmc.executebuiltin() command
+
+EXAMPLE CODE:
+current_time = koding.System(command='time')
+current_label = koding.System(command='currentlabel')
+is_folder = koding.System(command='ListItem.IsFolder', function='bool')
+dialog.ok('PULLED DETAILS','The current time is %s' % current_time, 'Folder status of list item [COLOR=dodgerblue]%s[/COLOR]: %s' % (current_label, is_folder),'^ A zero means False, as in it\'s not a folder.')
+~"""
+    params = {
+    'addonid'       :'xbmc.getInfoLabel("Container.PluginName")',
+    'addonname'     :'xbmc.getInfoLabel("Container.FolderName")',
+    'builddate'     :'xbmc.getInfoLabel("System.BuildDate")',
+    'cpu'           :'xbmc.getInfoLabel("System.CpuUsage")',
+    'cputemp'       :'xbmc.getInfoLabel("System.CPUTemperature")',
+    'currentlabel'  :'xbmc.getInfoLabel("System.CurrentControl")',
+    'currenticon'   :'xbmc.getInfoLabel("ListItem.Icon")',
+    'currentpos'    :'xbmc.getInfoLabel("Container.CurrentItem")',
+    'currentpath'   :'xbmc.getInfoLabel("Container.FolderPath")',
+    'currentrepo'   :'xbmc.getInfoLabel("Container.Property(reponame)")',
+    'currentskin'   :'xbmc.getSkinDir()',
+    'date'          :'xbmc.getInfoLabel("System.Date")',
+    'debug'         :'xbmc.executebuiltin("ToggleDebug")',
+    'freeram'       :'xbmc.getFreeMem()',
+    'freespace'     :'xbmc.getInfoLabel("System.FreeSpace")',
+    'hibernate'     :'xbmc.executebuiltin("Hibernate")',
+    'internetstate' :'xbmc.getInfoLabel("System.InternetState")',
+    'ip'            :'xbmc.getIPAddress()',
+    'kernel'        :'xbmc.getInfoLabel("System.KernelVersion")',
+    'language'      :'xbmc.getInfoLabel("System.Language")',
+    'mac'           :'xbmc.getInfoLabel("Network.MacAddress")',
+    'numitems'      :'xbmc.getInfoLabel("Container.NumItems")',
+    'profile'       :'xbmc.getInfoLabel("System.ProfileName")',
+    'quit'          :'xbmc.executebuiltin("Quit")',
+    'reboot'        :'xbmc.executebuiltin("Reboot")',
+    'restart'       :'xbmc.restart()', # Windows/Linux only
+    'shutdown'      :'xbmc.shutdown()',
+    'sortmethod'    :'xbmc.getInfoLabel("Container.SortMethod")',
+    'sortorder'     :'xbmc.getInfoLabel("Container.SortOrder")',
+    'systemname'    :'xbmc.getInfoLabel("System.FriendlyName")',
+    'time'          :'xbmc.getInfoLabel("System.Time")',
+    'usedspace'     :'xbmc.getInfoLabel("System.UsedSpace")',
+    'version'       :'xbmc.getInfoLabel("System.BuildVersion")',
+    'viewmode'      :'xbmc.getInfoLabel("Container.Viewmode")',
+    'weatheraddon'  :'xbmc.getInfoLabel("Weather.plugin")',
+    }
+
+    if function == '': newcommand = params[command]
+    elif function == 'info': newcommand = 'xbmc.getInfoLabel("%s")' % command
+    elif function == 'bool': newcommand = 'xbmc.getCondVisibility("%s")' % command
+    elif function == 'exec': newcommand = 'xbmc.getCondVisibility("%s")' % command
+    else:
+        dialog.ok('INCORRECT PARAMS','The following command has been called:','koding.System(%s,[COLOR=dodgerblue]%s[/COLOR])'%(command, function),'^ The wrong function has been sent through, please double check the section highlighted in blue.')
+
+    try:
+        return eval(newcommand)
+    except:
+        return 'error'
+#----------------------------------------------------------------
+# TUTORIAL #
 def Timestamp(mode = 'integer'):
     """
 This will return the timestamp in various formats. By default it returns as "integer" mode but other options are listed below:
 
-CODE: koding.Timestamp(mode)
+CODE: Timestamp(mode)
 mode is optional, by default it's set as integer
 
 AVAILABLE VALUES:
@@ -1092,151 +1034,4 @@ dialog.ok('CURRENT TIME','Integer: %s' % integer_time, 'Epoch: %s' % epoch_time,
 
     if mode == 'epoch':
         return now
-#----------------------------------------------------------------
-# TUTORIAL #
-def Toggle_Addons(addon='all', enable=True, safe_mode=True, exclude_list=[], new_only=True, refresh=True):
-    """
-Send through either a list of add-on ids or one single add-on id.
-The add-ons sent through will then be added to the addons*.db
-and enabled or disabled (depending on state sent through).
-
-WARNING: If safe_mode is set to False this directly edits the
-addons*.db rather than using JSON-RPC. Although directly amending
-the db is a lot quicker there is no guarantee it won't cause
-severe problems in later versions of Kodi (this was created for v17).
-DO NOT set safe_mode to False unless you 100% understand the consequences!
-
-CODE:  Toggle_Addons([addon, enable, safe_mode, exclude_list, new_only])
-
-AVAILABLE PARAMS:
-
-    (*) addon  -  This can be a list of addon ids, one single id or
-    'all' to enable/disable all. If enabling all you can still use
-    the exclude_list for any you want excluded from this function.
-
-    enable  -  By default this is set to True, if you want to disable
-    the add-on(s) then set this to False.
-
-    safe_mode  -  By default this is set to True which means the add-ons
-    are enabled/disabled via JSON-RPC which is the method recommended by
-    the XBMC foundation. Setting this to False will result in a much
-    quicker function BUT there is no guarantee this will work on future
-    versions of Kodi and it may even cause corruption in future versions.
-    Setting to False is NOT recommended and you should ONLY use this if
-    you 100% understand the risks that you could break multiple setups.
-
-    exclude_list  -  Send through a list of any add-on id's you do not
-    want to be included in this command.
-
-    new_only  -  By default this is set to True so only newly extracted
-    add-on folders will be enabled/disabled. This means that any existing
-    add-ons which have deliberately been disabled by the end user are
-    not affected.
-
-EXAMPLE CODE:
-xbmc.executebuiltin('ActivateWindow(Videos, addons://sources/video/)')
-xbmc.sleep(2000)
-dialog.ok('DISABLE YOUTUBE','We will now disable YouTube (if installed)')
-koding.Toggle_Addons(addon='plugin.video.youtube', enable=False, safe_mode=True, exclude_list=[], new_only=False)
-koding.Refresh('container')
-xbmc.sleep(2000)
-dialog.ok('ENABLE YOUTUBE','When you click OK we will enable YouTube (if installed)')
-koding.Toggle_Addons(addon='plugin.video.youtube', enable=True, safe_mode=True, exclude_list=[], new_only=False)
-koding.Refresh('container')
-~"""
-    from __init__   import dolog
-    from filetools  import DB_Path_Check
-    from database   import DB_Query
-
-    kodi_ver        = int(float(xbmc.getInfoLabel("System.BuildVersion")[:2]))
-    addons_db       = DB_Path_Check('addons')
-    data_type       = Data_Type(addon)
-    state           = int(bool(enable))
-    enabled_list    = []
-    disabled_list   = []
-    if kodi_ver >= 17:
-        on_system   = DB_Query(addons_db,'SELECT addonID, enabled from installed')
-# Create a list of enabled and disabled add-ons already on system
-        enabled_list  = Addon_List(enabled=True)
-        disabled_list = Addon_List(enabled=False)
-
-# If addon has been sent through as a string we add into a list
-    if data_type == 'str' and addon!= 'all':
-        addon = [addon]
-
-# Grab all the add-on ids from addons folder
-    if addon == 'all':
-        addon     = []
-        ADDONS    = xbmc.translatePath('special://home/addons')
-        my_addons = Get_Contents(path=ADDONS, exclude_list=['packages','temp'])
-        for item in my_addons:
-            addon_id = Get_Addon_ID(item)
-            addon.append(addon_id)
-
-# Find out what is and isn't enabled in the addons*.db
-    temp_list = []
-    for addon_id in addon:
-        dolog('CHECKING: %s'%addon_id)
-        if not addon_id in exclude_list:
-            if addon_id in disabled_list and not new_only and enable:
-                temp_list.append(addon_id)
-            elif addon_id not in disabled_list and addon_id not in enabled_list:
-                temp_list.append(addon_id)
-            elif addon_id in enabled_list and not enable:
-                temp_list.append(addon_id)
-            elif addon_id in disabled_list and enable:
-                temp_list.append(addon_id)
-    addon = temp_list
-
-# If you want to bypass the JSON-RPC mode and directly modify the db (READ WARNING ABOVE!!!)
-    if not safe_mode and kodi_ver >= 17:
-        installedtime   = Timestamp('date_time')
-        insert_query    = 'INSERT or IGNORE into installed (addonID , enabled, installDate) VALUES (?,?,?)'
-        update_query    = 'UPDATE installed SET enabled = ? WHERE addonID = ? '
-        insert_values   = [addon, state, installedtime]
-        try:
-            for item in addon:
-                DB_Query(addons_db, insert_query, [item, state, installedtime])
-                DB_Query(addons_db, update_query, [state, item])
-        except:
-            dolog(Last_Error())
-        if refresh:
-            Refresh()
-
-# Using the safe_mode (JSON-RPC)
-    else:
-        final_enabled = []
-        if state:
-            my_value = 'true'
-            log_value = 'ENABLED'
-        else:
-            my_value = 'false'
-            log_value = 'DISABLED'
-
-        for my_addon in addon:
-
-# If enabling the add-on then we also check for dependencies and enable them first
-            if state:
-                dolog('Checking dependencies for : %s'%my_addon)
-                dependencies = Dependency_Check(addon_id=my_addon, recursive=True)
-
-# traverse through the dependencies in reverse order attempting to enable
-                for item in reversed(dependencies):
-                    if not item in exclude_list and not item in final_enabled and not item in enabled_list:
-                        dolog('Attempting to enable: %s'%item)
-                        addon_set = Set_Setting(setting_type='addon_enable', setting=item, value = 'true')
-
-# If we've successfully enabled then we add to list so we can skip any other instances
-                        if addon_set:
-                            dolog('%s now %s' % (my_addon, log_value))
-                            final_enabled.append(item)
-
-# Now the dependencies are enabled we need to enable the actual main add-on
-            if not my_addon in final_enabled:
-                addon_set = Set_Setting(setting_type='addon_enable', setting=my_addon, value = my_value)
-            if addon_set:
-                dolog('%s now %s' % (my_addon, log_value))
-                final_enabled.append(addon)
-    if refresh:
-        Refresh('container')
 #----------------------------------------------------------------

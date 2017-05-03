@@ -13,7 +13,9 @@
 # please make sure you give approptiate credit in your add-on description (noobsandnerds.com)
 # 
 # Please make sure you've read and understood the license, this code can NOT be used commercially
-# and it can NOT be modified and redistributed. Thank you.
+# and it can NOT be modified and redistributed. If you're found to be in breach of this license
+# then any affected add-ons will be blacklisted and will not be able to work on the same system
+# as any other add-ons which use this code. Thank you for your cooperation.
 
 import sys
 import urllib
@@ -26,11 +28,18 @@ dialog = xbmcgui.Dialog()
 mode   = ''
 #----------------------------------------------------------------
 # TUTORIAL #
-def Add_Dir(name, url, mode, folder=False, icon='', fanart='', description='', info_labels={}, set_art={}, set_property={}, content_type='', context_items=None, context_override=False, playable=False):
+def Add_Dir(name, url='', mode='', folder=False, icon='', fanart='', description='', info_labels={}, set_art={}, set_property={}, content_type='', context_items=None, context_override=False, playable=False):
     """
 This allows you to create a list item/folder inside your add-on.
 Please take a look at your addon default.py comments for more information
 (presuming you created one at http://totalrevolution.tv)
+
+TOP TIP: If you want to send multiple variables through to a function just
+send through as a dictionary encapsulated in quotation marks. In the function
+you can then use the following code to access them:
+
+params = eval(url)
+^ That will then give you a dictionary where you can just pull each variable and value from.
 
 CODE: Add_Dir(name, url, mode, [folder, icon, fanart, description, info_labels, content_type, context_items, context_override, playable])
 
@@ -38,10 +47,12 @@ AVAILABLE PARAMS:
 
     (*) name  -  This is the name you want to show for the list item
 
-    (*) url   -  This is a temporary global variable (string), when you click on
-    another list item it will change to whatever you have that set to
+    url   -  This is a temporary global variable (string), when you click on
+    another list item it will change to whatever you have that set to. If you
+    send through a url starting with plugin:// the item will open up into
+    that plugin path.
 
-    (*) mode  -  The mode you want to open when this item is clicked, this is set
+    mode  -  The mode you want to open when this item is clicked, this is set
     in your master_modes dictionary (see template add-on linked above)
 
     folder       -  This is an optional boolean, by default it's set to False.
@@ -102,10 +113,11 @@ Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=
 # ^ This will add an item to the list AND a context menu item for when bring up the menu (when focused on this item).
 # ^^ The context_override is set to False which means the new items will appear alongside the default Kodi context menu items.
 ~"""
+    
+
 
     from __init__       import dolog
     from systemtools    import Data_Type
-
 
     module_id   =  'script.module.python.koding.aio'
     this_module =  xbmcaddon.Addon(id=module_id)
@@ -166,7 +178,7 @@ Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=
         set_property["Fanart_Image"] = fanart
 
 # Set the main listitem properties
-    liz = xbmcgui.ListItem(label=name, iconImage=icon, thumbnailImage=icon)
+    liz = xbmcgui.ListItem(label=str(name), iconImage=str(icon), thumbnailImage=str(icon))
 
 # Set the infolabels
     liz.setInfo(type=content_type, infoLabels=info_labels)
@@ -190,7 +202,10 @@ Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=
     u += "&fanart="         +urllib.quote_plus(fanart)
     u += "&description="    +urllib.quote_plus(description)
     
-    if folder:
+    if url.startswith('plugin://'):
+        xbmcplugin.addDirectoryItem(handle=addon_handle,url=url,listitem=liz,isFolder=True) 
+
+    elif folder:
         xbmcplugin.addDirectoryItem(handle=addon_handle,url=u,listitem=liz,isFolder=True)
 
     elif playable:

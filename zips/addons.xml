@@ -15,7 +15,7 @@
 
 <addon id="script.module.python.koding.aio"
    name="Python Koding AIO"
-   version="0.5.5"
+   version="0.8.1"
    provider-name="TotalRevolution, noobsandnerds">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
@@ -31,9 +31,9 @@
     <language></language>
     <license>Creative Commons 4.0-NC-ND</license>
     <forum>http://noobsandnerds.com/support/showthread.php?tid=17614</forum>
-    <website>http://noobsandnerds.com</website>
-    <news>Added Sleep_If_Function_Active function</news>
-    <source></source>
+    <website>http://totalrevolution.tv</website>
+    <news>New routing added</news>
+    <source>https://github.com/totalrevolution/totalrevolution/tree/master/script.module.python.koding.aio</source>
   </extension>
 </addon>
 </addons>
