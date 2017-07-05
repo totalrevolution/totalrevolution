@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="script.module.python.koding.aio"
    name="Python Koding AIO"
-   version="0.9.6.1"
+   version="0.9.6.2"
    provider-name="TotalRevolution, noobsandnerds">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>

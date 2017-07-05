@@ -1,3 +1,6 @@
+v.0.9.6.2:
+- Bug fix for misplaced variable in Addon_Toggle
+
 v.0.9.6.1:
 - Added Check_Repo() function to check if the xml links can be resolved
 - Fixed bug in Toggle_Addons, was failing to enable recently unzipped

@@ -874,9 +874,9 @@ koding.Refresh('container')
                         addon_set = False
                     else:
                         addon_set = Set_Setting(setting_type='addon_enable', setting=my_addon, value = my_value)
-            if addon_set:
-                dolog('%s now %s' % (my_addon, log_value))
-                final_enabled.append(addon)
+                if addon_set:
+                    dolog('%s now %s' % (my_addon, log_value))
+                    final_enabled.append(addon)
         if len(bad_repo) > 0:
             final_list = 'The following repostitories are not resolving so have not been installed: '
             for item in bad_repo:
