@@ -1,3 +1,76 @@
+v.0.9.6.1:
+- Added Check_Repo() function to check if the xml links can be resolved
+- Fixed bug in Toggle_Addons, was failing to enable recently unzipped
+- Updated some missing info from the README file
+
+v.0.9.6:
+- Added Requirements function to return min and max requirements for kodi dependencies
+- Added Highest_Version function for returning highest version in a list
+- Improved some video.py functionality, thanks to midraal
+- Fixed Adult_Toggle, had had a typo in there which was occasionally causing an error
+- Fixed exception in adult toggele for when no id can be found natively
+- Fixed the strings so error message works for run of online code when in debug mode
+- Removed Install_Addon due to high server loads at NaN. This is hopefully temporary
+but at this moment in time the future of this function is uncertain.
+
+v.0.9.5:
+- Fixed bug in sleep_if_function_active, was closing dialog busy
+
+v.0.9.4:
+- Added new Adult_Toggle function
+- Improved Adult_Genre so it can take a custom url, no longer NaN dependant.
+
+v.0.9.3.1:
+- Fixed indentation error in database module
+
+v.0.9.3:
+- fixed a bug with remove_from_table
+- added reset_db function to use when running into threading error with sqlite
+- Added exceptions for built-in python libraries, no need to attempt enabling those
+- Fixed Main() commands which had broken due to cleaning of newlines and tabs
+- Fixed 
+
+v.0.9.2:
+- Added Select_Dialog function to allow user to select from multiple values.
+- Fixed the Open_URL function so it works correctly with User_Info again.
+- Changed Open_URL to return False in case of failed attempt (was returning a test string). Will also print details of the bad url to log if addon debugging mode enabled.
+
+v.0.9.1:
+- Added option to send through params in Open_URL (see README for full info)
+- Added Delete_Cookies function
+- Fixed bug in Addon_Settings where it wasn't possible to set a blank string
+- Added an optional error message if Extract fails
+
+v.0.9:
+- Fixed db query example, wasn't working on pre-Krypton
+- Added exception for Get_ID, only works on certain platforms so returns False if not supported on current os.
+
+v.0.8.9:
+- Added extra logging for Main runcode
+- Added proper exceptions if URL could not be opened
+
+v.0.8.8:
+- Removed rogue ampersand in addon.xml
+
+v.0.8.7:
+- Added OK_Dialog function
+- Added YesNo_Dialog function
+- Added Compress function - this will probably end up replacing Archive_Tree longer term
+- Suppressed error popup message when online code fails
+
+v.0.8.6:
+- Fixed logging in Open_URL, was logging everything by default
+
+v.0.8.5:
+- Fixed bad error reporting in addon_enable
+- Fixed example code for Sleep_If_Playback_Active function
+
+v.0.8.4:
+- Added extra json query attempt for addon_enable
+
+v.0.8.3:
+- Fixed Timestamp issue in Addon_Genre function
+
 v.0.8.2:
 - Added Sleep_If_Playback_Active() function, this pauses code until playback stops
 
