@@ -24,7 +24,7 @@ import xbmc
 import xbmcgui
 
 dialog       = xbmcgui.Dialog()
-
+HOME         = xbmc.translatePath('special://home')
 master_modes = {
 # Required for certain koding functions to work
     "populate_list":    {'function': directory.Populate_List, 'args': ["url","start_point","end_point","separator","skip"]},
@@ -57,7 +57,7 @@ BELOW IS AN EXAMPLE OF HOW TO CALL THE CODE IN YOUR MAIN ADDON PY FILE:
 def Test_Function(name,description):
     dialog.ok('This is a test function', name, description')
 
-koding.Add_Dir(name='Test Dialog', url='{"name":"My Test Function", "description" : "Its ALIVE!!!"}', mode='test')
+koding.Add_Dir(name='Test Dialog', url={"name":"My Test Function", "description" : "Its ALIVE!!!"}, mode='test')
 koding.run()
 ~"""
     if mode not in master_modes:
@@ -96,6 +96,7 @@ AVAILABLE PARAMS:
     into, it's set as "main" by default. If you have a different mode
     name you want to open into just edit accordingly.
 ~"""
+    import urllib
     import urlparse
     import sys
     from __init__    import DEBUG
@@ -107,9 +108,12 @@ AVAILABLE PARAMS:
     if mode in master_modes:
         evaled_args = []
 
-# Grab the url and split up into a dictionary of args
+    # Grab the url and split up into a dictionary of args
         try:
             main_url = params["url"]
+        # Convert back from special to physical path - useful for community shares
+            main_url = urllib.unquote_plus(main_url)
+            main_url = main_url.replace('special://home/',HOME)
         except:
             main_url = ''
         try:

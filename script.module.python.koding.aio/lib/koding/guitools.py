@@ -153,6 +153,249 @@ else:
         return True        
 #----------------------------------------------------------------    
 # TUTORIAL #
+def Custom_Dialog(pos='center', dialog='Text', size='700x500', button_width=200,\
+    header='Disclaimer', main_content='Add some text here', buttons=['Decline','Agree'],\
+    header_color='gold', text_color='white', background='000000', transparency=100,\
+    highlight_color='gold', button_color_focused='4e91cf', button_trans_focused=100,\
+    button_color_nonfocused='586381', button_trans_nonfocused=50):
+    """
+A fully customisable dialog where you can have as many buttons as you want.
+Similar behaviour to the standard Kodi yesno dialog but this allows as many buttons
+as you want, as much text as you want (with a slider) as well as fully configurable
+sizing and positioning.
+
+CODE: Custom_Dialog([pos, dialog, size, button_width, header, main_content, buttons,\
+    header_color, text_color, background, transparency, highlight_color, button_color_focused,\
+    button_trans_focused, button_color_nonfocused, button_trans_nonfocused])
+
+AVAILABLE PARAMS:
+
+    pos  -  This is the co-ordinates of where on the screen you want the
+    dialog to appear. This needs to be sent through as a string so for
+    example if you want the dialog top left corner to be 20px in and
+    10px down you would use pos='20x10'. By default this is set to 'center'
+    which will center the dialog on the screen.
+
+    dialog   -  By default this is set to 'Text'. Currently that is the
+    only custom dialog available but there are plans to improve upon this
+    and allow for image and even video dialogs.
+
+    size  - Sent through as a string this is the dimensions you want the
+    dialog to be, by default it's set to '700x500' but you can set to any
+    size you want using that same format. Setting to 'fullscreen' will
+    use 1280x720 (fullscreen).
+
+    button_width  -  This is sent through as an integer and is the width you
+    want your buttons to be. By default this is set to 200 which is quite large
+    but looks quite nice if using only 2 or 3 buttons.
+
+    header  -  Sent through as a string this is the header shown in the dialog.
+    The default is 'Disclaimer'.
+
+    header_color  -  Set the text colour, by default it's 'gold'
+
+    text_color  -  Set the text colour, by default it's 'white'
+
+    main_content  -  This is sent through as a string and is the main message text
+    you want to show in your dialog. When the ability to add videos, images etc.
+    is added there may well be new options added to this param but it will remain
+    backwards compatible.
+
+    buttons  -  Sent through as a list (tuple) this is a list of all your buttons.
+    Make sure you do not duplicate any names otherwise it will throw off the
+    formatting of the dialog and you'll get false positives with the results.
+
+    background  -  Optionally set the background colour (hex colour codes required).
+    The default is '000000' (black).
+
+    transparency  -  Set the percentage of transparency as an integer. By default
+    it's set to 100 which is a solid colour.
+
+    highlight_color  -  Set the highlighted text colour, by default it's 'gold'
+
+    button_color_focused - Using the same format as background you can set the
+    colour to use for a button when it's focused.
+
+    button_trans_focused - Using the same format as transparency you can set the
+    transparency amount to use on the button when in focus.
+
+    button_color_nonfocused - Using the same format as background you can set the
+    colour to use for buttons when they are not in focus.
+
+    button_trans_nonfocused - Using the same format as transparency you can set the
+    transparency amount to use on the buttons when not in focus.
+
+EXAMPLE CODE:
+main_text = 'This is my main text.\n\nYou can add anything you want in here and the slider will allow you to see all the contents.\n\nThis example shows using a blue background colour and a transparency of 90%.\n\nWe have also changed the highlighted_color to yellow.'
+my_buttons = ['button 1', 'button 2', 'button 3']
+my_choice = koding.Custom_Dialog(main_content=main_text,pos='center',buttons=my_buttons,background='213749',transparency=90,highlight_color='yellow')
+dialog.ok('CUSTOM DIALOG 1','You selected option %s'%my_choice,'The value of this is: [COLOR=dodgerblue]%s[/COLOR]'%my_buttons[my_choice])
+
+main_text = 'This is example 2 with no fancy colours, just a fullscreen and a working scrollbar.\n\nYou\'ll notice there are also a few more buttons on this one.\n\nline 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\nline 10\nline 11\nline 12\nline 13\nline 14\nline 15\nline 16\nline 17\nline 18\nline 19\nline 20\n\nYou get the idea we\'ll stop there!'
+my_buttons = ['button 1', 'button 2', 'button 3','button 4', 'button 5', 'button 6','button 7', 'button 8', 'button 9','button 10', 'button 11', 'button 12', 'button 13','button 14', 'button 15', 'button 16','button 17', 'button 18', 'button 19','button 20']
+my_choice = koding.Custom_Dialog(main_content=main_text,pos='center',size='fullscreen',buttons=my_buttons)
+dialog.ok('CUSTOM DIALOG 2','You selected option %s'%my_choice,'The value of this is: [COLOR=dodgerblue]%s[/COLOR]'%my_buttons[my_choice])
+~"""
+    koding_path = xbmc.translatePath("special://home/addons/script.module.python.koding.aio")
+    skin_path   = os.path.join(koding_path,"resources","skins","Default","720p")
+    ACTION      = -1
+# Convert the transparency percentage to hex
+    transparency = float(transparency) / 100 * 255
+    transparency = hex(int(transparency)).split('x')[1]
+    button_trans_focused = float(button_trans_focused) / 100 * 255
+    button_trans_focused = hex(int(button_trans_focused)).split('x')[1]
+    button_trans_nonfocused = float(button_trans_nonfocused) / 100 * 255
+    button_trans_nonfocused = hex(int(button_trans_nonfocused)).split('x')[1]
+
+# Work out the dialog dimensions
+    if size == 'fullscreen':
+        dialog_width = '1280'
+        dialog_height = '720'
+    else:
+        dialog_width, dialog_height = size.split('x')  
+
+    button_count    = len(buttons)
+    buttons_per_row = (int(dialog_width)-25) / (button_width+25)
+    if buttons_per_row > button_count:
+        buttons_per_row = button_count
+
+# work out the number of rows, round up if a float
+    button_rows     = int(button_count/buttons_per_row) + (button_count % buttons_per_row > 0)
+
+# Work out the positioning of the dialog
+    if pos == 'center':
+        posx = str( (1280 - int(dialog_width)) / 2)
+        posy = str( (720 - int(dialog_height)) / 2)
+    else:
+        posx, posy = pos.split(',')
+
+# Work out the text area size
+    text_width  = str( int(dialog_width)-80 )
+    text_height = str( (int(dialog_height)-(50*(button_rows+1)))-70 )
+    scroll_pos  = str( int(text_width)+32 )
+    button_max  = int(dialog_height)-30
+
+# Work out the button positions
+    if dialog == 'Text':
+        button_spacing  = ( int(dialog_width)-(buttons_per_row*button_width) ) / (buttons_per_row+1)
+        buttons_dict    = {}
+        counter         = 1
+        row             = 1
+    # Create a dictionary of button positioning
+        for button in buttons:
+            if counter > buttons_per_row:
+                counter = 1
+                row += 1
+        # If starting a new line reset the values
+            if counter > buttons_per_row or counter == 1:
+                current_pos = button_spacing
+                counter += 1
+            else:
+                current_pos = current_pos+button_width+button_spacing
+                counter += 1
+
+            buttons_dict[button] = [str(current_pos),row]
+
+# Set the dialog template name and new temporary "live" XML
+    dialog_type = dialog.capitalize()+'.xml'
+    dialog_new  = 'temp.xml'
+    dialog_path = os.path.join(skin_path,dialog_type)
+    temp_path   = os.path.join(skin_path,dialog_new)
+
+    button_num   = 100
+    counter      = 1
+    buttons_code = ''
+    for button in buttons:
+        if buttons_dict[button][1] == 1:
+            onup = 99
+        else:
+            onup = button_num-buttons_per_row
+
+    # If button is on the last row we set down to scrollbar
+        if buttons_dict[button][1] == button_rows:
+            ondown = 99
+    # Otherwise set down to the item on row below
+        elif buttons_dict[button][1] != button_rows:
+            ondown = button_num+buttons_per_row
+
+    # Set the vertical position (y) of the buttons
+        button_y = str( int(text_height)+(buttons_dict[button][1]*50)+40 )
+        if ( int(text_height) < 200 ) or ( int(button_y) > button_max ):
+            if size != 'fullscreen':
+                xbmcgui.Dialog().ok('WE NEED A BIGGER WINDOW!','The amount of buttons sent through do not fit in this window. Either make the button width smaller or make a bigger window')
+            else:
+                xbmcgui.Dialog().ok('SMALLER BUTTONS NEEDED!','The amount of buttons sent through do not fit in this window. Either send through less buttons or decrease their width using the button_width param.')
+            return
+        button_x = str( buttons_dict[button][0] )
+
+        buttons_code += '\
+           <control type="button" id="%s">\n\
+                <posx>%s</posx>\n\
+                <posy>%s</posy>\n\
+                <width>%s</width>\n\
+                <height>40</height>\n\
+                <label>%s</label>\n\
+                <texturefocus colordiffuse="%s%s">DialogBack.png</texturefocus>\n\
+                <texturenofocus colordiffuse="%s%s">DialogBack.png</texturenofocus>\n\
+                <font>font12_title</font>\n\
+                <textcolor>%s</textcolor>\n\
+                <focusedcolor>%s</focusedcolor>\n\
+                <align>center</align>\n\
+                <onleft>%s</onleft>\n\
+                <onright>%s</onright>\n\
+                <onup>%s</onup>\n\
+                <ondown>%s</ondown>\n\
+            </control>\n' % (button_num, button_x, button_y, button_width, buttons[counter-1],\
+                            button_trans_focused, button_color_focused, button_trans_nonfocused,\
+                            button_color_nonfocused, text_color, highlight_color, button_num-1,\
+                            button_num+1, onup, ondown)
+        button_num += 1
+        counter    += 1
+
+# Grab contents of the template and replace with our new values
+    with open(dialog_path, 'r') as content_file:
+        content = content_file.read()
+        content = content.replace('dialog_width',dialog_width)\
+            .replace('dialog_height',dialog_height)\
+            .replace('text_width',text_width)\
+            .replace('text_height',text_height)\
+            .replace('pos_x',posx)\
+            .replace('pos_y',posy)\
+            .replace('PK_Transparency',transparency)\
+            .replace('PK_Color',background)\
+            .replace('PK_Text_Color',text_color)\
+            .replace('PK_Header_Color',header_color)\
+            .replace('<!-- buttons -->',buttons_code)
+# Create the new temp "live" XML
+    myfile = open(temp_path,'w')
+    myfile.write(content)
+    myfile.close()
+
+    d=MyDisclaimer(dialog_new,koding_path,header=header,main_content=main_content)
+    d.doModal()
+    ACTION = d.ACTION
+    del d
+    return ACTION
+
+class MyDisclaimer(xbmcgui.WindowXMLDialog):
+    def __init__(self,*args,**kwargs):
+        self.header=kwargs['header']
+        self.main_content=kwargs['main_content']
+        self.WINDOW=xbmcgui.Window( 10000 )
+        self.WINDOW.setProperty( 'PK_Header' , self.header )
+        self.WINDOW.setProperty( 'PK_Main_Text' , self.main_content )
+        self.ACTION=-1
+    def onClick( self, controlID ):
+        if controlID>=100:
+            self.ACTION=(controlID-100)
+            self.close()
+        elif controlID==12:
+            self.close()
+    def onAction( self, action ):
+        if action in [ 5, 6, 7, 9, 10, 92, 117 ] or action.getButtonCode() in [275,257,261]:
+            self.close()
+#----------------------------------------------------------------    
+# TUTORIAL #
 def Keyboard(heading='',default='',hidden=False,return_false=False,autoclose=False,kb_type='alphanum'):
     """
 Show an on-screen keyboard and return the string
@@ -207,16 +450,17 @@ dialog.ok('IP RETURNED','You typed in:', '', '[COLOR=dodgerblue]%s[/COLOR]'%myte
 mytext = koding.Keyboard(heading='Password',kb_type='password')
 dialog.ok('MD5 RETURN','The md5 for this password is:', '', '[COLOR=dodgerblue]%s[/COLOR]'%mytext)
 ~"""
+    from vartools import Decode_String
     kb_type = eval( 'xbmcgui.INPUT_%s'%kb_type.upper() )
     if hidden:
         hidden = eval( 'xbmcgui.%s_HIDE_INPUT'%kb_type.upper() )
     keyboard = dialog.input(heading,default,kb_type,hidden,autoclose)
 
     if keyboard != '':
-        return unicode(keyboard, "utf-8")
+        return keyboard
     
     elif not return_false:
-        return default
+        return Decode_String(default)
     
     else:
         return False

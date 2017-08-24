@@ -72,6 +72,7 @@ EXAMPLE CODE:
 HOME = xbmc.translatePath('special://home')
 DST = os.path.join(HOME,'test.zip')
 koding.Archive_Tree(HOME, DST)
+dialog.ok('[COLOR gold]ARCHIVE COMPLETE[/COLOR]','Congratulations your Kodi folder has been zipped up, you can find it in the following location:\n[COLOR dodgerblue]%s[/COLOR]'%DST)
 ~"""
     import zipfile
     import time
@@ -97,7 +98,6 @@ koding.Archive_Tree(HOME, DST)
                 for file in files:
                     contents.append(file)
             total_items =len(contents)
-            xbmc.log(str(contents),2)
             
             for base, dirs, files in os.walk(sourcefile):
                 dirs[:] = [d for d in dirs if d not in exclude_dirs]
@@ -193,30 +193,6 @@ koding.Text_Box('CHECK HOME FOLDER','If you check your Kodi home folder you shou
             shutil.make_archive(dst.replace('.zip',''), 'zip', src)
         elif compression == 'tar':
             shutil.make_archive(dst.replace('.tar',''), 'tar', src)
-#----------------------------------------------------------------    
-# TUTORIAL #
-def Convert_Special(filepath=xbmc.translatePath('special://home')):
-    """
-Convert physcial paths stored in text files to their special:// equivalent.
-
-CODE: Convert_Special([filepath])
-
-AVAILABLE PARAMS:
-
-    filepath  -  This is the path you want to scan, by default it's set to the Kodi HOME directory.
-
-EXAMPLE CODE:
-koding.Convert_Special()
-~"""    
-    import urllib
-    for root, dirs, files in os.walk(filepath):
-        for file in files:
-            if file.endswith(".xml") or file.endswith(".hash") or file.endswith("properies") or file.endswith(".ini"):
-                contents     = Text_File(os.path.join(root,file), 'r')
-                encodedpath  = urllib.quote(HOME)
-                encodedpath2 = encodedpath.replace('%3A','%3a').replace('%5C','%5c')
-                newfile = contents.replace(HOME, 'special://home/').replace(encodedpath, 'special://home/').replace(encodedpath2, 'special://home/')
-                Text_File(os.path.join(root, file), 'w', newfile)
 #----------------------------------------------------------------    
 # TUTORIAL #
 def Create_Paths(path=''):
@@ -406,9 +382,11 @@ koding.Dummy_File(dst=file1, size=10, size_format='kb')
 koding.Dummy_File(dst=file2, size=10, size_format='kb')
 koding.Dummy_File(dst=file3, size=10, size_format='kb')
 
-dialog.ok('TEST FILE CREATED','If you look in your addon_data folder you should now see a new test folder containing 3 dummy files. The folder name is \'py_koding_test\'.')
-if dialog.yesno('DELETE FOLDER','Everything except file1.txt will now be removed from:', '/userdata/py_koding_test/','Do you want to continue?'):
+dialog.ok('[COLOR gold]TEST FILE CREATED[/COLOR]','If you look in your userdata folder you should now see a new test folder containing 3 dummy files. The folder name is \'py_koding_test\'.')
+if dialog.yesno('[COLOR gold]DELETE FOLDER[/COLOR]','Everything except file1.txt will now be removed from:', '/userdata/py_koding_test/','Do you want to continue?'):
     koding.Delete_Folders(filepath=delete_path, ignore=[file1])
+    dialog.ok('[COLOR gold]DELETE LEFTOVERS[/COLOR]','When you press OK we will delete the whole temporary folder we created including it\'s contents')
+    koding.Delete_Folders(filepath=delete_path)
 ~"""
     exclude_list = ['','/','\\','C:/','storage']
 
@@ -483,6 +461,39 @@ os.remove(dummy)
     f.close()
 #----------------------------------------------------------------
 # TUTORIAL #
+def End_Path(path):
+    """
+Split the path at every '/' and return the final file/folder name.
+If your path uses backslashes rather than forward slashes it will use
+that as the separator.
+
+CODE:  End_Path(path)
+
+AVAILABLE PARAMS:
+
+    path  -  This is the path where you want to grab the end item name.
+
+EXAMPLE CODE:
+addons_path = xbmc.translatePath('special://home/addons')
+file_name = koding.End_Path(path=addons_path)
+dialog.ok('ADDONS FOLDER','Path checked:',addons_path,'Folder Name: [COLOR=dodgerblue]%s[/COLOR]'%file_name)
+file_path = xbmc.translatePath('special://home/addons/script.module.python.koding.aio/addon.xml')
+file_name = koding.End_Path(path=file_path)
+dialog.ok('FILE NAME','Path checked:',file_path,'File Name: [COLOR=dodgerblue]%s[/COLOR]'%file_name)
+~"""
+    if '/' in path:
+        path_array = path.split('/')
+        if path_array[-1] == '':
+            path_array.pop()
+    elif '\\' in path:
+        path_array = path.split('\\')
+        if path_array[-1] == '':
+            path_array.pop()
+    else:
+        return path
+    return path_array[-1]
+#----------------------------------------------------------------
+# TUTORIAL #
 def Extract(_in, _out, dp=None, show_error=False):
     """
 This function will extract a zip or tar file and return true or false so unlike the
@@ -510,10 +521,16 @@ AVAILABLE PARAMS:
     will appear showing details of the file which failed to extract.
 
 EXAMPLE CODE:
+koding_path = xbmc.translatePath('special://home/addons/script.module.python.koding.aio')
+zip_dest = xbmc.translatePath('special://home/test_addon.zip')
+extract_dest = xbmc.translatePath('special://home/TEST')
+koding.Compress(src=koding_path,dst=zip_dest,compression='zip',parent=True)
 dp = xbmcgui.DialogProgress()
 dp.create('Extracting Zip','Please Wait')
-if koding.Extract(_in=src,_out=dst,dp=dp,show_error=True):
-    dialog.ok('YAY IT WORKED!','Successful extraction complete')
+if koding.Extract(_in=zip_dest,_out=extract_dest,dp=dp,show_error=True):
+    dialog.ok('YAY IT WORKED!','We just zipped up your python koding add-on then extracted it to a new folder in your Kodi root directory called TEST. Press OK to delete these files.')
+    os.remove(zip_dest)
+    shutil.rmtree(extract_dest)
 else:
     dialog.ok('BAD NEWS!','UH OH SOMETHING WENT HORRIBLY WRONG')
 ~"""
@@ -592,50 +609,6 @@ if dialog.yesno('TOTAL WIPEOUT!','This will attempt give you a totally fresh ins
         cleanwipe = subprocess.Popen(['exec ''pm clear '+str(running)+''], executable='/system/bin/sh', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=Get_ID(setid=True)).communicate()[0]
     else:
         return False
-#----------------------------------------------------------------
-# TUTORIAL #
-def Find_In_Text(content, start, end, show_errors = False):
-    """
-Regex through some text and return a list of matches.
-Please note this will return a LIST so even if only one item is found
-you will still need to access it as a list, see example below.
-
-CODE: koding.Find_In_Text(content, start, end, [show_errors])
-
-AVAILABLE PARAMS:
-    
-    (*) content  -  This is the string to search
-
-    (*) start    -  The start search string
-
-    (*) end      -  The end search string
-
-    show_errors  -  Default is False, if set to True the code will show help
-    dialogs for bad code.
-
-EXAMPLE CODE:
-textsearch = 'This is some text so lets have a look and see if we can find the words "lets have a look"'
-search_result = koding.Find_In_Text(textsearch, 'text so ', ' and see')
-dialog.ok('SEARCH RESULT','You searched for the start string of "text so " and the end string of " and see". Your result is: %s' % search_result[0])
-
-# Please note: we know for a fact there is only one result which is why we're only accessing list item zero.
-# If we were expecting more than one return we would probably do something more useful and loop through in a for loop.
-~"""
-    import re
-    if content == None or content == False:
-        if show_errors:
-            dialog.ok('ERROR WITH REGEX','No content sent through - there\'s nothing to scrape. Please check the website address is still active (details at bottom of log).')
-            xbmc.log(content)
-        return
-    if end != '':
-        links = re.findall('%s([\s\S]*?)%s' % (start, end), content)
-    if len(links)>0:
-        return links
-    else:
-        if show_errors:
-            xbmc.log(content)
-            dialog.ok('ERROR WITH REGEX','Please check your regex, there was content sent through to search but there are no matches for the regex supplied. The raw content has now been printed to the log')
-        return None
 #----------------------------------------------------------------
 # TUTORIAL #
 def Free_Space(dirname = HOME, filesize = 'b'):
@@ -806,110 +779,6 @@ koding.Text_Box('ADDON FOLDERS','Below is a list of folders found in the addons 
                     else:
                         final_list.append(dirname)
     return final_list
-#---------------------------------------------------------------------------------------------------
-# TUTORIAL #
-def Highest_Version(content=[],start_point='',end_point=''):
-    """
-Send through a list of strings which all have a common naming structure,
-the one with the highest version number will be returned.
-
-CODE: Highest_Version(content,[start_point,end_point])
-
-AVAILABLE PARAMS:
-
-    (*) content  -  This is the list of filenames you want to check.
-
-    start_point  -  If your filenames have a common character/string immediately
-    before the version number enter that here. For example if you're looking at
-    online repository/add-on files you would use '-' as the start_point. The version
-    numbers always appear after the final '-' with add-ons residing on repo's.
-
-    end_point  -  If your version number is followed by a common string (e.g. '.zip')
-    then enter it in here.
-
-EXAMPLE CODE:
-mylist = ['plugin.test-1.0.zip','plugin.test-0.7.zip','plugin.test-1.1.zip','plugin.test-0.9.zip']
-dialog.ok('[COLOR=gold]OUR LIST OF FILES[/COLOR]', '[COLOR=dodgerblue]%s[/COLOR]\n[COLOR=powderblue]%s[/COLOR]\n[COLOR=dodgerblue]%s[/COLOR]\n[COLOR=powderblue]%s[/COLOR]'%(mylist[0],mylist[1],mylist[2],mylist[3]))
-
-highest = Highest_Version(content=mylist,start_point='-',end_point='.zip')
-dialog.ok('HIGHEST VERSION', 'The highest version number of your files is:','[COLOR=dodgerblue]%s[/COLOR]'%highest)
-~"""
-    highest      = 0
-    highest_ver  = ''
-    for item in content:
-        version = item.replace(end_point,'')
-        version = version.split(start_point)
-        version = version[len(version)-1]
-        if version > highest:
-            highest      = version
-            highest_ver  = item
-    return highest_ver
-#----------------------------------------------------------------
-# TUTORIAL #
-def md5_check(src,string=False):
-    """
-Return the md5 value of string/file/directory, this will return just one unique value.
-
-CODE: md5_check(src,[string])
-
-AVAILABLE PARAMS:
-
-    (*) src  -  This is the source you want the md5 value of.
-    This can be a string, path of a file or path to a folder.
-
-    string  -  By default this is set to False but if you want to send
-    through a string rather than a path set this to True.
-
-EXAMPLE CODE:
-home = xbmc.translatePath('special://home')
-home_md5 = koding.md5_check(home)
-dialog.ok('md5 Check', 'The md5 of your home folder is:', '[COLOR=dodgerblue]%s[/COLOR]'%home_md5)
-
-guisettings = xbmc.translatePath('special://profile/guisettings.xml')
-guisettings_md5 = koding.md5_check(guisettings)
-dialog.ok('md5 Check', 'The md5 of your guisettings.xml:', '[COLOR=dodgerblue]%s[/COLOR]'%guisettings_md5)
-
-mystring = 'This is just a random text string we\'ll get the md5 value of'
-myvalue = koding.md5_check(src=mystring,string=True)
-dialog.ok('md5 String Check', 'String to get md5 value of:', '[COLOR=dodgerblue]%s[/COLOR]'%mystring)
-dialog.ok('md5 String Check', 'The md5 value of your string:', '[COLOR=dodgerblue]%s[/COLOR]'%myvalue)
-~"""
-    import hashlib
-    import os
-
-    SHAhash = hashlib.md5()
-    if not os.path.exists(src) and not string:
-        return -1
-
-# If source is a file
-    if string:
-        return hashlib.md5(src).hexdigest()
-# If source is a file
-    elif not os.path.isdir(src):
-        return hashlib.md5(open(src,'rb').read()).hexdigest()
-
-# If source is a directory
-    else:
-        try:
-            for root, dirs, files in os.walk(src):
-              for names in files:
-                filepath = os.path.join(root,names)
-                try:
-                  f1 = open(filepath, 'rb')
-                except:
-                  f1.close()
-                  continue
-
-            while 1:
-# Read file in as little chunks
-              buf = f1.read(4096)
-              if not buf : break
-              SHAhash.update(hashlib.md5(buf).hexdigest())
-            f1.close()
-        except:
-            return -2
-
-        return SHAhash.hexdigest()
 #----------------------------------------------------------------
 # TUTORIAL #
 def Move_Tree(src, dst, dp=None):
@@ -983,33 +852,6 @@ shutil.rmtree(destination)
 
     if dp:
         dp.close()
-#----------------------------------------------------------------
-# TUTORIAL #
-def Split_Lines(raw_string, size):
-    """
-Splits up a piece of text into a list of lines x amount of chars in length.
-
-CODE: koding.Split_Lines(raw_string, size)
-
-AVAILABLE PARAMS:
-
-    (*) raw_string  -  This is the text you want split up into lines
-
-    (*) size        -  This is the maximum size you want the line length to be (in characters)
-
-EXAMPLE CODE:
-raw_string = 'This is some test code, let\'s take a look and see what happens if we split this up into lines of 20 chars per line'
-my_list = koding.Split_Lines(raw_string,20)
-koding.Text_Box('List of lines',str(my_list))
-~"""    
-    final_list=[""]
-    for i in raw_string:
-        length = len(final_list)-1
-        if len(final_list[length]) < size:
-            final_list[length]+=i
-        else:
-            final_list += [i]
-    return final_list
 #----------------------------------------------------------------
 # TUTORIAL #
 def Text_File(path, mode, text = ''):

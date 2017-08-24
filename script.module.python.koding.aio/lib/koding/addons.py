@@ -28,6 +28,7 @@ import xbmcgui
 import filetools
 
 ADDONS      = xbmc.translatePath('special://home/addons')
+XBMC_PATH   = xbmc.translatePath('special://xbmc')
 kodi_ver    = int(float(xbmc.getInfoLabel("System.BuildVersion")[:2]))
 dialog      = xbmcgui.Dialog()
 
@@ -35,13 +36,6 @@ dialog      = xbmcgui.Dialog()
 # TUTORIAL #
 def Addon_Genre(genre='adult',custom_url=''):
     """
-[COLOR=gold]PREMIUM FEATURE FOR ADDONS EXCLUSIVELY SUPPORTED AT NOOBSANDNERDS[/COLOR]
-If you'd like to hook into this please take a look at the README.
-
-Please Note: Although this hooks into the NaN framework to pull genres you can use this without
-having to hook into their framework if you have a custom url which returns results in the same format.
-Your url must return a dictionary of items in this format: {"addon_name":"addon_id","addon_name_2":"addon_id_2"}
-
 Return a dictionary of add-ons which match a specific genre.
 
 CODE: Addon_Genre([genre, custom_url])
@@ -49,37 +43,35 @@ CODE: Addon_Genre([genre, custom_url])
 AVAILABLE PARAMS:
     
     genre  -  By default this is set to 'adult' which will return
-    a dictionary of all known adult add-ons. For a full list of all
-    the available genres you can filter by take a look at the Add-on Portal
-    link below. If you click on each of the genre links then look at the
-    url you'll be able to see the name to use. For example if you click on
-    "Dev Tools" you'll see the url shows as 'devtools' and that's what you'd
-    send through to this function if you only wanted those to show.
-    http://noobsandnerds.com/addons/category/genres/
+    a dictionary of all known adult add-ons. The genre details are pulled from the
+    Add-on Portal at noobsandnerds.com so you can use any of the supported genre tags
+    listed on this page: http://noobsandnerds.com/latest/?p=3762
 
-    custom_url  -  If you have your own custom url which returns genres
-    you can enter it here and use that rather than rely on NaN categorisation.
+    custom_url  -  If you have your own custom url which returns a dictionary
+    of genres you can enter it here and use that rather than rely on NaN categorisation.
 
 EXAMPLE CODE:
-space_addons = koding.Addon_Genre(genre='space')
-if space_addons:
-    my_return = 'LIST OF AVAILABLE SPACE BASED ADD-ONS:\n\n'
+dialog.ok('[COLOR gold]ADD-ON GENRES[/COLOR]','We will now list all known comedy based add-ons. If you have add-ons installed which you feel should be categorised as supplying comedy but they aren\'t then you can help tag them up correctly via the Add-on Portal at NaN.')
+comedy_addons = koding.Addon_Genre(genre='comedy')
+if comedy_addons:
+    my_return = 'LIST OF AVAILABLE COMEDY BASED ADD-ONS:\n\n'
 
 # Convert the dictionary into a list:
-    space_addons = space_addons.items()
-    for item in space_addons:
+    comedy_addons = comedy_addons.items()
+    for item in comedy_addons:
         my_return += '[COLOR=gold]Name:[/COLOR] %s   |   [COLOR=dodgerblue]ID:[/COLOR] %s\n' % (item[0],item[1])
-    koding.Text_Box('SPACE ADD-ONS',my_return)
+    koding.Text_Box('[COLOR gold]COMEDY ADD-ONS[/COLOR]',my_return)
 ~"""
     import binascii
-    from __init__       import Main
+    from __init__       import converthex
     from filetools      import Text_File
     from systemtools    import Timestamp
     from web            import Open_URL
     
-    local_path  = binascii.hexlify(genre)
-    cookie_path = xbmc.translatePath("special://profile/addon_data/script.module.python.koding.aio/cookies/")
-    final_path  = os.path.join(cookie_path,local_path)
+    download_new = True
+    local_path   = binascii.hexlify('addons')
+    cookie_path  = xbmc.translatePath("special://profile/addon_data/script.module.python.koding.aio/cookies/")
+    final_path   = os.path.join(cookie_path,local_path)
     if not os.path.exists(cookie_path):
         os.makedirs(cookie_path)
 
@@ -88,33 +80,21 @@ if space_addons:
         old = int(modified)
         now = int(Timestamp('epoch'))
 # Add a 24hr wait so we don't kill server
-        if now > (modified+86400):
-            if custom_url == '':
-                Main('addon_list|g:%s'%genre)
-            else:
-                addon_list = Open_URL(custom_url)
-                try:
-                    addon_list = eval(addon_list)
-                    Text_File(final_path,"w",binascii.hexlify(str(addon_list)) )
-                except:
-                    pass
+        if now < (modified+86400):
+            download_new = False
 
-# Create new file if it doesn't exist
-    else:
+# Create new file
+    if download_new:
         if custom_url == '':
-            Main('addon_list|g:%s'%genre)
-        else:
-            addon_list = Open_URL(custom_url)
-            try:
-                addon_list = eval(addon_list)
-                Text_File(final_path,"w",binascii.hexlify(str(addon_list)) )
-            except:
-                pass
+            custom_url = converthex('687474703a2f2f6e6f6f6273616e646e657264732e636f6d2f6164646f6e732f6164646f6e5f6c6973742e747874')
+        addon_list = Open_URL(custom_url)
+        Text_File(final_path, "w", addon_list)
 
+# Grab details of the relevant genre
     if os.path.exists(final_path):
         try:
-            addon_list = eval(binascii.unhexlify(Text_File(final_path, 'r')))
-            return addon_list
+            addon_list = eval( Text_File(final_path, 'r') )
+            return addon_list[genre]
         except:
             return False
     else:
@@ -385,18 +365,18 @@ def Check_Deps(addon_path, depfiles = []):
     return depfiles
 #----------------------------------------------------------------
 # TUTORIAL #
-def Check_Repo(repo,show_busy=True):
+def Check_Repo(repo,show_busy=True,timeout=10):
     """
 This will check the status of repo and return True if the repo is online or False
 if it contains paths that are no longer accessible online.
 
 IMPORTANT: If you're running an old version of Kodi which uses the old Python 2.6
 (OSX and Android lower than Kodi 17 or a linux install with old Python installed on system)
-you will get a return of True on https links regardless of their real status. This is due
+you will get a return of False on https links regardless of their real status. This is due
 to the fact Python 2.6 cannot access secure links. Any still using standard http links
 will return the correct results.
 
-CODE:  Check_Repo(repo, [show_busy])
+CODE:  Check_Repo(repo, [show_busy, timeout])
 
 AVAILABLE PARAMS:
 
@@ -407,8 +387,11 @@ AVAILABLE PARAMS:
 
     show_busy - By default this is set to True and a busy dialog will show during the check
 
+    timeout - By default this is set to 10 (seconds) - this is the maximum each request
+    to the repo url will take before timing out and returning False.
+
 EXAMPLE CODE:
-repo_status = Check_Repo('repository.noobsandnerds')
+repo_status = Check_Repo('repository.xxxecho',show_busy=False,timeout=10)
 if repo_status:
     dialog.ok('REPO STATUS','The repository modules4all is: [COLOR=lime]ONLINE[/COLOR]')
 else:
@@ -420,27 +403,28 @@ else:
     from filetools import Text_File
     from guitools  import Show_Busy
     from web       import Validate_Link
-
+    dolog('### CHECKING %s'%repo)
     status = True
     if show_busy:
         Show_Busy()
     if repo.startswith('special://'):
         repo_path = xbmc.translatePath(repo)
-    if not ADDONS in repo:
+    elif not ADDONS in repo and not XBMC_PATH in repo:
         repo_path = os.path.join(ADDONS,repo)
+    else:
+        repo_path = repo
     repo_path = os.path.join(repo_path,'addon.xml')
     dolog(repo_path)
     if os.path.exists(repo_path):
         content  = Text_File(repo_path,'r')
         md5_urls = re.findall(r'<checksum>(.+?)</checksum>', content, re.DOTALL)
         for item in md5_urls:
-            if (item.startswith('https') and (kodi_ver >= 17)) or (item.startswith('http')):
-                link_status = Validate_Link(item)
-                dolog(item)
-                dolog('STATUS: %s'%link_status)
-                if link_status < 200 or link_status >= 400:
-                    status = False
-                    break
+            link_status = Validate_Link(item,timeout)
+            dolog(item)
+            dolog('STATUS: %s'%link_status)
+            if link_status < 200 or link_status >= 400:
+                status = False
+                break
         if show_busy:
             Show_Busy(False)
         return status
@@ -560,8 +544,8 @@ koding.Text_Box('Modules required for %s'%current_id,clean_text)
                 except:
                     dep_path = os.path.join(ADDONS,item)
 
-            if dep_path:
-                depfiles = Check_Deps(dep_path)
+                if dep_path:
+                    depfiles = Check_Deps(dep_path)
 
     return depfiles
 #----------------------------------------------------------------
@@ -684,7 +668,8 @@ else:
     dialog.ok('YOUTUBE NOT INSTALLED','We cannot run this example as it uses the YouTube add-on which has not been found on your system.')
 ~"""
     import xbmcaddon
-    addon_id = Caller()
+    if addon_id == '':
+        addon_id = Caller()
     xbmc.log('ADDON ID: %s'%addon_id,2)
     xbmc.executebuiltin('Addon.OpenSettings(%s)' % addon_id)
     if focus != '':
@@ -706,24 +691,18 @@ def Toggle_Addons(addon='all', enable=True, safe_mode=True, exclude_list=[], new
 Send through either a list of add-on ids or one single add-on id.
 The add-ons sent through will then be added to the addons*.db
 and enabled or disabled (depending on state sent through).
-
 WARNING: If safe_mode is set to False this directly edits the
 addons*.db rather than using JSON-RPC. Although directly amending
 the db is a lot quicker there is no guarantee it won't cause
 severe problems in later versions of Kodi (this was created for v17).
 DO NOT set safe_mode to False unless you 100% understand the consequences!
-
 CODE:  Toggle_Addons([addon, enable, safe_mode, exclude_list, new_only, refresh])
-
 AVAILABLE PARAMS:
-
     (*) addon  -  This can be a list of addon ids, one single id or
     'all' to enable/disable all. If enabling all you can still use
     the exclude_list for any you want excluded from this function.
-
     enable  -  By default this is set to True, if you want to disable
     the add-on(s) then set this to False.
-
     safe_mode  -  By default this is set to True which means the add-ons
     are enabled/disabled via JSON-RPC which is the method recommended by
     the XBMC foundation. Setting this to False will result in a much
@@ -731,18 +710,14 @@ AVAILABLE PARAMS:
     versions of Kodi and it may even cause corruption in future versions.
     Setting to False is NOT recommended and you should ONLY use this if
     you 100% understand the risks that you could break multiple setups.
-
     exclude_list  -  Send through a list of any add-on id's you do not
     want to be included in this command.
-
     new_only  -  By default this is set to True so only newly extracted
     add-on folders will be enabled/disabled. This means that any existing
     add-ons which have deliberately been disabled by the end user are
     not affected.
-
     refresh  - By default this is set to True, it will refresh the
     current container and also force a local update on your add-ons db.
-
 EXAMPLE CODE:
 from systemtools import Refresh
 xbmc.executebuiltin('ActivateWindow(Videos, addons://sources/video/)')
@@ -759,8 +734,8 @@ koding.Refresh('container')
     from filetools      import DB_Path_Check, Get_Contents
     from database       import DB_Query
     from systemtools    import Data_Type, Last_Error, Refresh, Set_Setting, Timestamp
-    from web            import Validate_Link
 
+    kodi_ver        = int(float(xbmc.getInfoLabel("System.BuildVersion")[:2]))
     addons_db       = DB_Path_Check('addons')
     data_type       = Data_Type(addon)
     state           = int(bool(enable))
@@ -783,6 +758,7 @@ koding.Refresh('container')
 # Grab all the add-on ids from addons folder
     if addon == 'all':
         addon     = []
+        ADDONS    = xbmc.translatePath('special://home/addons')
         my_addons = Get_Contents(path=ADDONS, exclude_list=['packages','temp'])
         for item in my_addons:
             addon_id = Get_Addon_ID(item)
@@ -793,25 +769,13 @@ koding.Refresh('container')
     for addon_id in addon:
         if not addon_id in exclude_list and addon_id != '':
             dolog('CHECKING: %s'%addon_id)
-
-# Check ALL addons and not just newly extracted not yet in db
             if addon_id in disabled_list and not new_only and enable:
-                dolog('[1] Adding to temp list: %s'%addon_id)
                 temp_list.append(addon_id)
-
-# Check addons not in our disabled list and also aren't in the enabled list
             elif addon_id not in disabled_list and addon_id not in enabled_list:
-                dolog('[2] Adding to temp list: %s'%addon_id)
                 temp_list.append(addon_id)
-
-# Check addons that are already enabled, get ready to disable
             elif addon_id in enabled_list and not enable:
-                dolog('[3] Adding to temp list: %s'%addon_id)
                 temp_list.append(addon_id)
-
-# Check addons which are disabled get ready to enable (same as first if function??)
             elif addon_id in disabled_list and enable:
-                dolog('[4] Adding to temp list: %s'%addon_id)
                 temp_list.append(addon_id)
     addon = temp_list
 
@@ -832,8 +796,6 @@ koding.Refresh('container')
 
 # Using the safe_mode (JSON-RPC)
     else:
-        Refresh('addons')
-        xbmc.sleep(1000)
         final_enabled = []
         if state:
             my_value = 'true'
@@ -848,7 +810,6 @@ koding.Refresh('container')
             if state:
                 dolog('Checking dependencies for : %s'%my_addon)
                 dependencies = Dependency_Check(addon_id=my_addon, recursive=True)
-                dolog('Dependencies: %s'%dependencies)
 
 # traverse through the dependencies in reverse order attempting to enable
                 for item in reversed(dependencies):
@@ -862,27 +823,148 @@ koding.Refresh('container')
                             final_enabled.append(item)
 
 # Now the dependencies are enabled we need to enable the actual main add-on
-        bad_repo = []
-        for my_addon in addon:
             if not my_addon in final_enabled:
-                ok = True
-                if 'repo' in my_addon:
-                    ok = Check_Repo(my_addon)
-                    if not ok:
-                        dolog('BAD REPO: %s IS NOT RESOLVING SO WE ARE NOT INSTALLING'%my_addon)
-                        bad_repo.append(my_addon)
-                        addon_set = False
-                    else:
-                        addon_set = Set_Setting(setting_type='addon_enable', setting=my_addon, value = my_value)
+                addon_set = Set_Setting(setting_type='addon_enable', setting=my_addon, value = my_value)
+            try:
                 if addon_set:
                     dolog('%s now %s' % (my_addon, log_value))
                     final_enabled.append(addon)
-        if len(bad_repo) > 0:
-            final_list = 'The following repostitories are not resolving so have not been installed: '
-            for item in bad_repo:
-                final_list += item+','
-            final_list = final_list[:-1]
-            dialog.ok('[COLOR=gold]BAD REPOSITORIES FOUND[/COLOR]',final_list)
+            except:
+                pass
     if refresh:
-        Refresh('container')
+        Refresh(['addons','container'])
+
+# NEW CODE NOT WORKING
+#     from __init__       import dolog
+#     from filetools      import DB_Path_Check, Get_Contents
+#     from database       import DB_Query
+#     from systemtools    import Data_Type, Last_Error, Refresh, Set_Setting, Timestamp
+#     from web            import Validate_Link
+
+#     addons_db       = DB_Path_Check('addons')
+#     data_type       = Data_Type(addon)
+#     state           = int(bool(enable))
+#     enabled_list    = []
+#     disabled_list   = []
+#     if kodi_ver >= 17:
+#         on_system   = DB_Query(addons_db,'SELECT addonID, enabled from installed')
+# # Create a list of enabled and disabled add-ons already on system
+#         enabled_list  = Addon_List(enabled=True)
+#         disabled_list = Addon_List(enabled=False)
+
+# # If addon has been sent through as a string we add into a list
+#     if data_type == 'unicode':
+#         addon = addon.encode('utf8')
+#         data_type = Data_Type(addon)
+
+#     if data_type == 'str' and addon!= 'all':
+#         addon = [addon,'']
+
+# # Grab all the add-on ids from addons folder
+#     if addon == 'all':
+#         addon     = []
+#         my_addons = Get_Contents(path=ADDONS, exclude_list=['packages','temp'])
+#         for item in my_addons:
+#             addon_id = Get_Addon_ID(item)
+#             addon.append(addon_id)
+
+# # Find out what is and isn't enabled in the addons*.db
+#     temp_list = []
+#     for addon_id in addon:
+#         if not addon_id in exclude_list and addon_id != '':
+#             dolog('CHECKING: %s'%addon_id)
+
+# # Check ALL addons and not just newly extracted not yet in db
+#             if addon_id in disabled_list and not new_only and enable:
+#                 dolog('[1] Adding to temp list: %s'%addon_id)
+#                 temp_list.append(addon_id)
+
+# # Check addons not in our disabled list and also aren't in the enabled list
+#             elif addon_id not in disabled_list and addon_id not in enabled_list:
+#                 dolog('[2] Adding to temp list: %s'%addon_id)
+#                 temp_list.append(addon_id)
+
+# # Check addons that are already enabled, get ready to disable
+#             elif addon_id in enabled_list and not enable:
+#                 dolog('[3] Adding to temp list: %s'%addon_id)
+#                 temp_list.append(addon_id)
+
+# # Check addons which are disabled get ready to enable (same as first if function??)
+#             elif addon_id in disabled_list and enable:
+#                 dolog('[4] Adding to temp list: %s'%addon_id)
+#                 temp_list.append(addon_id)
+#     addon = temp_list
+
+# # If you want to bypass the JSON-RPC mode and directly modify the db (READ WARNING ABOVE!!!)
+#     if not safe_mode and kodi_ver >= 17:
+#         installedtime   = Timestamp('date_time')
+#         insert_query    = 'INSERT or IGNORE into installed (addonID , enabled, installDate) VALUES (?,?,?)'
+#         update_query    = 'UPDATE installed SET enabled = ? WHERE addonID = ? '
+#         insert_values   = [addon, state, installedtime]
+#         try:
+#             for item in addon:
+#                 DB_Query(addons_db, insert_query, [item, state, installedtime])
+#                 DB_Query(addons_db, update_query, [state, item])
+#         except:
+#             dolog(Last_Error())
+#         if refresh:
+#             Refresh()
+
+# # Using the safe_mode (JSON-RPC)
+#     else:
+#         Refresh('addons')
+#         xbmc.sleep(1000)
+#         final_enabled = []
+#         if state:
+#             my_value = 'true'
+#             log_value = 'ENABLED'
+#         else:
+#             my_value = 'false'
+#             log_value = 'DISABLED'
+
+#         for my_addon in addon:
+
+# # If enabling the add-on then we also check for dependencies and enable them first
+#             if state:
+#                 dolog('Checking dependencies for : %s'%my_addon)
+#                 dependencies = Dependency_Check(addon_id=my_addon, recursive=True)
+#                 dolog('Dependencies: %s'%dependencies)
+
+# # traverse through the dependencies in reverse order attempting to enable
+#                 for item in reversed(dependencies):
+#                     if not item in exclude_list and not item in final_enabled and not item in enabled_list:
+#                         dolog('Attempting to enable: %s'%item)
+#                         addon_set = Set_Setting(setting_type='addon_enable', setting=item, value = 'true')
+
+# # If we've successfully enabled then we add to list so we can skip any other instances
+#                         if addon_set:
+#                             dolog('%s now %s' % (my_addon, log_value))
+#                             final_enabled.append(item)
+
+# # Now the dependencies are enabled we need to enable the actual main add-on
+#         bad_repo = []
+#         for my_addon in addon:
+#             if not my_addon in final_enabled:
+#                 ok = True
+#                 addon_set = True
+#                 if 'repo' in my_addon:
+#                     ok = Check_Repo(my_addon)
+#                     if not ok:
+#                         dolog('BAD REPO: %s IS NOT RESOLVING SO WE ARE NOT INSTALLING'%my_addon)
+#                         addon_set = False
+#                 if addon_set:
+#                     addon_set = Set_Setting(setting_type='addon_enable', setting=my_addon, value = my_value)
+#                 if addon_set:
+#                     dolog('%s now %s' % (my_addon, log_value))
+#                     final_enabled.append(addon)
+#                 else:
+#                     bad_repo.append(my_addon)
+#         if len(bad_repo) > 0:
+#             final_list = 'The following repostitories are not resolving so have not been installed: '
+#             for item in bad_repo:
+#                 final_list += item+','
+#             final_list = final_list[:-1]
+#             dialog.ok('[COLOR=gold]BAD REPOSITORIES FOUND[/COLOR]',final_list)
+#     if refresh:
+#         Refresh('container')
 # ----------------------------------------------------------------

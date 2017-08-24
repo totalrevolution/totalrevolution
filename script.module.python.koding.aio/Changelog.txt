@@ -1,3 +1,75 @@
+v.0.9.6.9.8:
+- Fixed bug with dependency check, wasn't showing all recursive deps
+
+v.0.9.6.9.7:
+- Added Link_Tester function, returns whether or not a link is locked to users IP
+- Added fix for Play_Video so it doesn't close dp if ignore_dp is set to True.
+
+v.0.9.6.9.6:
+- Added Last_Played function to return the real url of the last played item
+- Updated Addon_Genre, now fully unlocked and working for all developers to hook into.
+
+v.0.9.6.9.5:
+- Added Last_Played function to return the real url of the last played item
+- Added new Split_List function for creating new lists out of elements of another
+- Added new Table_Convert function, this will allow you to pull data from a html
+page conaining a table and convert into a list of dictionaries with your own custom keys.
+- Updated Addon_Genre, now fully unlocked and working for all developers to hook into.
+- Updated Open_URL so it can now take send a request via a proxy
+
+v.0.9.6.9.4:
+- Changed Add_Dir and route function so it auto converts physical paths into special paths when sending through any urls or creating routes. These are then auto converted back once returned to the function. This means all paths will work when using community shared content - no need for manually editing special paths.
+
+v.0.9.6.9.3:
+- Added new functionality to Convert_Special, can now set string to True and it will replace any instances of physical paths to special in the string which was sent through.
+
+v.0.9.6.9.2:
+- IMPORTANT FOR DEVS: Moved some functions around in preparation for upcoming stable 1.0 release. A new module has been created called vartools, all variable/string related functions can now be found in here as we seem to be accumilating rather a lof of these new functions!
+- Added new Fuzzy_Search function which searches for similar matches to a string
+- Fixed Open_Settings, wasn't opening into custom addon id's settings.
+- Changed the return of Keyboard, was returning as unicode.
+- Re-done some of the live example code with better dialogs and wording.
+- Re-formatted the README to reflect new changes.
+
+v.0.9.6.9.1:
+- Removed auto resolving of m3u in Play_Video as it was causing bugs in some links
+
+v.0.9.6.9:
+- New M3U_Selector function for playing m3u/m3u8 playlists
+- Added new Parse_XML function
+- Added button colour options for Custom_Dialog function
+- Added midraals new code in check_playback which hopefully should get rid of the dialog appearing on top of playback on some systems.
+
+v.0.9.6.8:
+- Added Decode_String function to clean up unicode chars
+- Updated the readme info, had outdated info for Custom_Dialog
+
+v.0.9.6.7:
+- New Custom_Dialog function allowing for multiple buttons and custom size dialogs
+- Add_Dir now automatically converts dictionary items for multiple urls
+
+v.0.9.6.6:
+- Allow for metadata to be passed through to Play_Video (as a dictionary)
+- Fixed typo in Play_Video when sending through an item param
+- Added some missing functions in README.
+
+v.0.9.6.5:
+- Fixed Check_Repos, was a bug if scanning full paths
+
+v.0.9.6.4.2:
+- Added a timeout to Validate_Link function
+- Validate_Link will now return False if https cannot be accessed
+- Check_Repos now returns False if https being used on Python 2.6
+
+v.0.9.6.4.1:
+- Fixed indentation in toggle_addons
+
+v.0.9.6.4:
+- Still a bug with toggle_addons locking up system so reverted that code to old.
+
+v.0.9.6.3:
+- Redone Addon_Toggle a little as there are still bugs
+
 v.0.9.6.2:
 - Bug fix for misplaced variable in Addon_Toggle
 

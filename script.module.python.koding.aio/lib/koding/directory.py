@@ -47,10 +47,18 @@ AVAILABLE PARAMS:
 
     (*) name  -  This is the name you want to show for the list item
 
-    url   -  This is a temporary global variable (string), when you click on
-    another list item it will change to whatever you have that set to. If you
-    send through a url starting with plugin:// the item will open up into
-    that plugin path.
+    url   -  If the route (mode) you're calling requires extra paramaters
+    to be sent through then this is where you add them. If the function is
+    only expecting one item then you can send through as a simple string.
+    Unlike many other Add_Dir functions Python Koding does allow for multiple
+    params to be sent through in the form of a dictionary so let's say your
+    function is expecting the 2 params my_time & my_date. You would send this info
+    through as a dictionary like this:
+    url={'my_time':'10:00', 'my_date':'01.01.1970'}
+    
+    If you send through a url starting with plugin:// the item will open up into
+    that plugin path so for example:
+    url='plugin://plugin.video.youtube/play/?video_id=FTI16i7APhU'
 
     mode  -  The mode you want to open when this item is clicked, this is set
     in your master_modes dictionary (see template add-on linked above)
@@ -113,11 +121,9 @@ Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=
 # ^ This will add an item to the list AND a context menu item for when bring up the menu (when focused on this item).
 # ^^ The context_override is set to False which means the new items will appear alongside the default Kodi context menu items.
 ~"""
-    
-
-
     from __init__       import dolog
     from systemtools    import Data_Type
+    from vartools       import Convert_Special
 
     module_id   =  'script.module.python.koding.aio'
     this_module =  xbmcaddon.Addon(id=module_id)
@@ -134,6 +140,9 @@ Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=
 
     if description == '':
         description = this_module.getLocalizedString(30837)
+
+    if Data_Type(url) == 'dict':
+        url = repr(url)
 
     if Data_Type(info_labels) != 'dict':
         dialog.ok('WRONG INFO LABELS', 'Please check documentation, these should be sent through as a dictionary.')
@@ -196,7 +205,7 @@ Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=
 
     u   = sys.argv[0]
     u += "?mode="           +str(mode)
-    u += "&url="            +urllib.quote_plus(url)
+    u += "&url="            +Convert_Special(url,string=True)
     u += "&name="           +urllib.quote_plus(name)
     u += "&iconimage="      +urllib.quote_plus(icon)
     u += "&fanart="         +urllib.quote_plus(fanart)
@@ -319,8 +328,7 @@ koding.Populate_List(url=link, start_point=sp, end_point=ep, separator=sep)
     import re
     import urlparse
     from __init__       import dolog
-    from filetools      import Find_In_Text
-    from systemtools    import Cleanup_String
+    from vartools       import Find_In_Text, Cleanup_String
     from video          import Play_Video
     from web            import Open_URL, Get_Extension, Cleanup_URL
 

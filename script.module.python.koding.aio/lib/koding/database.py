@@ -448,6 +448,7 @@ AVAILABLE PARAMS:
     (*) table  -  This is the name of the table you want to permanently delete.
 
 EXAMPLE CODE:
+dialog.ok('[COLOR gold]REMOVE TABLE[/COLOR]','It\'s a bit pointless doing this as you can\'t physically see what\'s happening so you\'ll just have to take our word it works!')
 koding.Remove_Table('my_test_table')
 ~"""
     sql_string = "DROP TABLE IF EXISTS %s;" % table

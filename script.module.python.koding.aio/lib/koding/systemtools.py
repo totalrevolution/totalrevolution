@@ -26,185 +26,7 @@ import xbmcaddon
 import xbmcgui
 
 import filetools
-
-#----------------------------------------------------------------
-# TUTORIAL #
-def ASCII_Check(sourcefile=xbmc.translatePath('special://home'), dp=False):
-    """
-Return a list of files found containing non ASCII characters in the filename.
-
-CODE: ASCII_Check([sourcefile, dp])
-
-AVAILABLE PARAMS:
-    
-    sourcefile  -  The folder you want to scan, by default it's set to the
-    Kodi home folder.
-        
-    dp  -  Optional DialogProgress, by default this is False. If you want
-    to show a dp make sure you initiate an instance of xbmcgui.DialogProgress()
-    and send through as the param.
-        
-EXAMPLE CODE:
-home = xbmc.translatePath('special://home')
-progress = xbmcgui.DialogProgress()
-progress.create('ASCII CHECK')
-my_return = ASCII_Check(sourcefile=home, dp=progress)
-if len(my_return) > 0:
-    dialog.select('NON ASCII FILES', my_return)
-else:
-    dialog.ok('ASCII CHECK CLEAN','Congratulations!','There weren\'t any non-ASCII files found on this system.')
-~"""
-    rootlen      = len(sourcefile)
-    for_progress = []
-    final_array  = []
-    ITEM         = []
-
-    for base, dirs, files in os.walk(sourcefile):
-        for file in files:
-            ITEM.append(file)   
-    N_ITEM =len(ITEM)
-    
-    for base, dirs, files in os.walk(sourcefile):
-        dirs[:] = [d for d in dirs]
-        files[:] = [f for f in files]
-        
-        for file in files:
-            for_progress.append(file) 
-            progress = len(for_progress) / float(N_ITEM) * 100
-            if dp:
-                dp.update(0,"Checking for non ASCII files",'[COLOR yellow]%s[/COLOR]'%d, 'Please Wait')
-            
-            try:
-                file.encode('ascii')
-
-            except UnicodeDecodeError:
-                badfile = (str(base)+'/'+str(file)).replace('\\','/').replace(':/',':\\')
-                final_array.append(badfile)
-    return final_array
-#----------------------------------------------------------------
-# TUTORIAL #
-def Cleanup_String(my_string):
-    """
-Clean a string, removes whitespaces and common buggy formatting when pulling from websites
-
-CODE: Cleanup_String(my_string)
-
-AVAILABLE PARAMS:
-    
-    (*) my_string   -  This is the main text you want cleaned up.
-        
-EXAMPLE CODE:
-current_text = '" This is a string of text which should be cleaned up   /'
-clean_text = koding.Cleanup_String(current_text)
-xbmc.log(clean_text)
-dialog.ok('CLEAN', clean_text)
-~"""
-    import urllib
-    bad_chars = ['/','\\',':',';','"',"'"]
-
-    try:
-        my_string = my_string.encode('utf8')
-    except:
-        pass
-    
-    my_string = urllib.unquote_plus(my_string)
-    my_string = my_string.replace('&amp;','&')
-    
-    if len(my_string) > 4:
-        if my_string[-4] == '.':
-            my_string = my_string[:-4]
-    
-    my_string = my_string.strip()
-
-    while my_string[0] in bad_chars or my_string[-1] in bad_chars:
-        if my_string[-1] in bad_chars:
-            my_string = my_string[:-1]
-        if my_string[0] in bad_chars:
-            my_string = my_string[1:]
-        my_string = my_string.strip()
-
-    return my_string
-#----------------------------------------------------------------
-# TUTORIAL #
-def Colour_Text(text, colour1='dodgerblue',colour2='white'):
-    """
-Capitalize a string and make the first colour of each string blue and the rest of text white
-That's the default colours but you can change to whatever colours you want.
-
-CODE: Colour_Text(text, [color1, color2])
-
-AVAILABLE PARAMS:
-    
-    (*) text   -  This is the main text you want to change
-
-    colour1 -  This is optional and is set as dodgerblue by default.
-    This is the first letter of each word in the string
-
-    colour2 -  This is optional and is set as white by default. 
-    This is the colour of the text
-
-IMPORTANT: I use the Queens English so please note the word "colour" has a 'u' in it!
-
-EXAMPLE CODE:
-current_text = 'This is a string of text which should be changed to dodgerblue and white with every first letter capitalised'
-mytext = koding.Colour_Text(text=current_text, colour1='dodgerblue', colour2='white')
-xbmc.log(current_text)
-xbmc.log(mytext)
-dialog.ok('CURRENT TEXT', current_text)
-dialog.ok('NEW TEXT', mytext)
-~"""
-    if text.startswith('[COLOR') and text.endswith('/COLOR]'):
-        return text
-
-    colour_clean = 0
-
-    if ' ' in text:
-        newname = ''
-        text = text.split(' ')
-        for item in text:
-            if len(item)==1 and item == '&':
-                newname += ' &'
-            if '[/COLOR]' in item:
-                newname += ' '+item
-            elif not item.startswith('[COLOR=') and not colour_clean:
-                if item.startswith('(') or item.startswith('['):
-                    newname += '[COLOR=yellow] '+item
-                    colour_clean = 1
-                else:
-                    if item.isupper():
-                        newname += '[COLOR=%s] %s[/COLOR]' % (colour1, item)
-                    else:
-                        try:
-                            newname += '[COLOR=%s] %s[/COLOR][COLOR=%s]%s[/COLOR]' % (colour1, item[0].upper(), colour2, item[1:])
-                        except:
-                            try:
-                                newname += '[COLOR=%s] %s[/COLOR][COLOR=%s][/COLOR]' % (colour1, item[0], colour2, item[1:])
-                            except:
-                                pass
-            
-
-            elif item.endswith(')') or item.endswith(']'):
-                newname += ' '+item+'[/COLOR]'
-                colour_clean = 0
-
-            else:
-                newname += ' '+item
-
-    else:
-        if text[0] == '(':
-            newname = '[COLOR=%s]%s[/COLOR][COLOR=%s]%s[/COLOR][COLOR=%s]%s[/COLOR]' % (colour2, text[0], colour1, text[1].upper(), colour2, text[2:])
-        else:
-            newname = '[COLOR=%s]%s[/COLOR][COLOR=%s]%s[/COLOR]' % (colour1, text[0], colour2, text[1:])
-
-    success = 0
-    while success != 1:
-        if newname.startswith(' '):
-            newname = newname[1:]
-        success = 1
-    if newname.startswith('[COLOR=%s] ' % colour1):
-        newname = '[COLOR=%s]%s' % (colour1, newname[19:])
-
-    return newname
+from vartools import Data_Type
 #----------------------------------------------------------------
 # TUTORIAL #
 def Cleanup_Textures(frequency=14,use_count=10):
@@ -306,73 +128,6 @@ dialog.ok('CURRENT PROFILE','Your current running profile is:','[COLOR=dodgerblu
 ~"""
 
     return xbmc.getInfoLabel('System.ProfileName')
-#----------------------------------------------------------------
-# TUTORIAL #
-def Data_Type(data):
-    """
-This will return whether the item received is a dictionary, list, string, integer etc.
-
-CODE:  Data_Type(data)
-
-AVAILABLE PARAMS:
-    
-    (*) data  -  This is the variable you want to check.
-
-RETURN VALUES:
-    list, dict, str, int, float, bool
-
-EXAMPLE CODE:
-    test1 = ['this','is','a','list']
-    test2 = {"a" : "1", "b" : "2", "c" : 3}
-    test3 = 'this is a test string'
-    test4 = 12
-    test5 = 4.3
-    test6 = True
-
-    my_return = 'test1 type : %s\n' % koding.Data_Type(test1)
-    my_return += 'test2 type : %s\n' % koding.Data_Type(test2)
-    my_return += 'test3 type : %s\n' % koding.Data_Type(test3)
-    my_return += 'test4 type : %s\n' % koding.Data_Type(test4)
-    my_return += 'test5 type : %s\n' % koding.Data_Type(test5)
-    my_return += 'test6 type : %s\n' % koding.Data_Type(test6)
-
-    koding.Text_Box('TEST RESULTS', my_return)
-~"""
-    data_type = type(data).__name__
-    return data_type
-#----------------------------------------------------------------
-# TUTORIAL #
-def End_Path(path):
-    """
-Split the path at every '/' and return the final file/folder name.
-If your path uses backslashes rather than forward slashes it will use
-that as the separator.
-
-CODE:  End_Path(path)
-
-AVAILABLE PARAMS:
-
-    path  -  This is the path where you want to grab the end item name.
-
-EXAMPLE CODE:
-addons_path = xbmc.translatePath('special://home/addons')
-file_name = koding.End_Path(path=addons_path)
-dialog.ok('ADDONS FOLDER','Path checked:',addons_path,'Folder Name: [COLOR=dodgerblue]%s[/COLOR]'%file_name)
-file_path = xbmc.translatePath('special://home/addons/script.module.python.koding.aio/addon.xml')
-file_name = koding.End_Path(path=file_path)
-dialog.ok('FILE NAME','Path checked:',file_path,'File Name: [COLOR=dodgerblue]%s[/COLOR]'%file_name)
-~"""
-    if '/' in path:
-        path_array = path.split('/')
-        if path_array[-1] == '':
-            path_array.pop()
-    elif '\\' in path:
-        path_array = path.split('\\')
-        if path_array[-1] == '':
-            path_array.pop()
-    else:
-        return path
-    return path_array[-1]
 #----------------------------------------------------------------
 # TUTORIAL #
 def Force_Close():
@@ -505,30 +260,6 @@ koding.Text_Box('OLD LOG FILE',old_log)
     return logtext
 #----------------------------------------------------------------
 # TUTORIAL #
-def ID_Generator(size=15):
-    """
-This will generate a random string made up of uppercase & lowercase ASCII
-characters and digits - it does not contain special characters.
-
-CODE:  ID_Generator([size])
-size is an optional paramater.
-
-AVAILABLE PARAMS:
-
-    size - just send through an integer, this is the length of the string you'll get returned.
-    So if you want a password generated that's 20 characters long just use ID_Generator(20). The default is 15.
-
-EXAMPLE CODE:
-my_password = koding.ID_Generator(20)
-dialog.ok('ID GENERATOR','Password generated:', '', '[COLOR=dodgerblue]%s[/COLOR]' % my_password)
-~"""
-    import string
-    import random
-
-    chars=string.ascii_uppercase + string.digits + string.ascii_lowercase
-    return ''.join(random.choice(chars) for _ in range(size))
-#----------------------------------------------------------------
-# TUTORIAL #
 def Last_Error():
     """
 Return details of the last error produced, perfect for try/except statements
@@ -539,7 +270,7 @@ EXAMPLE CODE:
 try:
     xbmc.log(this_should_error)
 except:
-koding.Text_Box('ERROR MESSAGE',Last_Error())
+    koding.Text_Box('ERROR MESSAGE',Last_Error())
 ~"""
 
     import traceback
@@ -673,7 +404,8 @@ xbmc_gui = Requirements('xbmc.gui')
 xbmc_python = Requirements('xbmc.python')
 dialog.ok('DEPENDENCIES','[COLOR=dodgerblue]xbmc.gui[/COLOR]  Min: %s  Max: %s'%(xbmc_gui['min'],xbmc_gui['max']),'[COLOR=dodgerblue]xbmc.python[/COLOR]  Min: %s  Max: %s'%(xbmc_python['min'],xbmc_python['max']))
 ~"""
-    from filetools import Text_File, Find_In_Text
+    from filetools import Text_File
+    from vartools  import Find_In_Text
     root     = xbmc.translatePath('special://xbmc/addons')
     dep_path = os.path.join(root,dependency,'addon.xml')
     content  = Text_File(dep_path,'r')
@@ -903,43 +635,6 @@ dialog.ok('WINDOW CLOSED','The window has now been closed so this dialog code ha
         xbmc.sleep(250)
 
     return okwindow
-#----------------------------------------------------------------
-# TUTORIAL #
-def String(code='', source=''):
-    """
-This will return the relevant language skin as set in the
-resources/language folder for your add-on. By default you'll get
-the language string returned from your current running add-on
-but if you send through another add-on id you can grab from
-any add-on or even the built-in kodi language strings.
-
-CODE: String(code, [source])
-
-AVAILABLE PARAMS:
-
-    (*) code  -  This is the language string code set in your strings.po file.
-
-    source  -  By default this is set to a blank string and will
-    use your current add-on id. However if you want to pull the string
-    from another add-on just enter the add-on id in here. If you'd prefer
-    to pull from the built-in kodi resources files just set as 'system'.
-
-EXAMPLE CODE:
-kodi_string = koding.String(code=10140, source='system')
-koding_string = koding.String(code=30825, source='script.module.python.koding.aio')
-dialog.ok('SYSTEM STRING','The string [COLOR=dodgerblue]10140[/COLOR] pulled from the default system language resources is:','[COLOR=gold]%s[/COLOR]' % kodi_string)
-dialog.ok('PYTHON KODING STRING','The string [COLOR=dodgerblue]30825[/COLOR] pulled from the Python Koding language resources is:','[COLOR=gold]%s[/COLOR]' % koding_string)
-~"""
-    import xbmcaddon
-    from addons import Caller
-    if source == '':
-        source = Caller()
-    if source != 'system':
-        addon_id = xbmcaddon.Addon(id=source)
-        mystring = addon_id.getLocalizedString(code)
-    else:
-        mystring = xbmc.getLocalizedString(code)
-    return mystring
 #----------------------------------------------------------------
 # TUTORIAL #
 def System(command, function=''):

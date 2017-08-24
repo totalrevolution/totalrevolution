@@ -43,6 +43,7 @@ from router         import *
 from systemtools    import *
 from tutorials      import *
 from video          import *
+from vartools       import *
 from web            import *
 
 def converthex(url):
@@ -131,13 +132,14 @@ AVAILABLE PARAMS:
     to the log regardless of what the debug setting is set at in add-on settings.
 
 EXAMPLE CODE:
-koding.dolog(string='Quick test to see if this gets printed to the log', my_debug=True)~"""
-
+koding.dolog(string='Quick test to see if this gets printed to the log', my_debug=True)
+dialog.ok('[COLOR gold]CHECK LOGFILE[/COLOR]','If you check your log file you should be able to see a new test line we printed.')
+~"""
     import xbmc
     global DEBUG
     global ADDON_ID
     if DEBUG == 'true' or my_debug:
-        xbmc.log('### %s : %s'%(ADDON_ID,string), 2)
+        xbmc.log('### %s : %s'%(ADDON_ID,string), level=xbmc.LOGNOTICE)
 #----------------------------------------------------------------
 def Check_Addons(addons):
     """ internal command ~"""

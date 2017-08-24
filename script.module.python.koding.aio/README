@@ -25,47 +25,34 @@ A D D O N   B A S E D   F U N C T I O N S
 ADDON GENRE DICTIONARY:
 Return a dictionary of add-ons which match a specific genre.
 
-* THIS IS A PREMIUM FEATURE FOR ADDONS EXCLUSIVELY SUPPORTED AT NOOBSANDNERDS
-If you'd like to hook into this please take a look at the following URL:
-https://raw.githubusercontent.com/noobsandnerds/noobsandnerds/master/repository.nanaddons/README.txt
-
-Please Note: Although this hooks into the NaN framework to pull genres you can use this without
-having to hook into their framework if you have a custom url which returns results in the same format.
-Your url must return a dictionary of items in this format: {"addon_name":"addon_id","addon_name_2":"addon_id_2"}
-
-	CODE: Addon_Genre([genre,custom_url])
+	CODE: Addon_Genre([genre, custom_url])
 
 	AVAILABLE PARAMS:
 	    
 	    genre  -  By default this is set to 'adult' which will return
-	    a dictionary of all known adult add-ons. For a full list of all
-	    the available genres you can filter by take a look at the Add-on Portal
-	    link below. If you click on each of the genre links then look at the
-	    url you'll be able to see the name to use. For example if you click on
-	    "Dev Tools" you'll see the url shows as 'devtools' and that's what you'd
-	    send through to this function if you only wanted those to show.
-	    http://noobsandnerds.com/addons/category/genres/
+	    a dictionary of all known adult add-ons. The genre details are pulled from the
+	    Add-on Portal at noobsandnerds.com so you can use any of the supported genre tags
+	    listed on this page: http://noobsandnerds.com/latest/?p=3762
 
-	    custom_url  -  If you have your own custom url which returns genres
-    	you can enter it here and use that rather than rely on NaN categorisation.
+	    custom_url  -  If you have your own custom url which returns a dictionary
+	    of genres you can enter it here and use that rather than rely on NaN categorisation.
 
 	EXAMPLE CODE:
-		space_addons = Addon_Genre(genre='space')
-		my_return = 'LIST OF AVAILABLE SPACE BASED ADD-ONS:\n\n'
+		dialog.ok('[COLOR gold]ADD-ON GENRES[/COLOR]','We will now list all known comedy based add-ons. If you have add-ons installed which you feel should be categorised as supplying comedy but they aren\'t then you can help tag them up correctly via the Add-on Portal at NaN.')
+		comedy_addons = koding.Addon_Genre(genre='comedy')
+		if comedy_addons:
+		    my_return = 'LIST OF AVAILABLE COMEDY BASED ADD-ONS:\n\n'
 
 		# Convert the dictionary into a list:
-		space_addons = space_addons.items()
-
-		for item in space_addons:
-		    my_return += '[COLOR=gold]Name:[/COLOR] %s   |   [COLOR=dodgerblue]ID:[/COLOR] %s\n' % (item[0],item[1])
-
-		Text_Box('SPACE ADD-ONS',my_return)
+		    comedy_addons = comedy_addons.items()
+		    for item in comedy_addons:
+		        my_return += '[COLOR=gold]Name:[/COLOR] %s   |   [COLOR=dodgerblue]ID:[/COLOR] %s\n' % (item[0],item[1])
+		    koding.Text_Box('[COLOR gold]COMEDY ADD-ONS[/COLOR]',my_return)
 
 ------------------------------------------------------------------------------------------
 
 ADD-ON ID FROM PATH:
-If you know the folder name of an add-on but want to find out the addon id (it may not necessarily be the same as folder name)
-then you can use this function. Even if the add-on isn't enabled on the system this will regex out the add-on id.
+If you know the folder name of an add-on but want to find out the addon id (it may not necessarily be the same as folder name) then you can use this function. Even if the add-on isn't enabled on the system this will regex out the add-on id.
 
 	CODE:  Get_Addon_ID(folder)
 
@@ -259,11 +246,11 @@ if it contains paths that are no longer accessible online.
 
 IMPORTANT: If you're running an old version of Kodi which uses the old Python 2.6
 (OSX and Android lower than Kodi 17 or a linux install with old Python installed on system)
-you will get a return of True on https links regardless of their real status. This is due
+you will get a return of False on https links regardless of their real status. This is due
 to the fact Python 2.6 cannot access secure links. Any still using standard http links
 will return the correct results.
 
-	CODE:  Check_Repo(repo, [show_busy])
+	CODE:  Check_Repo(repo, [show_busy, timeout])
 
 	AVAILABLE PARAMS:
 
@@ -274,12 +261,15 @@ will return the correct results.
 
 	    show_busy - By default this is set to True and a busy dialog will show during the check
 
+	    timeout - By default this is set to 10 (seconds) - this is the maximum each request
+	    to the repo url will take before timing out and returning False.
+
 	EXAMPLE CODE:
-	repo_status = Check_Repo('repository.modules4all')
-	if repo_status:
-	    dialog.ok('REPO STATUS','The repository modules4all is: [COLOR=lime]ONLINE[/COLOR])
-	else:
-	    dialog.ok('REPO STATUS','The repository modules4all is: [COLOR=red]OFFLINE[/COLOR])
+		repo_status = Check_Repo('repository.noobsandnerds',show_busy=True,timeout=10)
+		if repo_status:
+		    dialog.ok('REPO STATUS','The repository modules4all is: [COLOR=lime]ONLINE[/COLOR]')
+		else:
+		    dialog.ok('REPO STATUS','The repository modules4all is: [COLOR=red]OFFLINE[/COLOR]')
 
 ------------------------------------------------------------------------------------------
 
@@ -325,6 +315,11 @@ This will delete your cookies file.
 	EXAMPLE CODE:
 		Open_URL(url='http://google.com',cookiejar='google')
 		dialog.ok('GOOGLE COOKIES CREATED','We have just opened a page to google.com, if you check your addon_data folder for your add-on you should see a cookies folder and in there should be a cookie called "google". When you press OK this will be removed.')
+
+	CLEARING COOKIES FROM ADD-ON SETTINGS:
+		If you want to offer the option to clear the cookie data direct from the add-on settings then you can add the following code. This will wipe the cookies folder for that add-on.
+
+        <setting id="clear_data"	label="Clear Cookies"	type="action"	action="RunScript(special://home/addons/script.module.python.koding.aio/lib/koding/__init__.py,clear_data,your.addon.id)"	option="close"	visible="true"/>
 
 ------------------------------------------------------------------------------------------
 
@@ -810,6 +805,86 @@ Bring up a countdown timer and return true if waited or false if cancelled.
 
 ------------------------------------------------------------------------------------------
 
+CUSTOM DIALOG:
+A fully customisable dialog where you can have as many buttons as you want.
+Similar behaviour to the standard Kodi yesno dialog but this allows as many buttons
+as you want, as much text as you want (with a slider) as well as fully configurable
+sizing and positioning.
+
+	CODE: Custom_Dialog([pos, dialog, size, button_width, header, main_content, buttons,\
+	    header_color, text_color, background, transparency, highlight_color, button_color_focused,\
+	    button_trans_focused, button_color_nonfocused, button_trans_nonfocused])
+
+	AVAILABLE PARAMS:
+
+	    pos  -  This is the co-ordinates of where on the screen you want the
+	    dialog to appear. This needs to be sent through as a string so for
+	    example if you want the dialog top left corner to be 20px in and
+	    10px down you would use pos='20x10'. By default this is set to 'center'
+	    which will center the dialog on the screen.
+
+	    dialog   -  By default this is set to 'Text'. Currently that is the
+	    only custom dialog available but there are plans to improve upon this
+	    and allow for image and even video dialogs.
+
+	    size  - Sent through as a string this is the dimensions you want the
+	    dialog to be, by default it's set to '700x500' but you can set to any
+	    size you want using that same format. Setting to 'fullscreen' will
+	    use 1280x720 (fullscreen).
+
+	    button_width  -  This is sent through as an integer and is the width you
+	    want your buttons to be. By default this is set to 200 which is quite large
+	    but looks quite nice if using only 2 or 3 buttons.
+
+	    header  -  Sent through as a string this is the header shown in the dialog.
+	    The default is 'Disclaimer'.
+
+	    header_color  -  Set the text colour, by default it's 'gold'
+
+	    text_color  -  Set the text colour, by default it's 'white'
+
+	    main_content  -  This is sent through as a string and is the main message text
+	    you want to show in your dialog. When the ability to add videos, images etc.
+	    is added there may well be new options added to this param but it will remain
+	    backwards compatible.
+
+	    buttons  -  Sent through as a list (tuple) this is a list of all your buttons.
+	    Make sure you do not duplicate any names otherwise it will throw off the
+	    formatting of the dialog and you'll get false positives with the results.
+
+	    background  -  Optionally set the background colour (hex colour codes required).
+	    The default is '000000' (black).
+
+	    transparency  -  Set the percentage of transparency as an integer. By default
+	    it's set to 100 which is a solid colour.
+
+	    highlight_color  -  Set the highlighted text colour, by default it's 'blue'
+
+	    button_color_focused - Using the same format as background you can set the
+	    colour to use for a button when it's focused.
+
+	    button_trans_focused - Using the same format as transparency you can set the
+	    transparency amount to use on the button when in focus.
+
+	    button_color_nonfocused - Using the same format as background you can set the
+	    colour to use for buttons when they are not in focus.
+
+	    button_trans_nonfocused - Using the same format as transparency you can set the
+	    transparency amount to use on the buttons when not in focus.
+
+	EXAMPLE CODE:
+		main_text = 'This is my main text.\n\nYou can add anything you want in here and the slider will allow you to see all the contents.\n\nThis example shows using a blue background colour and a transparency of 90%.\n\nWe have also changed the highlighted_color to yellow.'
+		my_buttons = ['button 1', 'button 2', 'button 3']
+		my_choice = koding.Custom_Dialog(main_content=main_text,pos='center',buttons=my_buttons,background='213749',transparency=90,highlight_color='yellow')
+		dialog.ok('CUSTOM DIALOG 1','You selected option %s'%my_choice,'The value of this is: [COLOR=dodgerblue]%s[/COLOR]'%my_buttons[my_choice])
+
+		main_text = 'This is example 2 with no fancy colours, just a fullscreen and a working scrollbar.\n\nYou\'ll notice there are also a few more buttons on this one.\n\nline 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\nline 10\nline 11\nline 12\nline 13\nline 14\nline 15\nline 16\nline 17\nline 18\nline 19\nline 20\n\nYou get the idea we\'ll stop there!'
+		my_buttons = ['button 1', 'button 2', 'button 3','button 4', 'button 5', 'button 6','button 7', 'button 8', 'button 9','button 10', 'button 11', 'button 12', 'button 13','button 14', 'button 15', 'button 16','button 17', 'button 18', 'button 19','button 20']
+		my_choice = koding.Custom_Dialog(main_content=main_text,pos='center',size='fullscreen',buttons=my_buttons)
+		dialog.ok('CUSTOM DIALOG 2','You selected option %s'%my_choice,'The value of this is: [COLOR=dodgerblue]%s[/COLOR]'%my_buttons[my_choice])
+
+------------------------------------------------------------------------------------------
+
 ENABLE/DISABLE THE BUSY (WORKING) SYMBOL:
 This will show/hide a "working" symbol.
 
@@ -993,26 +1068,28 @@ D I R E C T O R Y   F U N C T I O N S
 ------------------------------------------------------------------------------------------
 
 ADD DIRECTORY ITEM:
-This allows you to create a list item/folder inside your add-on. Please take a look at your addon
-default.py comments for more information (presuming you created one at http://totalrevolution.tv)
+This allows you to create a list item/folder inside your add-on.
+For more information please take a look at your addon default.py comments in the standard add-on
+template (presuming you created one at http://totalrevolution.tv).
 
-TOP TIP: If you want to send multiple variables through to a function just send through as a dictionary
-encapsulated in quotation marks. In the function you can then use the following code to access them:
-
-params = eval(url)
-
-^ That will then give you a dictionary where you can just pull each variable and value from.
-
-	CODE: Add_Dir(name, url, mode, [folder, icon, fanart, description, info_labels, content_type, context_items, context_override, playable]))
+	CODE: Add_Dir(name, url, mode, [folder, icon, fanart, description, info_labels, content_type, context_items, context_override, playable])
 
 	AVAILABLE PARAMS:
 
 	    (*) name  -  This is the name you want to show for the list item
 
-	    url   -  This is a temporary global variable (string), when you click on
-	    another list item it will change to whatever you have that set to. If you
-	    send through a url starting with plugin:// the item will open up into
-	    that plugin path.
+	    url   -  If the route (mode) you're calling requires extra paramaters
+	    to be sent through then this is where you add them. If the function is
+	    only expecting one item then you can send through as a simple string.
+	    Unlike many other Add_Dir functions Python Koding does allow for multiple
+	    params to be sent through in the form of a dictionary so let's say your
+	    function is expecting the 2 params my_time & my_date. You would send this info
+	    through as a dictionary like this:
+	    url={'my_time':'10:00', 'my_date':'01.01.1970'}
+	    
+	    If you send through a url starting with plugin:// the item will open up into
+	    that plugin path so for example:
+	    url='plugin://plugin.video.youtube/play/?video_id=FTI16i7APhU'
 
 	    mode  -  The mode you want to open when this item is clicked, this is set
 	    in your master_modes dictionary (see template add-on linked above)
@@ -1074,7 +1151,6 @@ params = eval(url)
 		Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=my_context, context_override=False)
 		# ^ This will add an item to the list AND a context menu item for when bring up the menu (when focused on this item).
 		# ^^ The context_override is set to False which means the new items will appear alongside the default Kodi context menu items.
-
 ------------------------------------------------------------------------------------------
 
 CONVERT A STRING (URL) INTO MULTIPLE VARIABLES:
@@ -1163,7 +1239,7 @@ BELOW IS AN EXAMPLE OF HOW TO CALL THE CODE IN YOUR MAIN ADDON PY FILE:
 def Test_Function(name,desc):
     dialog.ok('This is a test function', name, desc')
 
-koding.Add_Dir(name='Test Dialog', url='{"name":"My Test Function", "desc" : "Its ALIVE!!!"}', mode='test')
+koding.Add_Dir(name='Test Dialog', url={"name":"My Test Function", "desc" : "Its ALIVE!!!"}, mode='test')
 koding.run()
 
 ------------------------------------------------------------------------------------------
@@ -1221,6 +1297,8 @@ event you encounter this issue just add the file(s) to your exclude list.
 		HOME = xbmc.translatePath('special://home')
 		DST = os.path.join(HOME,'test.zip')
 		koding.Archive_Tree(HOME, DST)
+		dialog.ok('[COLOR gold]ARCHIVE COMPLETE[/COLOR]','Congratulations your Kodi folder has been zipped up, you can find it in the following location:\n[COLOR dodgerblue]%s[/COLOR]'%DST)
+
 
 ------------------------------------------------------------------------------------------
 
@@ -1278,15 +1356,27 @@ as this has better functionality but it's currently missing the custom message a
 ------------------------------------------------------------------------------------------
 
 CONVERT PHYSICAL PATHS TO SPECIAL:
-Convert physcial paths stored in text files to their special:// equivalent.
+Convert physcial paths stored in text files to their special:// equivalent or
+replace instances of physical paths to special in a string sent through.
 
-	CODE: Convert_Special([filepath])
+	CODE: Convert_Special([filepath, string])
 
-	AVAILABLE PARAMS
+	AVAILABLE PARAMS:
+
 	    filepath  -  This is the path you want to scan, by default it's set to the Kodi HOME directory.
+	    
+	    string    -  By default this is set to False, if you set to True you will get the
+	                 string of your 'filepath' returned with any reference to physical
+	                 path replaced with special://
 
 	EXAMPLE CODE:
-		koding.Convert_Special()
+		path = xbmc.translatePath('special://profile')
+		dialog.ok('[COLOR gold]ORIGINAL PATH[/COLOR]','Let\'s convert this path to it\'s special equivalent:\n[COLOR dodgerblue]%s[/COLOR]'%path)
+		path = Convert_Special(filepath=path,string=True)
+		dialog.ok('[COLOR gold]CONVERTED PATH[/COLOR]','This is the converted path:\n[COLOR dodgerblue]%s[/COLOR]'%path)
+		if dialog.yesno('[COLOR gold]CONVERT PHYSICAL PATHS[/COLOR]','We will now run through your Kodi folder converting all physical paths to their special:// equivalent in xml/hash/properties/ini files.\nDo you want to continue?'):
+		    koding.Convert_Special()
+		    dialog.ok('[COLOR gold]SUCCESS[/COLOR]','Congratulations, all references to your physical paths have been converted to special:// paths.')
 
 ------------------------------------------------------------------------------------------
 
@@ -1423,9 +1513,11 @@ any folders/files you don't want removed.
 		koding.Dummy_File(dst=file2, size=10, size_format='kb')
 		koding.Dummy_File(dst=file3, size=10, size_format='kb')
 
-		dialog.ok('TEST FILE CREATED','If you look in your addon_data folder you should now see a new test folder containing 3 dummy files. The folder name is \'py_koding_test\'.')
-		if dialog.yesno('DELETE FOLDER','Everything except file1.txt will now be removed from:', '/userdata/py_koding_test/','Do you want to continue?'):
+		dialog.ok('[COLOR gold]TEST FILE CREATED[/COLOR]','If you look in your userdata folder you should now see a new test folder containing 3 dummy files. The folder name is \'py_koding_test\'.')
+		if dialog.yesno('[COLOR gold]DELETE FOLDER[/COLOR]','Everything except file1.txt will now be removed from:', '/userdata/py_koding_test/','Do you want to continue?'):
 		    koding.Delete_Folders(filepath=delete_path, ignore=[file1])
+		    dialog.ok('[COLOR gold]DELETE LEFTOVERS[/COLOR]','When you press OK we will delete the whole temporary folder we created including it\'s contents')
+		    koding.Delete_Folders(filepath=delete_path)
 
 ------------------------------------------------------------------------------------------
 
@@ -1443,12 +1535,38 @@ This function extract a zip or tar file and return true or false so unlike the b
 		dp - This is optional, if you pass through the dp function as a DialogProgress() then you'll get to see the status of the extraction process. If you choose not to add this paramater then you'll just get a busy spinning circle icon until it's completed. See the example below for a dp example.
 
 	EXAMPLE CODE WITH A DIALOG PROGRESS WINDOW:
+		koding_path = xbmc.translatePath('special://home/addons/script.module.python.koding.aio')
+		zip_dest = xbmc.translatePath('special://home/test_addon.zip')
+		extract_dest = xbmc.translatePath('special://home/TEST')
+		koding.Compress(src=koding_path,dst=zip_dest,compression='zip',parent=True)
 		dp = xbmcgui.DialogProgress()
 		dp.create('Extracting Zip','Please Wait')
-		if koding.Extract(src,dst,dp):
-		    xbmc.log('YAY IT WORKED!')
+		if koding.Extract(_in=zip_dest,_out=extract_dest,dp=dp,show_error=True):
+		    dialog.ok('YAY IT WORKED!','We just zipped up your python koding add-on then extracted it to a new folder in your Kodi root directory called TEST. Press OK to delete these files.')
+		    os.remove(zip_dest)
+		    shutil.rmtree(extract_dest)
 		else:
-		    xbmc.log('UH OH SOMETHING WENT HORRIBLY WRONG')
+		    dialog.ok('BAD NEWS!','UH OH SOMETHING WENT HORRIBLY WRONG')
+
+------------------------------------------------------------------------------------------
+
+FREE SPACE:
+Show the amount of available free space in a path, this can be returned in a number of different formats.
+
+	CODE: Free_Space([dirname, filesize])
+
+	AVAILABLE PARAMS:
+
+		dirname  - This optional, by default it will tell you how much space is available in your special://home folder. If you require information for another path (such as a different partition or storage device) then enter the physical path. This currently only works for local paths and not networked drives.
+
+		filesize - By default you'll get a return of total bytes, however you can get the value as bytes, kilobytes, megabytes, gigabytes and terabytes..
+
+			VALUES:
+			'b'	 = bytes (integer)
+			'kb' = kilobytes (float to 1 decimal place)
+			'mb' = kilobytes (float to 2 decimal places)
+			'gb' = kilobytes (float to 3 decimal places)
+			'tb' = terabytes (float to 4 decimal places)
 
 ------------------------------------------------------------------------------------------
 
@@ -1464,6 +1582,35 @@ perform a hard reset and on Android it will wipe the data for the current runnin
 		        clean_state = koding.Fresh_Install()
 		        if not clean_state:
 		            dialog.ok('SYSTEM NOT SUPPORTED','Your platform is not yet supported by this function, you will have to manually wipe.')
+
+------------------------------------------------------------------------------------------
+
+FOLDER SIZE:
+Return the size of a folder path including sub-directories, this can be returned in a number of different formats.
+
+	CODE: koding.Folder_Size([dirname, filesize])
+
+	AVAILABLE PARAMS:
+
+	    dirname  - This optional, by default it will tell you how much space is available in your
+	    special://home folder. If you require information for another path (such as a different
+	    partition or storage device) then enter the physical path. This currently only works for
+	    local paths and not networked drives.
+
+	    filesize - By default you'll get a return of total bytes, however you can get the value as
+	    bytes, kilobytes, megabytes, gigabytes and terabytes..
+
+	        VALUES:
+	        'b'  = bytes (integer)
+	        'kb' = kilobytes (float to 1 decimal place)
+	        'mb' = kilobytes (float to 2 decimal places)
+	        'gb' = kilobytes (float to 3 decimal places)
+	        'tb' = terabytes (float to 4 decimal places)
+
+	EXAMPLE CODE:
+		HOME = xbmc.translatePath('special://home')
+		home_size = Folder_Size(HOME, 'mb')
+		dialog.ok('Folder Size','KODI HOME: %s MB' % home_size)
 
 ------------------------------------------------------------------------------------------
 
@@ -1550,6 +1697,16 @@ koding.Move_Tree(destination, source)
 
 ------------------------------------------------------------------------------------------
 
+PATH TO CURRENT "LIVE" DATABASE:
+If you need to find out the current "real" database in use then this is the function for you. It will scan for a specific database type (e.g. addons) and return the path to the one which was last updated. This is particularly useful if the system's previously updated to a newer version rather than a fresh install - or if they've installed a "build" which contained old databases.
+
+	CODE: DB_Path_Check(db_path)
+
+	AVAILABLE VALUES:
+		The db_path can be any string you want, it needs to be the string the database starts with. If you want to find the path for the addons*.db you would use "addons" as the value, if you wanted to find the path of the MyVideos*.db you would use "myvideos" etc. - it is not case sensitive.
+
+------------------------------------------------------------------------------------------
+
 READ/WRITE TEXT FILES:
 Open/create a text file and read/write to it.
 
@@ -1590,116 +1747,44 @@ S Y S T E M   B A S E D   F U N C T I O N S
 
 ------------------------------------------------------------------------------------------
 
-ASCII CHECK:
-Return a list of files found containing non ASCII characters in the filename.
-
-	CODE: ASCII_Check([sourcefile, dp])
-
-	AVAILABLE PARAMS:
-	    
-	    sourcefile  -  The folder you want to scan, by default it's set to the
-	    Kodi home folder.
-	        
-	    dp  -  Optional DialogProgress, by default this is False. If you want
-	    to show a dp make sure you initiate an instance of xbmcgui.DialogProgress()
-	    and send through as the param.
-	        
-	EXAMPLE CODE:
-		home = xbmc.translatePath('special://home')
-		progress = xbmcgui.DialogProgress()
-		progress.create('ASCII CHECK')
-		my_return = ASCII_Check(sourcefile=home, dp=progress)
-		if len(my_return) > 0:
-		    dialog.select('NON ASCII FILES', my_return)
-		else:
-		    dialog.ok('ASCII CHECK CLEAN','Congratulations!','There weren\'t any non-ASCII files found on this system.')
-
-------------------------------------------------------------------------------------------
-
-CLEANUP A STRING:
-Clean a string, removes whitespaces and common buggy formatting when pulling from websites
-
-	CODE: Cleanup_String(my_string)
-
-	    AVAILABLE PARAMS:
-	        
-	        (*) my_string   -  This is the main text you want cleaned up.
-
-	EXAMPLE CODE:
-		current_text = '" This is a string of text which should be cleaned up   /'
-		clean_text = koding.Cleanup_String(current_text)
-		xbmc.log(clean_text)
-		dialog.ok('CLEAN', clean_text)
-
-------------------------------------------------------------------------------------------
-
 CURRENT PROFILE:
 This will return the current running profile, it's only one line of code but this is for my benefit as much as
 anyone else's. I use this function quite a lot and keep forgetting the code so figured it would be easier to
 just write a simple function for it :)
 
-CODE:  Current_Profile()
+	CODE:  Current_Profile()
 
-EXAMPLE CODE:
-profile = koding.Current_Profile()
-dialog.ok('CURRENT PROFILE','Your current running profile is:','[COLOR=dodgerblue]%s[/COLOR]' % profile)
+	EXAMPLE CODE:
+		profile = koding.Current_Profile()
+		dialog.ok('CURRENT PROFILE','Your current running profile is:','[COLOR=dodgerblue]%s[/COLOR]' % profile)
 
 ------------------------------------------------------------------------------------------
 
 CURRENT TIMESTAMP:
 This will return the timestamp in various formats. By default it returns as "integer" mode but other options are listed below:
 
-	CODE: koding.Timestamp(mode)
+	CODE: Timestamp(mode)
 	mode is optional, by default it's set as integer
 
 	AVAILABLE VALUES:
-	    'integer' -  An integer which is nice and easy to work with in Python (especially for finding out human readable diffs). The format returned is [year][month][day][hour][minutes][seconds]. 
+
+	    'integer' -  An integer which is nice and easy to work with in Python (especially for
+	    finding out human readable diffs). The format returned is [year][month][day][hour][minutes][seconds]. 
 	    
 	    'epoch'   -  Unix Epoch format (calculated in seconds passed since 12:00 1st Jan 1970).
 
 	    'clean'   -  A clean user friendly time format: Tue Jan 13 10:17:09 2009
 
-------------------------------------------------------------------------------------------
-
-DATA TYPE:
-This will return whether the item received is a dictionary, list, string, integer etc.
-
-	CODE:  Data_Type(data)
-
-	    AVAILABLE PARAMS:
-	        
-	        (*) data  -  This is the variable you want to check.
-
-	    RETURN VALUES:
-	    	list, dict, str, int, float, bool
+	    'date_time' -  A clean interger style date with time at end: 2017-04-07 10:17:09
 
 	EXAMPLE CODE:
-		test1 = ['this','is','a','list']
-		test2 = {"a" : "1", "b" : "2", "c" : 3}
-		test3 = 'this is a test string'
-		test4 = 12
-		test5 = 4.3
-		test6 = True
-
-		my_return = 'test1 type : %s\n' % koding.Data_Type(test1)
-		my_return += 'test2 type : %s\n' % koding.Data_Type(test2)
-		my_return += 'test3 type : %s\n' % koding.Data_Type(test3)
-		my_return += 'test4 type : %s\n' % koding.Data_Type(test4)
-		my_return += 'test5 type : %s\n' % koding.Data_Type(test5)
-		my_return += 'test6 type : %s\n' % koding.Data_Type(test6)
-
-		koding.Text_Box('TEST RESULTS', my_return)
-
-------------------------------------------------------------------------------------------
-
-DEBUG MODE:
-Print to the Kodi log but only if debugging is enabled in settings.xml
-
-	CODE: koding.dolog(string)
-	string is your text you want printed to log.
-
-	EXAMPLE CODE:	koding.dolog('Quick test to see if this gets printed to the log')
-	EXAMPLE OUTPUT:		<addon_id>: Quick test to see if this gets printed to the log
+		integer_time = koding.Timestamp('integer')
+		epoch_time = koding.Timestamp('epoch')
+		clean_time = koding.Timestamp('clean')
+		date_time = koding.Timestamp('date_time')
+		import datetime
+		installedtime = str(datetime.datetime.now())[:-7]
+		dialog.ok('CURRENT TIME','Integer: %s' % integer_time, 'Epoch: %s' % epoch_time, 'Clean: %s' % clean_time)
 
 ------------------------------------------------------------------------------------------
 
@@ -1710,6 +1795,10 @@ Use this to set built-in kodi settings via JSON or set skin settings.
 
 	AVAILABLE PARAMS:
 	    
+	    (*) setting - This is the name of the setting you want to change, it could be a
+	    setting from the kodi settings or a skin based setting. If you're wanting
+	    to enable/disable an add-on this is set as the add-on id.
+
 	    setting_type - The type of setting type you want to change. By default
 	    it's set to 'kodi_setting', see below for more info.
 
@@ -1732,10 +1821,6 @@ Use this to set built-in kodi settings via JSON or set skin settings.
 	        'json' : WIP - setitng = method, value = params, see documentation on
 	        JSON-RPC API here: http://kodi.wiki/view/JSON-RPC_API)
 
-	    setting - This is the name of the setting you want to change, it could be a
-	    setting from the kodi settings or a skin based setting. If you're wanting
-	    to enable/disable an add-on this is set as the add-on id.
-
 	    value: This is the value you want to change the setting to. By default this
 	    is set to 'true'.
 
@@ -1748,90 +1833,6 @@ Use this to set built-in kodi settings via JSON or set skin settings.
 
 ------------------------------------------------------------------------------------------
 
-FANCY TEXT:
-Capitalize a string and make the first colour of each string blue and the rest of text white.
-That's the default colours but you can change to whatever colours you want.
-
-	CODE: Colour_Text(text, [color1, color2])
-
-	    AVAILABLE PARAMS:
-	        
-	        (*) text   -  This is the main text you want to change
-
-	        colour1 -  This is optional and is set as dodgerblue by default.
-	        This is the first letter of each word in the string
-
-	        colour2 -  This is optional and is set as white by default. 
-	        This is the colour of the text
-
-	IMPORTANT: I use the Queens English so please note the word "colour" has a 'u' in it!
-
-	EXAMPLE CODE:
-		current_text = 'This is a string of text which should be changed to dodgerblue and white with every first letter capitalised'
-		mytext = koding.Colour_Text(text=current_text, colour1='dodgerblue', colour2='white')
-		xbmc.log(current_text)
-		xbmc.log(mytext)
-		dialog.ok('CURRENT TEXT', current_text)
-		dialog.ok('NEW TEXT', mytext)~"""
-
-------------------------------------------------------------------------------------------
-
-FIND IN TEXT:
-Regex through some text and return a list of matches. Please note this will return a LIST so even if
-only one item is found you will still need to access it as a list, see example below.
-
-	CODE: koding.Find_In_Text(content, start, end, [show_errors])
-
-	AVAILABLE PARAMS:
-	    
-	    (*) content  -  This is the string to search
-
-	    (*) start    -  The start search string
-
-	    (*) end      -  The end search string
-
-	    show_errors  -  Default is True, the code will show help dialogs for bad code.
-	    Set to False if you want to hide these messages
-
-	EXAMPLE CODE:
-		textsearch = 'This is some text so lets have a look and see if we can find the words "lets have a look"'
-		search_result = koding.Find_In_Text(textsearch, 'text so ', ' and see')
-		dialog.ok('SEARCH RESULT','You searched for the start string of "text so " and the end string of " and see". Your result is: %s' % search_result[0])
-
-		# Please note: we know for a fact there is only one result which is why we're only accessing list item zero.
-		# If we were expecting more than one return we would probably do something more useful and loop through in a for loop.
-
-------------------------------------------------------------------------------------------
-
-FOLDER SIZE:
-Return the size of a folder path including sub-directories, this can be returned in a number of different formats.
-
-	CODE: koding.Folder_Size([dirname, filesize])
-
-	AVAILABLE PARAMS:
-
-	    dirname  - This optional, by default it will tell you how much space is available in your
-	    special://home folder. If you require information for another path (such as a different
-	    partition or storage device) then enter the physical path. This currently only works for
-	    local paths and not networked drives.
-
-	    filesize - By default you'll get a return of total bytes, however you can get the value as
-	    bytes, kilobytes, megabytes, gigabytes and terabytes..
-
-	        VALUES:
-	        'b'  = bytes (integer)
-	        'kb' = kilobytes (float to 1 decimal place)
-	        'mb' = kilobytes (float to 2 decimal places)
-	        'gb' = kilobytes (float to 3 decimal places)
-	        'tb' = terabytes (float to 4 decimal places)
-
-	EXAMPLE CODE:
-		HOME = xbmc.translatePath('special://home')
-		home_size = Folder_Size(HOME, 'mb')
-		dialog.ok('Folder Size','KODI HOME: %s MB' % home_size)
-
-------------------------------------------------------------------------------------------
-
 FORCE CLOSE:
 Force close Kodi, should only be used in extreme circumstances.
 
@@ -1840,37 +1841,6 @@ Force close Kodi, should only be used in extreme circumstances.
 	EXAMPLE CODE:
 		if dialog.yesno('FORCE CLOSE','Are you sure you want to forcably close Kodi? This could potentially cause corruption if system tasks are taking place in background.'):
 		    koding.Force_Close()
-
-------------------------------------------------------------------------------------------
-
-FREE SPACE:
-Show the amount of available free space in a path, this can be returned in a number of different formats.
-
-	CODE: Free_Space([dirname, filesize])
-
-	AVAILABLE PARAMS:
-
-		dirname  - This optional, by default it will tell you how much space is available in your special://home folder. If you require information for another path (such as a different partition or storage device) then enter the physical path. This currently only works for local paths and not networked drives.
-
-		filesize - By default you'll get a return of total bytes, however you can get the value as bytes, kilobytes, megabytes, gigabytes and terabytes..
-
-			VALUES:
-			'b'	 = bytes (integer)
-			'kb' = kilobytes (float to 1 decimal place)
-			'mb' = kilobytes (float to 2 decimal places)
-			'gb' = kilobytes (float to 3 decimal places)
-			'tb' = terabytes (float to 4 decimal places)
-
-------------------------------------------------------------------------------------------
-
-GENERATE RANDOM PASSWORD:
-This will generate a random string made up of uppercase & lowercase ASCII characters and digits - it does not contain special characters.
-
-	CODE:  ID_Generator([size])
-	size is an optional paramater.
-
-	AVAILABLE PARAMS:
-		Size - just send through an integer, this is the length of the string you'll get returned. So if you want a password generated that's 20 characters long just use ID_Generator(20). The default is 15.
 
 ------------------------------------------------------------------------------------------
 
@@ -1943,33 +1913,30 @@ Return details of the last error produced, perfect for try/except statements
 
 ------------------------------------------------------------------------------------------
 
-MD5 CHECK:
-Return the md5 value of file or directory, this will return just one unique value.
+NETWORK SETTINGS:
+Attempt to open the WiFi/network settings for the current running operating system.
 
-	CODE: md5_check(src)
+I have no access to any iOS based systems so if anybody wants to add support for
+that and you know the working code please contact me at info@totalrevolution.tv
+The Linux one is also currently untested and of course there are many different
+distros so if you know of any improved code please do pass on. Thank you.
 
-	AVAILABLE PARAMS:
-
-	    (*) src  -  This is source directory/file you want the md5 value of.
+	CODE: Network_Settings()
 
 	EXAMPLE CODE:
-		home = xbmc.translatePath('special://home')
-		home_md5 = koding.md5_check(home)
-		dialog.ok('md5 Check', 'The md5 of your home folder is:', home_md5)
-
-		guisettings = xbmc.translatePath('special://profile/guisettings.xml')
-		guisettings_md5 = koding.md5_check(guisettings)
-		dialog.ok('md5 Check', 'The md5 of your guisettings.xml:', guisettings_md5)
+		koding.Network_Settings()
 
 ------------------------------------------------------------------------------------------
 
-PATH TO CURRENT "LIVE" DATABASE:
-If you need to find out the current "real" database in use then this is the function for you. It will scan for a specific database type (e.g. addons) and return the path to the one which was last updated. This is particularly useful if the system's previously updated to a newer version rather than a fresh install - or if they've installed a "build" which contained old databases.
+PRINT TO LOG - DEBUG MODE:
+Print to the Kodi log but only if debugging is enabled in settings.xml
 
-	CODE: DB_Path_Check(db_path)
+	CODE: koding.dolog(string)
+	string is your text you want printed to log.
 
-	AVAILABLE VALUES:
-		The db_path can be any string you want, it needs to be the string the database starts with. If you want to find the path for the addons*.db you would use "addons" as the value, if you wanted to find the path of the MyVideos*.db you would use "myvideos" etc. - it is not case sensitive.
+	EXAMPLE CODE:
+		koding.dolog(string='Quick test to see if this gets printed to the log', my_debug=True)
+		dialog.ok('[COLOR gold]CHECK LOGFILE[/COLOR]','If you check your log file you should be able to see a new test line we printed.')
 
 ------------------------------------------------------------------------------------------
 
@@ -2079,40 +2046,21 @@ This will allow you to pause code while a specific function is running in the ba
 ------------------------------------------------------------------------------------------
 
 SLEEP IF WINDOW/DIALOG IS ACTIVE:
-This will allow you to pause code while a specific window or dialog is open.
+This will allow you to pause code while a specific window is open.
 
-	CODE: koding.Sleep_If_Active(window_type)
+	CODE: Sleep_If_Window_Active(window_type)
 
 	AVAILABLE PARAMS:
 
 	    window_type  -  This is the window xml name you want to check for, if it's
 	    active then the code will sleep until it becomes inactive. By default this
-	    is set to 10147 which is the custom text window. For a list of available
-	    Window ID's please take a look at this page: http://kodi.wiki/view/Window_IDs
+	    is set to the custom text box (10147). You can find a list of window ID's
+	    here: http://kodi.wiki/view/Window_IDs
 
 	EXAMPLE CODE:
 		koding.Text_Box('EXAMPLE TEXT','This is just an example, normally a text box would not pause code and the next command would automatically run immediately over the top of this.')
 		koding.Sleep_If_Window_Active(10147) # This is the window id for the text box
 		dialog.ok('WINDOW CLOSED','The window has now been closed so this dialog code has now been initiated')
-
-------------------------------------------------------------------------------------------
-
-SPLIT STRING INTO LINES OF X AMOUNT OF CHARACTERS:
-Splits up a piece of text into a list of lines x amount of chars in length.
-
-	CODE: koding.Split_Lines(raw_string, size)
-
-	AVAILABLE PARAMS:
-
-	    (*) raw_string  -  This is the text you want split up into lines
-
-	    (*) size        -  This is the maximum size you want the line length to be (in characters)
-
-	EXAMPLE CODE:
-		raw_string = 'This is some test code, let\'s take a look and see what happens
-		if we split this up into lines of 20 chars per line'
-		my_list = koding.Split_Lines(raw_string,20)
-		koding.Text_Box('List of lines',str(my_list))
 
 ------------------------------------------------------------------------------------------
 
@@ -2192,23 +2140,490 @@ exec: http://kodi.wiki/view/List_of_Built_In_Functions
 
 ------------------------------------------------------------------------------------------
 
+V A R I A B L E    /   S T R I N G    B A S E D   F U N C T I O N S
+
+------------------------------------------------------------------------------------------
+
+ASCII CHECK:
+Return a list of files found containing non ASCII characters in the filename.
+
+	CODE: ASCII_Check([sourcefile, dp])
+
+	AVAILABLE PARAMS:
+	    
+	    sourcefile  -  The folder you want to scan, by default it's set to the
+	    Kodi home folder.
+	        
+	    dp  -  Optional DialogProgress, by default this is False. If you want
+	    to show a dp make sure you initiate an instance of xbmcgui.DialogProgress()
+	    and send through as the param.
+	        
+	EXAMPLE CODE:
+		home = xbmc.translatePath('special://home')
+		progress = xbmcgui.DialogProgress()
+		progress.create('ASCII CHECK')
+		my_return = ASCII_Check(sourcefile=home, dp=progress)
+		if len(my_return) > 0:
+		    dialog.select('NON ASCII FILES', my_return)
+		else:
+		    dialog.ok('ASCII CHECK CLEAN','Congratulations!','There weren\'t any non-ASCII files found on this system.')
+
+------------------------------------------------------------------------------------------
+
+CLEANUP A STRING:
+Clean a string, removes whitespaces and common buggy formatting when pulling from websites
+
+	CODE: Cleanup_String(my_string)
+
+	    AVAILABLE PARAMS:
+	        
+	        (*) my_string   -  This is the main text you want cleaned up.
+
+	EXAMPLE CODE:
+		current_text = '" This is a string of text which should be cleaned up   /'
+		dialog.ok('[COLOR gold]ORIGINAL STRING[/COLOR]', '[COLOR dodgerblue]%s[/COLOR]\n\nPress OK to view the cleaned up version.'%current_text)
+		clean_text = koding.Cleanup_String(current_text)
+		dialog.ok('[COLOR gold]CLEAN STRING[/COLOR]', '[COLOR dodgerblue]%s[/COLOR]'%clean_text)
+
+------------------------------------------------------------------------------------------
+
+DATA TYPE:
+This will return whether the item received is a dictionary, list, string, integer etc.
+
+	CODE:  Data_Type(data)
+
+	    AVAILABLE PARAMS:
+	        
+	        (*) data  -  This is the variable you want to check.
+
+	    RETURN VALUES:
+	    	list, dict, str, int, float, bool
+
+	EXAMPLE CODE:
+		test1 = ['this','is','a','list']
+		test2 = {"a" : "1", "b" : "2", "c" : 3}
+		test3 = 'this is a test string'
+		test4 = 12
+		test5 = 4.3
+		test6 = True
+
+		my_return = '[COLOR dodgerblue]%s[/COLOR] : %s\n' % (test1, koding.Data_Type(test1))
+		my_return += '[COLOR dodgerblue]%s[/COLOR] : %s\n' % (test2, koding.Data_Type(test2))
+		my_return += '[COLOR dodgerblue]%s[/COLOR] : %s\n' % (test3, koding.Data_Type(test3))
+		my_return += '[COLOR dodgerblue]%s[/COLOR] : %s\n' % (test4, koding.Data_Type(test4))
+		my_return += '[COLOR dodgerblue]%s[/COLOR] : %s\n' % (test5, koding.Data_Type(test5))
+		my_return += '[COLOR dodgerblue]%s[/COLOR] : %s\n' % (test6, koding.Data_Type(test6))
+
+		koding.Text_Box('TEST RESULTS', my_return)
+
+------------------------------------------------------------------------------------------
+
+DECODE STRING TO CLEAN TEXT:
+This will allow you to send a string which contains a variety of special characters (including
+non ascii, unicode etc.) and it will convert into a nice clean string which plays nicely
+with Python and Kodi. If it contains characters which will not play nicely it will strip them.
+
+	CODE: Decode_String(string)
+
+	AVAILABLE PARAMS:
+	    
+	    (*) string - This is the string you want to convert
+
+	EXAMPLE CODE:
+		my_string = 'symbols like [COLOR dodgerblue]¥¨˚∆ƒπø“¬∂≈óõřĖė[/COLOR] can cause errors \nnormal chars like [COLOR dodgerblue]asfasdf[/COLOR] are fine'
+		dialog.ok('ORIGINAL TEXT',my_string)
+		my_string = koding.Decode_String(my_string)
+		dialog.ok('DECODED/STRIPPED',my_string)
+		
+------------------------------------------------------------------------------------------
+
+FANCY TEXT:
+Capitalize a string and make the first colour of each string blue and the rest of text white.
+That's the default colours but you can change to whatever colours you want.
+
+	CODE: Colour_Text(text, [color1, color2])
+
+	    AVAILABLE PARAMS:
+	        
+	        (*) text   -  This is the main text you want to change
+
+	        colour1 -  This is optional and is set as dodgerblue by default.
+	        This is the first letter of each word in the string
+
+	        colour2 -  This is optional and is set as white by default. 
+	        This is the colour of the text
+
+	IMPORTANT: I use the Queens English so please note the word "colour" has a 'u' in it!
+
+	EXAMPLE CODE:
+		current_text = 'This is a string of text which should be changed to dodgerblue and white with every first letter capitalised'
+		mytext = koding.Colour_Text(text=current_text, colour1='dodgerblue', colour2='white')
+		xbmc.log(current_text)
+		xbmc.log(mytext)
+		dialog.ok('CURRENT TEXT', current_text)
+		dialog.ok('NEW TEXT', mytext)~"""
+
+------------------------------------------------------------------------------------------
+
+FIND IN TEXT:
+Regex through some text and return a list of matches. Please note this will return a LIST so even if
+only one item is found you will still need to access it as a list, see example below.
+
+	CODE: koding.Find_In_Text(content, start, end, [show_errors])
+
+	AVAILABLE PARAMS:
+	    
+	    (*) content  -  This is the string to search
+
+	    (*) start    -  The start search string
+
+	    (*) end      -  The end search string
+
+	    show_errors  -  Default is True, the code will show help dialogs for bad code.
+	    Set to False if you want to hide these messages
+
+	EXAMPLE CODE:
+		textsearch = 'This is some text so lets have a look and see if we can find the words "lets have a look"'
+		search_result = koding.Find_In_Text(textsearch, 'text so ', ' and see')
+		dialog.ok('SEARCH RESULT','You searched for the start string of "text so " and the end string of " and see". Your result is: %s' % search_result[0])
+
+		# Please note: we know for a fact there is only one result which is why we're only accessing list item zero.
+		# If we were expecting more than one return we would probably do something more useful and loop through in a for loop.
+
+------------------------------------------------------------------------------------------
+
+FUZZY MATCH:
+Send through a list of items and try to match against the search string. This will match where the
+search_string exists in the list or an item in the list exists in the search_string.
+
+CODE: Fuzzy_Search(search_string, search_list, [strip])
+
+AVAILABLE PARAMS:
+    
+    (*) search_string  -  This is the string to search for
+
+    (*) search_list    -  The list of items to search through
+
+    replace_strings  -  Optionally send through a list of strings you want to
+    replace. For example you may want to search for "West Ham United" but in
+    the list you've sent through they've abbreviated it to "West Ham Utd FC". In
+    this case we might want to send through a replace_strings list of:
+
+    (["united","utd"], ["fc",""])
+
+    This will remove any instances of "FC" from the search and it will replace
+    instances of "united" to "utd". The code will convert everythig to lowercase
+    so it doesn't matter what case you use in these searches.
+
+EXAMPLE CODE:
+	my_search = 'west ham utd'
+	my_list = ['west ham united', 'west ham utd', 'rangers fc', 'Man City', 'West Ham United FC', 'Fulham FC', 'West Ham f.c']
+	my_replace = (["united","utd"], ["fc",""], ["f.c",""])
+	dialog.ok('[COLOR gold]FUZZY SEARCH[/COLOR]','Let\'s search for matches similar to "west ham utd" in the list:\n\n%s'%my_list)
+	search_result = koding.Fuzzy_Search(my_search, my_list, my_replace)
+	good = ', '.join(search_result)
+	bad = ''
+	for item in my_list:
+	    if item not in search_result:
+	        bad += item+', '
+	dialog.ok('[COLOR gold]RESULTS FOUND[/COLOR]','[COLOR=dodgerblue]SEARCH:[/COLOR] %s\n[COLOR=lime]GOOD:[/COLOR] %s\n[COLOR=cyan]BAD:[/COLOR] %s'%(my_search,good,bad))
+
+------------------------------------------------------------------------------------------
+
+GENERATE RANDOM PASSWORD:
+This will generate a random string made up of uppercase & lowercase ASCII characters and digits - it does not contain special characters.
+
+	CODE:  ID_Generator([size])
+	size is an optional paramater.
+
+	AVAILABLE PARAMS:
+		Size - just send through an integer, this is the length of the string you'll get returned. So if you want a password generated that's 20 characters long just use ID_Generator(20). The default is 15.
+
+------------------------------------------------------------------------------------------
+
+LANGUAGE STRINGS:
+This will return the relevant language skin as set in the
+resources/language folder for your add-on. By default you'll get
+the language string returned from your current running add-on
+but if you send through another add-on id you can grab from
+any add-on or even the built-in kodi language strings.
+
+	CODE: String(code, [source])
+
+	AVAILABLE PARAMS:
+
+	    (*) code  -  This is the language string code set in your strings.po file.
+
+	    source  -  By default this is set to a blank string and will
+	    use your current add-on id. However if you want to pull the string
+	    from another add-on just enter the add-on id in here. If you'd prefer
+	    to pull from the built-in kodi resources files just set as 'system'.
+
+	EXAMPLE CODE:
+		kodi_string = koding.String(code=10140, source='system')
+		koding_string = koding.String(code=30825, source='script.module.python.koding.aio')
+		dialog.ok('SYSTEM STRING','The string [COLOR=dodgerblue]10140[/COLOR] pulled from the default system language resources is:','[COLOR=gold]%s[/COLOR]' % kodi_string)
+		dialog.ok('PYTHON KODING STRING','The string [COLOR=dodgerblue]30825[/COLOR] pulled from the Python Koding language resources is:','[COLOR=gold]%s[/COLOR]' % koding_string)
+		
+------------------------------------------------------------------------------------------
+
+MD5 CHECK:
+Return the md5 value of file or directory, this will return just one unique value.
+
+	CODE: md5_check(src)
+
+	AVAILABLE PARAMS:
+
+	    (*) src  -  This is source directory/file you want the md5 value of.
+
+	EXAMPLE CODE:
+		home = xbmc.translatePath('special://home')
+		home_md5 = koding.md5_check(home)
+		dialog.ok('md5 Check', 'The md5 of your home folder is:', home_md5)
+
+		guisettings = xbmc.translatePath('special://profile/guisettings.xml')
+		guisettings_md5 = koding.md5_check(guisettings)
+		dialog.ok('md5 Check', 'The md5 of your guisettings.xml:', guisettings_md5)
+
+------------------------------------------------------------------------------------------
+
+PARSE XML:
+Send through the contents of an XML file and pull out a list of matching
+items in the form of dictionaries. When checking your results you should
+allow for lists to be returned, by default each tag found in the xml will
+be returned as a string but if multiple entries of the same tag exists your
+dictionary item will be a list. Although this can be used for many uses this
+was predominantly added for support of XML's which contain multiple links to video
+files using things like <sublink>. When checking to see if a string or list has been
+returned you can use the Data_Type function from Koding which will return 'str' or 'list'.
+
+	CODE: Parse_XML(source, block, tags)
+
+	AVAILABLE PARAMS:
+
+	    source  -  This is the original source file, this must already be read into
+	    memory as a string so made sure you've either used Open_URL or Text_File to
+	    read the contents before sending through.
+
+	    block -  This is the master tag you want to use for creating a dictionary of items.
+	    For example if you have an xml which contains multiple tags called <item> and you wanted
+	    to create a dictionary of sub items found in each of these you would just use 'item'.
+
+	    tags - This is a list of tags you want to return in your dictionary, so lets say each <item>
+	    section contains <link>, <title> and <thumb> tags you can return a dictionary of all those
+	    items by sending through ['link','title','thumb']
+
+	EXAMPLE CODE:
+		dialog.ok('DICTIONARY OF ITEMS','We will now attempt to return a list of details pulled from the noobsandnerds repository addon.xml (NaN repo needs to be installed for this to work).')
+		xml_file = xbmc.translatePath('special://home/addons/repository.noobsandnerds/addon.xml')
+		xml_file = koding.Text_File(xml_file,'r')
+		repo_details = koding.Parse_XML(source=xml_file, block='dir', tags=['info','checksum','datadir'])
+		counter = 0
+		for item in repo_details:
+		    dialog.ok( '[COLOR gold]REPO %s[/COLOR]'%(counter+1),'info path: %s\nchecksum path: %s\ndatadir: %s' % (repo_details[counter]['info'],repo_details[counter]['checksum'],repo_details[counter]['datadir']) )
+		    counter += 1
+		dialog.ok('[COLOR=dodgerblue]FINAL NOTICE[/COLOR]','You probably didn\'t notice but the details of the main noobsandnerds repo paths did NOT show, this is because they are not encapsulated in <dir> tags which we used as the \'block\' to check for.')
+
+------------------------------------------------------------------------------------------
+
+SPLIT LIST:
+Send through a list and split it up into multiple lists. You can choose to create
+lists of every x amount of items or you can split at every nth item and only include
+specific items in your new list.
+
+	CODE: Split_List(source, split_point, include)
+
+	AVAILABLE PARAMS:
+
+	    source  -  This is the original list you want split
+
+	    split_point -  This is the postition you want to split your list at. For example:
+	    original list: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+	    Lets say we want to split it at every 5 items the split point would be 5
+
+	    include - You have 3 options here:
+
+	        'all' - This will add all items to your lists, so in the example above you will
+	        get a return of ([1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15])
+
+	        [] - Send through a list of positions you want to include, based on the example
+	        above and using include=[0,1,3] you will get a return of ([1,2,4],[6,7,9],[11,12,14])
+
+	        int - Send through an integer and it will return everything up to that position,
+	        based on the example above and using include=3 you will get a return of
+	        ([1,2,3],[6,7,8],[11,12,13])
+
+
+	EXAMPLE CODE:
+		my_list = ['one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen']
+		dialog.ok('[COLOR gold]SPLIT LIST 1[/COLOR]','We will now attempt to split the following list into blocks of 5:\n%s'%my_list)
+		newlist = koding.Split_List(source=my_list, split_point=5)
+		dialog.ok('[COLOR gold]RESULTS[/COLOR]','Our returned var:\n%s'%newlist)
+		dialog.ok('[COLOR gold]SPLIT LIST 2[/COLOR]','We will now attempt to split the same list at every 5th item position and only show items [0,1,3]')
+		newlist = koding.Split_List(source=my_list, split_point=5, include=[0,1,3])
+		dialog.ok('[COLOR gold]RESULTS[/COLOR]','Our returned var:\n%s'%newlist)
+		dialog.ok('[COLOR gold]SPLIT LIST 3[/COLOR]','We will now attempt to split the same list at every 5th item position and only show the first 3 items.')
+		newlist = koding.Split_List(source=my_list, split_point=5, include=3)
+		dialog.ok('[COLOR gold]RESULTS[/COLOR]','Our returned var:\n%s'%newlist)
+
+------------------------------------------------------------------------------------------
+
+SPLIT STRING INTO LINES OF X AMOUNT OF CHARACTERS:
+Splits up a piece of text into a list of lines x amount of chars in length.
+
+	CODE: koding.Split_Lines(raw_string, size)
+
+	AVAILABLE PARAMS:
+
+	    (*) raw_string  -  This is the text you want split up into lines
+
+	    (*) size        -  This is the maximum size you want the line length to be (in characters)
+
+	EXAMPLE CODE:
+		raw_string = 'This is some test code, let\'s take a look and see what happens
+		if we split this up into lines of 20 chars per line'
+		my_list = koding.Split_Lines(raw_string,20)
+		koding.Text_Box('List of lines',str(my_list))
+
+------------------------------------------------------------------------------------------
+
+TABLE CONVERT:
+Open a web page which a table and pull out the contents of that table
+into a list of dictionaries with your own custom keys.
+
+	CODE:   Table_Convert(url, contents, table)
+
+	AVAILABLE PARAMS:
+
+	    url  -  The url you want to open and pull data from
+
+	    contents  -  Send through a dictionary of the keys you want to assign to
+	    each of the cells. The format would be: {my_key : position}
+	    You can pull out as many cells as you want, so if your table has 10 columns
+	    but you only wanted to pull data for cells 2,4,5,6,8 then you could do so
+	    by setting contents to the following params:
+	    contents = {"name 1":2, "name 2":4, "name 3":5, "name 4":6, "name 5":8}
+
+	    table  -  By default this is set to zero, this is to be used if there's
+	    multiple tables on the page you're accessing. Remeber to start at zero,
+	    so if you want to access the 2nd table on the page it will be table=1.
+
+	EXAMPLE CODE:
+		dialog.ok('[COLOR gold]TABLE DATA[/COLOR]','Let\'s pull some details from the proxy list table found at:\nhttps://hidemy.name/en/proxy-list/.')
+		proxies = koding.Table_Convert(url='https://hidemy.name/en/proxy-list/', contents={"ip":0,"port":1}, table=0)
+		mytext = '[COLOR dodgerblue]Here are some proxies:[/COLOR]\n'
+		for item in proxies:
+		    mytext += '\nIP: %s\nPort: %s\n[COLOR steelblue]----------------[/COLOR]'%(item['ip'],item['port'])
+		Text_Box('MASTER PROXY LIST',mytext)
+
+------------------------------------------------------------------------------------------
+
 V I D E O   T O O L S
 
 ------------------------------------------------------------------------------------------
 
 CHECK IF VIDEO PLAYBACK IS SUCCESSFUL:
-This function will return true or false based on video playback. Simply start a stream (whether via an add-on, direct link to URL or local storage doesn't matter), the code will then work out if playback is successful. This uses a number of checks and should take into account all potential glitches which can occur during playback. The return should happen within a second or two of playback being successful (or not).
+This function will return true or false based on video playback. Simply start a stream
+(whether via an add-on, direct link to URL or local storage doesn't matter), the code will
+then work out if playback is successful. This uses a number of checks and should take into
+account all potential glitches which can occur during playback. The return should happen
+within a second or two of playback being successful (or not).
 
 	CODE: Check_Playback()
+
+	AVAILABLE PARAMS:
+	    
+	    ignore_dp  -  By default this is set to True but if set to False
+	    this will ignore the DialogProgress window. If you use a DP while
+	    waiting for the stream to start then you'll want to set this True.
+	    Please bare in mind the reason this check is in place and enabled
+	    by default is because some streams do bring up a DialogProgress
+	    when initiated (such as f4m proxy links) and disabling this check
+	    in those circumstances can cause false positives.
+
+	    timeout  -  This is the amount of time you want to allow for playback
+	    to start before sending back a response of False. Please note if
+	    ignore_dp is set to True then it will also add a potential 10s extra
+	    to this amount if a DialogProgress window is open. The default setting
+	    for this is 10s.
+
+	EXAMPLE CODE:
+		xbmc.Player().play('http://totalrevolution.tv/videos/python_koding/Browse_To_Folder.mov')
+		isplaying = koding.Check_Playback()
+		if isplaying:
+		    dialog.ok('PLAYBACK SUCCESSFUL','Congratulations, playback was successful')
+		    xbmc.Player().stop()
+		else:
+		    dialog.ok('PLAYBACK FAILED','Sorry, playback failed :(')
+
+------------------------------------------------------------------------------------------
+
+LAST PLAYED (OR CURRENTLY PLAYING) FILE:
+Return the link of the last played (or currently playing) video.
+This differs to the built in getPlayingFile command as that only shows details
+of the current playing file, these details can differ to the url which was
+originally sent through to initiate the stream. This Last_Played function
+directly accesses the database to get the REAL link which was initiated and
+will even return the plugin path if it's been played through an external add-on.
+
+	CODE: Last_Played()
+
+	EXAMPLE CODE:
+	if koding.Play_Video('http://totalrevolution.tv/videos/python_koding/Browse_To_Folder.mov'):
+	    xbmc.sleep(3000)
+	    xbmc.Player().stop()
+	    last_vid = Last_Played()
+	    dialog.ok('[COLOR gold]VIDEO LINK[/COLOR]','The link we just played is:\n\n%s'%last_vid)
+	else:
+	    dialog.ok('[COLOR gold]PLAYBACK FAILED[/COLOR]','Sorry this video is no longer available, please try using a different video link.')
+
+------------------------------------------------------------------------------------------
+
+M3U / M3U8 PLAYLIST SELECTOR:
+Send through an m3u/m3u8 playlist and have the contents displayed via a dialog select.
+The return will be a dictionary of 'name' and 'url'. You can send through either
+a locally stored filepath or an online URL.
+
+This function will try it's best to pull out the relevant playlist details even if the
+web page isn't a correctly formatted m3u playlist (e.g. an m3u playlist embedded into
+a blog page).
+
+	CODE: M3U_Selector(url, [post_type, header])
+
+	AVAILABLE PARAMS:
+	    (*) url  -  The location of your m3u file, this can be local or online
+
+	    post_type  -  If you need to use POST rather than a standard query string
+	    in your url set this to 'post', by default it's set to 'get'.
+
+	    header  -  This is the header you want to appear at the top of your dialog
+	    selection window, by default it's set to "Stream Selection"
+
+	EXAMPLE CODE:
+		# This example uses YouTube plugin paths but any playable paths will work
+		vid = koding.M3U_Selector(url='http://totalrevolution.tv/videos/playlists/youtube.m3u')
+
+		# Make sure there is a valid link returned
+		if vid:
+		    playback = koding.Play_Video(vid['url'])
+		if playback:
+		    dialog.ok('SUCCESS!','Congratulations the playback was successful!')
+	        xbmc.Player().stop()
+
+		else:
+		    dialog.ok('OOPS!','Looks like something went wrong there, the playback failed. Check the links are still valid.')
 
 ------------------------------------------------------------------------------------------
 
 PLAY VIDEO:
-This will attempt to play a video and return True or False on whether or not playback was successful. This function is similar
-to Check_Playback but this actually tries a number of methods to play the video whereas Check_Playback does not actually try to
-play a video - it will just return True/False on whether or not a video is currently playing.
+This will attempt to play a video and return True or False on whether or not playback was successful.
+This function is similar to Check_Playback but this actually tries a number of methods to play the
+video whereas Check_Playback does not actually try to play a video - it will just return True/False on
+whether or not a video is currently playing.
 
-	CODE: Play_Video(video, [showbusy, content])
+If you have m3u or m3u8 playlist links please use the M3U_Selector function to get the final resolved url.
+
+	CODE: Play_Video(video, [showbusy, content, ignore_dp, timeout, item])
 
 	AVAILABLE PARAMS:
 
@@ -2225,6 +2640,28 @@ play a video - it will just return True/False on whether or not a video is curre
 	    passing through audio you may want to set this to 'music' so the
 	    system can correctly set the tags for artist, song etc.
 
+	    ignore_dp  -  By default this is set to True but if set to False
+	    this will ignore the DialogProgress window. If you use a DP while
+	    waiting for the stream to start then you'll want to set this True.
+	    Please bare in mind the reason this check is in place and enabled
+	    by default is because some streams do bring up a DialogProgress
+	    when initiated (such as f4m proxy links) and disabling this check
+	    in those circumstances can cause false positives.
+
+	    timeout  -  This is the amount of time you want to allow for playback
+	    to start before sending back a response of False. Please note if
+	    ignore_dp is set to True then it will also add a potential 10s extra
+	    to this amount if a DialogProgress window is open. The default setting
+	    for this is 10s.
+
+	    item  -  By default this is set to None and in this case the metadata
+	    will be auto-populated from the previous Add_Dir so you'll just get the
+	    basics like title, thumb and description. If you want to send through your
+	    own metadata in the form of a dictionary you can do so and it will override
+	    the auto-generation. If anything else sent through no metadata will be set,
+	    you would use this option if you've already set metadata in a previous function.
+
+
 	EXAMPLE CODE:
 		isplaying = koding.Play_Video('http://totalrevolution.tv/videos/python_koding/Browse_To_Folder.mov')
 		if isplaying:
@@ -2232,7 +2669,6 @@ play a video - it will just return True/False on whether or not a video is curre
 		    xbmc.Player().stop()
 		else:
 		    dialog.ok('PLAYBACK FAILED','Sorry, playback failed :(')
-
 ------------------------------------------------------------------------------------------
 
 SLEEP IF PLAYBACK IS ACTIVE:
@@ -2252,10 +2688,26 @@ W E B   T O O L S
 
 ------------------------------------------------------------------------------------------
 
+CLEANUP URL:
+Clean a url, removes whitespaces and common buggy formatting when pulling from websites
+
+	CODE: Cleanup_URL(url)
+
+    AVAILABLE PARAMS:
+        
+        (*) url   -  This is the main url you want cleaned up.
+
+	EXAMPLE CODE:
+		raw_url = '" http://test.com/video/"/'
+		clean_url = koding.Cleanup_URL(raw_url)
+		dialog.ok('CLEANUP URL', 'Orig: %s'%raw_url,'Clean: %s'%clean_url)
+
+------------------------------------------------------------------------------------------
+
 DOWNLOAD:
 This will download a file, currently this has to be a standard download link which doesn't require cookies/login.
 
-	CODE: koding.Download(src,dst,[dp])
+	CODE: Download(src,dst,[dp])
 	dp is optional, by default it is set to false
 
 	AVAILABLE PARAMS:
@@ -2266,9 +2718,12 @@ This will download a file, currently this has to be a standard download link whi
 		dp - This is optional, if you pass through the dp function as a DialogProgress() then you'll get to see the progress of the download. If you choose not to add this paramater then you'll just get a busy spinning circle icon until it's completed. See the example below for a dp example.
 
 	EXAMPLE CODE WITH A DIALOG PROGRESS WINDOW:
+		src = 'http://noobsandnerds.com/portal/Bits%20and%20bobs/Documents/user%20guide%20of%20the%20gyro%20remote.pdf'
+		dst = xbmc.translatePath('special://home/remote.pdf')
 		dp = xbmcgui.DialogProgress()
 		dp.create('Downloading File','Please Wait')
 		koding.Download(src,dst,dp)
+		dialog.ok('[COLOR gold]DOWNLOAD COMPLETE[/COLOR]','Your download is complete, please check your home Kodi folder. There should be a new file called remote.pdf - you can delete this if you want.')
 
 ------------------------------------------------------------------------------------------
 
@@ -2286,16 +2741,18 @@ Return the extension of any given url
 
 ------------------------------------------------------------------------------------------
 
-PULL CONTENTS FROM A WEB PAGE:
+OPEN URL:
 If you need to pull the contents of a webpage it's very simple to do so by using this function.
+This uses the Python Requests module, for more detailed info on how the params work
+please look at the following link: http://docs.python-requests.org/en/master/user/advanced/
 
-IMPORTANT: This function is designed to convert a query string into a post.
-If you want to send through a post which contains ampersands or question
-marks you MUST send the params through as a dictionary. By default this function
-presumes the url only contains one question mark and it splits at that point and
-will then split the params at every instance of an ampersand.
+IMPORTANT: This function will attempt to convert a url with a query string into the
+correct params for a post or get command but I highly recommend sending through your
+query string as a dictionary using the payload params. It's much cleaner and is a
+safer way of doing things, if you send through your url with a query string attached
+then I take no responsibility if it doesn't work!
 
-	CODE:   koding.Open_URL(url,[post_type,payload,headers,cookies,auth,timeout,cookiejar])
+	CODE:   Open_URL(url,[post_type,payload,headers,cookies,auth,timeout,cookiejar])
 
 	AVAILABLE PARAMS:
 
@@ -2323,9 +2780,80 @@ will then split the params at every instance of an ampersand.
 	    set to addon_data/<addon_id>/cookies/cookiejar but if you have multiple
 	    websites you access then you may want to use a separate filename for each site.
 
+	    proxies - Use a proxy for accessing the link, see requests documentation for full
+	    information but essentially you would send through a dictionary like this:
+	    proxies = {"http":"http://10.10.1.10:3128","htts":"https://10.10.1.10:3128"}
+
 	EXAMPLE CODE:
-		url_contents = koding.Open_URL('http://testpage.com?query1=value1&query2=value2', post_type='get')
+		dialog.ok('[COLOR gold]OPEN FORUM PAGE[/COLOR]','We will attempt to open the noobsandnerds forum page and return the contents. You will now be asked for your forum credentials.')
+		myurl = 'http://noobsandnerds.com/support/index.php'
+		username = koding.Keyboard('ENTER USERNAME')
+		password = koding.Keyboard('ENTER PASSWORD')
+		params = {"username":username,"password":password}
+		xbmc.log(repr(params),2)
+		url_contents = koding.Open_URL(url=myurl, payload=params, post_type='get')
 		koding.Text_Box('CONTENTS OF WEB PAGE',url_contents)
+
+------------------------------------------------------------------------------------------
+
+PROXY LIST:
+Returns a list of verified proxies, courtesy of proxyfor.eu
+The default return you'll get is a dictionary of countries where each
+value is a list containing dictionaries of "ip", "port" and "speed".
+
+Please note this function will most likely break at some point in the
+future as it relies on web scraping. If you find it's broken please
+contact the developer via the noobsandnerds forum.
+
+	CODE:   Proxy_List([dictionary])
+
+	AVAILABLE PARAMS:
+
+	    country  -  By default you'll get a dictionary of countries, each
+	    of which have lists of available proxies. If set to False you'll receive
+	    just one list of dictionaries. See the example code below to understand
+	    how the two can be used.
+
+	EXAMPLE CODE:
+		dialog.ok('[COLOR gold]GRAB PROXIES[/COLOR]','Let\'s pull results with both the default settings and also with country set to False. This should hopefully show how the 2 different modes can be of use.')
+		proxies = koding.Proxy_List()
+		mytext = '[COLOR dodgerblue]Here are some proxies, as shown in this example if you know the name of the country you want it makes it very simple to sort the results:[/COLOR]\n\n[COLOR gold]China:[/COLOR]\n'
+
+		for item in proxies['China']:
+		    mytext += 'IP: %s\nPort: %s\nSpeed: %s\n[COLOR steelblue]----------------[/COLOR]\n'%(item['ip'],item['port'],item['speed'])
+
+		mytext += '\n[COLOR gold]United States:[/COLOR]\n'
+		for item in proxies['United States']:
+		    mytext += 'IP: %s\nPort: %s\nSpeed: %s\n[COLOR steelblue]----------------[/COLOR]\n'%(item['ip'],item['port'],item['speed'])
+		Text_Box('MASTER PROXY LIST',mytext)
+		xbmc.sleep(7000)
+		dialog.ok('[COLOR gold]MASTER PROXY LIST[/COLOR]','Now let\'s try with a master list (country set to False). We still get the country details but it\'s not in the form of a dictionary and is just one big list.\n')
+		proxies = koding.Proxy_List(country=False)
+		mytext = '[COLOR dodgerblue]Here are all the proxies found, We don\'t really care about sorting by country so we can just list the whole lot in one big list:[/COLOR]\n'
+		for item in proxies:
+		    item = item[0]
+		    mytext += 'Country: %s\nIP: %s\nPort: %s\nSpeed: %s\n[COLOR steelblue]----------------[/COLOR]\n'%(item['country'],item['ip'],item['port'],item['speed'])
+		Text_Box('MASTER PROXY LIST',mytext)
+
+------------------------------------------------------------------------------------------
+
+VALIDATE LINK:
+Returns the code for a particular link, so for example 200 is a good link and 404 is a URL not found
+
+	CODE:   koding.Validate_Link(url,[timeout])
+
+	AVAILABLE PARAMS:
+
+	    (*) url  -  This is url you want to check the header code for
+
+	    timeout  -  An optional timeout integer for checking url (default is 30 seconds)
+
+	EXAMPLE CODE:
+		url_code = koding.Validate_Link('http://totalrevolution.tv')
+		if url_code == 200:
+		    dialog.ok('WEBSITE STATUS','The website [COLOR=dodgerblue]totalrevolution.tv[/COLOR] is [COLOR=lime]ONLINE[/COLOR]')
+		else:
+	    dialog.ok('WEBSITE STATUS','The website [COLOR=dodgerblue]totalrevolution.tv[/COLOR] is [COLOR=red]OFFLINE[/COLOR]')
 
 ------------------------------------------------------------------------------------------
 
@@ -2348,10 +2876,10 @@ WARNING: Running code directly from a server is generally discouraged, any add-o
 ------------------------------------------------------------------------------------------
 
 
-NOOBSANDNERDS FEATURES
-======================
+NOOBSANDNERDS FEATURES - CURRENTLY ON HOLD DUE TO TECHNICAL (SERVER) ISSUES
+===========================================================================
 
-The following unique features are only available to developers who have their addons supported at noobsandnerds.com. The more users we have hooking into these functions the more money we need to spend on servers and as NaN is a voluntarily run site we rely solely on donations and google ads to keep the site going. If you're interested in hooking into these features please send whufclee a PM on the noobsandnerds forum.
+The following unique features are only available to developers who have their addons supported at noobsandnerds.com. The more users they have hooking into these functions the more money they need to spend on servers and as NaN is a voluntarily run site they rely solely on donations and google ads to keep the site going. If you're interested in hooking into these features please send whufclee a PM on the noobsandnerds forum.
 
 SECURITY
 ========
@@ -2386,12 +2914,6 @@ CREATE DEVELOPMENT VERSIONS RUNNING OFF YOUR OWN SERVER
 =======================================================
 If your add-on relies on grabbing content you've added to the NaN servers but you don't want to mess around with the live environment you can create a development version of the add-on and have it hit your own server instead. The development version can just be a duplicate of your existing add-on but with a new id, contact a member of the admin team at NaN to get it approved and then you'll be able to edit the base domain as you wish.
 
-SETTINGS - CLEAR DATA
-=====================
-If you want to offer the option to clear the cookie data then you can add the following code. This will wipe the cookies folder - could be useful if things like initial run code sent back from server changes or the base urls have changed.
-
-        <setting id="clear_data"	label="Re-check Server"	type="action"	action="RunScript(special://home/addons/script.module.python.koding.aio/lib/koding/__init__.py,clear_data,your.plugin.id)"	option="close"	visible="true"/>
-
 SYNCHRONISE FILES
 =================
 By adding small zip files on the server you can have your add-on auto-syncing with specific files. Particularly useful if you have userdata which is required but often requires some sort of regular changes.
@@ -2414,9 +2936,5 @@ You can run a variety of universal NaN modules, if you want to submit new ones t
 ------------------------------------------------------------------------------------------
 
 RETURN THE BASE URL: koding.Check_Cookie('base') - NaN uses a special load balancing system whereby multiple servers are used, all sync'd with access to the same content. If you need to hook into files hosted on your NaN account then using this function will return the base url. This may change from day to day, every add-on that uses koding.py will automatically get a new randomised server to use for the following 24 hours. This helps prevent ddos attacks, gives fallback options for any slow servers and also makes sure there are sufficient backups of your important files.
-
-------------------------------------------------------------------------------------------
-
-CLEAR COOKIE DATA: koding.Clear_Data() - If you're having any problems with the temporary cached files or you're testing in a dev environment and need to clear any cache you can call this function and it will simply wipe the whole cookie folder in your relevant addon_data folder. This is the folder that will always be used for any future temporary cache files used by koding.py. You can also call this function in the settings.xml - see the settings.xml section above.
 
 ------------------------------------------------------------------------------------------
