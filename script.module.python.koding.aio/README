@@ -127,6 +127,45 @@ Return a list of enabled or disabled add-ons found in the database.
 
 ------------------------------------------------------------------------------------------
 
+ADDON SERVICE
+Send through an add-on id, list of id's or leave as the default which is "all". This
+will loop through the list of add-ons and return the ones which are run as services.
+
+This enable/disable feature will comment out the service lines, and does not stop a running
+service or start a service. This is designed more for if you've manually extracted a new
+add-on into your system and it isn't yet enabled. Occasionally if the add-ons have dependencies
+which are run as services then trying to enable them can cause Kodi to freeze.
+
+	CODE: Addon_Service([addon, disable, skip_service])
+
+	AVAILABLE PARAMS:
+	    
+	    addons  -  By default this is set to "all" but if there's a sepcific set of add-ons you
+	    want to disable the service for just send through the id's in the form of a list.
+
+	    mode  -  By default this is set to 'list' meaning you'll get a return of add-on folders
+	    which contain an instance of service in the add-on.xml. You can set this to "disable" to
+	    comment out the instances of service and similarly when you need to re-enable you can use
+	    "enable" and that will uncomment out the service item. Please note that by uncommenting
+	    the service will not automatically start - you'll need to reload the profile for that.
+
+	    skip_service  -  This function can fail if certain dependencies are
+	    run as a service, if they are causing problems you can send through
+	    the id or a list of id's which you want to disable the service for.
+	    This will comment out the service part in the addon.xml before attempting
+	    to enable the add-on. Don't forget to re-enable this if you want the service
+	    running.
+
+	EXAMPLE CODE:
+		dialog.ok('[COLOR gold]CHECKING FOR SERVICES[/COLOR]','We will now check for all add-ons installed which contain services')
+		service_addons = Addon_Service(mode='list')
+		my_text = 'List of add-ons running as a service:\n\n'
+		for item in service_addons:
+		    my_text += item+'\n'
+		koding.Text_Box('[COLOR gold]SERVICE ADDONS[/COLOR]',my_text)
+
+------------------------------------------------------------------------------------------
+
 ADDON SETTINGS - RETRIEVE/SET VALUE:
 Change or retrieve an add-on setting.
 
@@ -186,10 +225,70 @@ By default this will open the current add-on settings but if you pass through an
 
 ------------------------------------------------------------------------------------------
 
+ADDON TOGGLE:
+Send through either a list of add-on ids or one single add-on id.
+The add-ons sent through will then be added to the addons*.db
+and enabled or disabled (depending on state sent through).
+
+WARNING: If safe_mode is set to False this directly edits the
+addons*.db rather than using JSON-RPC. Although directly amending
+the db is a lot quicker there is no guarantee it won't cause
+severe problems in later versions of Kodi (this was created for v17).
+DO NOT set safe_mode to False unless you 100% understand the consequences!
+
+	CODE:  Toggle_Addons([addon, enable, safe_mode, exclude_list, new_only, refresh, update_status])
+
+	AVAILABLE PARAMS:
+	    (*) addon  -  This can be a list of addon ids, one single id or
+	    'all' to enable/disable all. If enabling all you can still use
+	    the exclude_list for any you want excluded from this function.
+	    enable  -  By default this is set to True, if you want to disable
+	    the add-on(s) then set this to False.
+	    
+	    safe_mode  -  By default this is set to True which means the add-ons
+	    are enabled/disabled via JSON-RPC which is the method recommended by
+	    the XBMC foundation. Setting this to False will result in a much
+	    quicker function BUT there is no guarantee this will work on future
+	    versions of Kodi and it may even cause corruption in future versions.
+	    Setting to False is NOT recommended and you should ONLY use this if
+	    you 100% understand the risks that you could break multiple setups.
+	    
+	    exclude_list  -  Send through a list of any add-on id's you do not
+	    want to be included in this command.
+	    
+	    new_only  -  By default this is set to True so only newly extracted
+	    add-on folders will be enabled/disabled. This means that any existing
+	    add-ons which have deliberately been disabled by the end user are
+	    not affected.
+	    
+	    refresh  - By default this is set to True, it will refresh the
+	    current container and also force a local update on your add-ons db.
+
+	    update_status  - When running this function it needs to disable the
+	    auto-update of add-ons by Kodi otherwise it risks crashing. This
+	    update_status paramater is the state you want Kodi to revert back to
+	    once the toggle of add-ons has completed. By default this is set to 0
+	    which is auto-update. You can also choose 1 (notify of updates) or 2
+	    (disable auto updates).
+
+	EXAMPLE CODE:
+		from systemtools import Refresh
+		xbmc.executebuiltin('ActivateWindow(Videos, addons://sources/video/)')
+		xbmc.sleep(2000)
+		dialog.ok('DISABLE YOUTUBE','We will now disable YouTube (if installed)')
+		koding.Toggle_Addons(addon='plugin.video.youtube', enable=False, safe_mode=True, exclude_list=[], new_only=False)
+		koding.Refresh('container')
+		xbmc.sleep(2000)
+		dialog.ok('ENABLE YOUTUBE','When you click OK we will enable YouTube (if installed)')
+		koding.Toggle_Addons(addon='plugin.video.youtube', enable=True, safe_mode=True, exclude_list=[], new_only=False)
+		koding.Refresh('container')
+
+------------------------------------------------------------------------------------------
+
 ADULT TOGGLE:
 Remove/Enable a list of add-ons, these are put into a containment area until enabled again.
 
-CODE: Adult_Toggle(adult_list, [disable])
+CODE: Adult_Toggle(adult_list, [disable, update_status])
 
 AVAILABLE PARAMS:
             
@@ -197,6 +296,13 @@ AVAILABLE PARAMS:
 
     disable  -  By default this is set to true so any add-ons in the list sent
     through will be disabled. Set to False if you want to enable the hidden add-ons.
+
+    update_status  - When running this function it needs to disable the
+    auto-update of add-ons by Kodi otherwise it risks crashing. This
+    update_status paramater is the state you want Kodi to revert back to
+    once the toggle of add-ons has completed. By default this is set to 0
+    which is auto-update. You can also choose 1 (notify of updates) or 2
+    (disable auto updates).
 
 ------------------------------------------------------------------------------------------
 
@@ -724,9 +830,10 @@ This will allow the user to browse to a specific file and return the path.
 
 IMPORTANT: Do not confuse this with the Browse_To_Folder function
 
-	CODE: koding.Browse_To_File([header, path, extension])
+	CODE: koding.Browse_To_File([header, path, extension, browse_in_archives])
 
 	AVAILABLE PARAMS:
+
 	    header    -  As the name suggests this is a string to be used for the header/title
 	    of the window. The default is "Select the file you want to use".
 
@@ -736,9 +843,16 @@ IMPORTANT: Do not confuse this with the Browse_To_Folder function
 	    extension -  Optionally set extensions to filter by, let's say you only wanted
 	    zip and txt files to show you would send through '.zip|.txt'
 
+	    browse_in_archives -  Set to true if you want to be able to browse inside zips and
+	    other archive files. By default this is set to False.
+
 	EXAMPLE CODE:
-		folder = koding.Browse_To_File(header='Choose a file you want to use', path='special://home/userdata')
-		dialog.ok('FOLDER DETAILS','Folder path: [COLOR=dodgerblue]%s[/COLOR]'%folder)
+		dialog.ok('[COLOR gold]BROWSE TO FILE 1[/COLOR]','We will now browse to your addons folder with browse_in_archives set to [COLOR dodgerblue]False[/COLOR]. Try clicking on a zip file if you can find one (check packages folder).')
+		folder = koding.Browse_To_File(header='Choose a file you want to use', path='special://home/addons')
+		dialog.ok('FOLDER DETAILS','File path: [COLOR=dodgerblue]%s[/COLOR]'%folder)
+		dialog.ok('[COLOR gold]BROWSE TO FILE 2[/COLOR]','We will now browse to your addons folder with browse_in_archives set to [COLOR dodgerblue]True[/COLOR]. Try clicking on a zip file if you can find one (check packages folder).')
+		folder = koding.Browse_To_File(header='Choose a file you want to use', path='special://home/addons', browse_in_archives=True)
+		dialog.ok('FOLDER DETAILS','File path: [COLOR=dodgerblue]%s[/COLOR]'%folder)
 
 ------------------------------------------------------------------------------------------
 
@@ -748,7 +862,7 @@ and the path is then returned.
 
 IMPORTANT: Do not confuse this with the Browse_To_File function
 
-	CODE: koding.Browse_To_Folder(header, path)
+	CODE: Browse_To_Folder(header, path)
 
 	AVAILABLE PARAMS:
 	    header  -  As the name suggests this is a string to be used for the header/title
@@ -911,7 +1025,7 @@ This will show/hide a "working" symbol.
 KEYBOARD:
 Show an on-screen keyboard and return the string
 
-	CODE: koding.Keyboard([default, heading, hidden, return_false, autoclose, kb_type])
+	CODE: Keyboard([default, heading, hidden, return_false, autoclose, kb_type])
 
 	AVAILABLE PARAMS:
 
@@ -966,7 +1080,7 @@ Show an on-screen keyboard and return the string
 NOTIFICATION POPUP:
 Show a short notification for x amount of seconds
 
-	CODE: koding.Notify(title, message, [duration, icon])
+	CODE: Notify(title, message, [duration, icon])
 
 	AVAILABLE PARAMS:
 
@@ -1028,7 +1142,7 @@ sent through as a list and only one can be selected - this is not a multi-select
 TEXT BOX (LARGE WINDOW OF TEXT):
 This will allow you to open a blank window and fill it with some text.
 
-	CODE: koding.Text_Box(header, message)
+	CODE: Text_Box(header, message)
 
 	AVAILABLE PARAMS:
 		header 	-  As the name suggests this is a string to be used for the header/title of the window
@@ -1038,6 +1152,77 @@ This will allow you to open a blank window and fill it with some text.
 
 	EXAMPLE CODE:
 		koding.Text_Box('TEST HEADER','Just some random text[CR][CR]Use kodi tags for new lines, colours etc.')
+
+------------------------------------------------------------------------------------------
+
+UPDATE PROGRESS:
+This function is designed for skinners but can be used for general Python too. It will
+work out the current percentage of items that have been processed and update the
+"update_percent" property accordingly (1-100). You can also send through any properties
+you want updated and it will loop through updating them with the relevant values.
+
+To send through properties just send through the property name as the param and assign to a value.
+Example: Update_Progress( total_items=100,current_item=56, {"myproperty1":"test1","myproperty2":"test2"} )
+
+
+	CODE: Update_Progress(total_items,current_item,[kwargs])
+
+	AVAILABLE PARAMS:
+
+	    (*) total_items  -  Total amount of items in your list you're processing
+
+	    (*) current_item -  Current item number that's been processed.
+
+	    kwargs  -  Send through any other params and the respective property will be set.colours etc.
+
+------------------------------------------------------------------------------------------
+
+UPDATE SCREEN:
+This will create a full screen overlay showing progress of updates. You'll need to
+use this in conjunction with the Update_Progress function.
+
+
+	CODE: Update_Screen([disable_quit, auto_close))
+
+	AVAILABLE PARAMS:
+
+	    disable_quit  -  By default this is set to False and pressing the parent directory
+	    button (generally esc) will allow you to close the window. Setting this to True
+	    will mean it's not possible to close the window manually.
+
+	    auto_close  -  By default this is set to true and when the percentage hits 100
+	    the window will close. If you intend on then sending through some more commands
+	    you might want to consider leaving this window open in which case you'd set this
+	    to false. Bare in mind if you go this route the window will stay active until
+	    you send through the kill command which is: xbmc.executebuiltin('Action(firstpage)')
+
+	EXAMPLE CODE:
+	mykwargs = {
+	    "update_header"    : "Downloading latest updates",\
+	    "update_main_text" : "Your device is now downloading all the latest updates.\nThis shouldn\'t take too long, "\
+	                         "depending on your internet speed this could take anything from 2 to 10 minutes.\n\n"\
+	                         "Once downloaded the system will start to install the updates.",\
+	    "update_bar_color" : "4e91cf",\
+	    "update_icon"      : "special://home/addons/script.module.python.koding.aio/resources/skins/Default/media/update.png",\
+	    "update_spinner"   : "true"}
+	Update_Screen()
+	counter = 1
+	while counter <= 60:
+	    xbmc.sleep(300)
+	    Update_Progress(total_items=60,current_item=counter,**mykwargs)
+	    if counter == 30:
+	        mykwargs = {
+	            "update_header"        : "Halfway there!",\
+	            "update_main_text"     : "We just updated the properties to show how you can change things on the fly "\
+	                                     "simply by sending through some different properties. Both the icon and the "\
+	                                     "background images you see here are being pulled from online.",\
+	            "update_header_color"  : "4e91cf",\
+	            "update_percent_color" : "4e91cf",\
+	            "update_bar_color"     : "4e91cf",\
+	            "update_background"    : "http://www.planwallpaper.com/static/images/518164-backgrounds.jpg",\
+	            "update_icon"          : "http://totalrevolution.tv/img/tr_small_black_bg.jpg",\
+	            "update_spinner"       : "false"}
+	    counter += 1
 
 ------------------------------------------------------------------------------------------
 
@@ -1270,38 +1455,6 @@ F I L E   T O O L S
 
 ------------------------------------------------------------------------------------------
 
-ARCHIVE (CREATE A ZIP):
-Archive a folder path including all sub-folders. Optional exclude_dirs and exclude_files lists can be sent through and these will be skipped.
-
-IMPORTANT: There is a known bug where some certain compressed tar.gz files can cause the system to hang
-and a bad zipfile will continue to be made until it runs out of space on your storage device. In the unlikely
-event you encounter this issue just add the file(s) to your exclude list.
-
-	CODE: Archive_Tree(sourcefile, destfile, [exclude_dirs, exclude_files, message_header, message]):
-
-	AVAILABLE PARAMS:
-	    (*) sourcefile   - This is the source folder of where you want to start the archive process
-
-	    (*) destfile     - This is the file path you want to save the archive as (don't forget to add the actual filename at end of path)
-
-	    exclude_dirs   - This is optional, if you have folder names you want to exclude just add them here as a list item
-
-	    exclude_files  - This is optional, if you have specific file names you want to exclude just add them here as a list item
-
-	    message_header - This is optional, you can give the dialog progress window a title. The default is "ARCHIVING"
-
-	    message        - This is optional, the default text in the dialog progress window will be "Creating archive" unless changed here.
-
-
-	EXAMPLE CODE:
-		HOME = xbmc.translatePath('special://home')
-		DST = os.path.join(HOME,'test.zip')
-		koding.Archive_Tree(HOME, DST)
-		dialog.ok('[COLOR gold]ARCHIVE COMPLETE[/COLOR]','Congratulations your Kodi folder has been zipped up, you can find it in the following location:\n[COLOR dodgerblue]%s[/COLOR]'%DST)
-
-
-------------------------------------------------------------------------------------------
-
 CLEAN CACHED IMAGES:
 This will check for any cached artwork and wipe if it's not been accessed more than 10 times in the past x amount of days.
 
@@ -1323,8 +1476,15 @@ This will check for any cached artwork and wipe if it's not been accessed more t
 ------------------------------------------------------------------------------------------
 
 COMPRESS FILES:
-Compress files in either zip or tar format. This will most likely be replacing Archive_Tree longer term
-as this has better functionality but it's currently missing the custom message and exclude files options.
+Compress files in either zip or tar format. This will most likely be replacing
+Archive_Tree longer term as this has better functionality but it's currently
+missing the custom message and exclude files options.
+
+IMPORTANT: There was a known bug where some certain compressed tar.gz files can cause the system to hang
+and a bad zipfile will continue to be made until it runs out of space on your storage device. In the unlikely
+event you encounter this issue just add the problematic file(s) to your exclude list. I think this has since
+been fixed since a complete re-code to this function, or at least I've been unable to recreate it. If you
+find this problem is still occuring please let me know (whufclee on noobsandnerds.com forum), thankyou.
 
 	CODE: Compress(src,dst,[compression,parent])
 
@@ -1340,6 +1500,17 @@ as this has better functionality but it's currently missing the custom message a
 	    everything inside the path given. If set to True it will do the same but
 	    it will include the parent folder name - ideal if you want to zip up
 	    an add-on folder and be able to install via Kodi Settings.
+
+	    exclude_dirs   - This is optional, if you have folder names you want to exclude just
+	    add them here as a list item. By default the folder 'temp' is added to this list so
+	    if you need to include folders called temp make sure you send through a list, even
+	    if it's an empty one. The reason for leaving temp out is that's where Kodi logfiles
+	    and crashlogs are stored on a lot of devices and these are generally not needed in
+	    backup zips.
+
+	    exclude_files  - This is optional, if you have specific file names you want to
+	    exclude just add them here as a list item. By default the list consists of:
+	    'kodi.log','kodi.old.log','xbmc.log','xbmc.old.log','spmc.log','spmc.old.log'
 
 	EXAMPLE CODE:
 		koding_path = xbmc.translatePath('special://home/addons/script.module.python.koding.aio')
@@ -1388,7 +1559,7 @@ few seconds. If using a cheap poor quality device (like many android units)
 then you could even end up killing the device as some of them are made
 with very poor components which are liable to irreversable corruption.
 
-	CODE: koding.Dummy_File(dest, [size, size_format])
+	CODE: Dummy_File(dest, [size, size_format])
 
 	AVAILABLE PARAMS:
 
@@ -1524,7 +1695,7 @@ any folders/files you don't want removed.
 EXTRACT:
 This function extract a zip or tar file and return true or false so unlike the builtin xbmc function "Extract" this one will pause code until it's completed the action.
 
-	CODE: koding.Extract(src,dst,[dp])
+	CODE: Extract(src,dst,[dp])
 	dp is optional, by default it is set to false
 
 	AVAILABLE PARAMS:
@@ -1571,24 +1742,49 @@ Show the amount of available free space in a path, this can be returned in a num
 ------------------------------------------------------------------------------------------
 
 FRESH INSTALL:
-Attempt to completely wipe your install. Currently this only supports LE/OE/Android. On LE/OE it will
-perform a hard reset and on Android it will wipe the data for the current running app (untested).
+Attempt to completely wipe your install. You can send through a list
+of addons or paths you want to ignore (leave in the setup) or you can
+leave blank. If left blank and the platform is OpenELEC or LibreELEC
+it will perform a hard reset command followed by a reboot.
 
-	CODE:  Fresh_Install()
+	CODE:  Fresh_Install([keep_addons, ignore, keepdb)
+
+	AVAILABLE PARAMS:
+
+	    keep_addons  -  This is optional, if you have specific add-ons you want to omit
+	    from the wipe (leave intact) then just enter a list of add-on id's here. The code
+	    will determine from the addon.xml file which dependencies and sub-dependencies are
+	    required for that add-on so there's no need to create a huge list, you only need to
+	    list the master add-on id's. For example if you want to keep the current skin and
+	    your add-on you would use: keep_addons=['plugin.program.myaddon',System('currentskin')]
+	    and all addons/dependencies associated with those two add-ons will be added to the ignore
+	    list.
+
+	    ignore  -  This is optional, you can send through a list of paths you want to omit from
+	    the wipe. You can use folder paths to skip the whole folder or you can use individual
+	    file paths. Please make sure you use the physical path and not special://
+	    So before creating your list make sure you use xbmc.translatePath()
+
+	    keepdb  -  By default this is set to True which means the code will keep all the Kodi databases
+	    intact and perform a profile reload once wipe is complete. This will mean addons, video, music,
+	    epg, ADSP and viewtypes databases will remain completely untouched and Kodi should be fine to use
+	    without the need for a restart. If you set keepdb to False nothing will happen once the wipe has
+	    completed and it's up to you to choose what to do in your main code. I would highly recommend an
+	    ok dialog followed by xbmc.executebuiltin('Quit'). This will force Kodi to recreate all the relevant
+	    databases when they re-open. If you try and continue using Kodi without restarting the databases
+	    will not be recreated and you risk corruption.
 
 	EXAMPLE CODE:
-		if dialog.yesno('TOTAL WIPEOUT!','This will attempt give you a totally fresh install of Kodi.','Are you sure you want to continue?'):
-		    if dialog.yesno('[COLOR=gold]FINAL CHANCE!!![/COLOR]','If you click Yes this WILL attempt to wipe your install', '[COLOR=dodgerblue]ARE YOU 100% CERTAIN YOU WANT TO WIPE?[/COLOR]'):
+		if dialog.yesno('[COLOR gold]TOTAL WIPEOUT![/COLOR]','This will attempt give you a totally fresh install of Kodi.','Are you sure you want to continue?'):
+		    if dialog.yesno('[COLOR gold]FINAL CHANCE!!![/COLOR]','If you click Yes this WILL attempt to wipe your install', '[COLOR=dodgerblue]ARE YOU 100% CERTAIN YOU WANT TO WIPE?[/COLOR]'):
 		        clean_state = koding.Fresh_Install()
-		        if not clean_state:
-		            dialog.ok('SYSTEM NOT SUPPORTED','Your platform is not yet supported by this function, you will have to manually wipe.')
 
 ------------------------------------------------------------------------------------------
 
 FOLDER SIZE:
 Return the size of a folder path including sub-directories, this can be returned in a number of different formats.
 
-	CODE: koding.Folder_Size([dirname, filesize])
+	CODE: Folder_Size([dirname, filesize])
 
 	AVAILABLE PARAMS:
 
@@ -1680,7 +1876,7 @@ Move a directory including all sub-directories to a new location.
 This will automatically create the new location if it doesn't already
 exist and it wierwrite any existing entries if they exist.
 
-CODE: koding.Move_Tree(src, dst)
+CODE: Move_Tree(src, dst)
 
 AVAILABLE PARAMS:
 
@@ -1710,7 +1906,7 @@ If you need to find out the current "real" database in use then this is the func
 READ/WRITE TEXT FILES:
 Open/create a text file and read/write to it.
 
-	CODE: koding.Text_File(path, mode, [text])
+	CODE: Text_File(path, mode, [text])
 
 	AVAILABLE PARAMS:    
 	    (*) path  -  This is the path to the text file
@@ -1931,12 +2127,35 @@ distros so if you know of any improved code please do pass on. Thank you.
 PRINT TO LOG - DEBUG MODE:
 Print to the Kodi log but only if debugging is enabled in settings.xml
 
-	CODE: koding.dolog(string)
-	string is your text you want printed to log.
+	CODE: koding.dolog(string, [my_debug])
+
+	AVAILABLE PARAMS:
+
+	    (*) string  -  This is your text you want printed to log.
+
+	    my_debug  -  This is optional, if you set this to True you will print
+	    to the log regardless of what the debug setting is set at in add-on settings.
+
+	    line_info - By default this is set to True and will show the line number where
+	    the dolog command was called from along with the filepath it was called from.
 
 	EXAMPLE CODE:
-		koding.dolog(string='Quick test to see if this gets printed to the log', my_debug=True)
-		dialog.ok('[COLOR gold]CHECK LOGFILE[/COLOR]','If you check your log file you should be able to see a new test line we printed.')
+		koding.dolog(string='Quick test to see if this gets printed to the log', my_debug=True, line_info=True)
+		dialog.ok('[COLOR gold]CHECK LOGFILE 1[/COLOR]','If you check your log file you should be able to see a new test line we printed and immediately below that should be details of where it was called from.')
+		koding.dolog(string='This one should print without the line and file info', my_debug=True, line_info=False)
+		dialog.ok('[COLOR gold]CHECK LOGFILE 2[/COLOR]','If you check your log file again you should now be able to see a new line printed but without the file/line details.')
+
+------------------------------------------------------------------------------------------
+
+PYTHON VERSION:
+Return the current version of Python as a string. Very useful if you need to find out whether or not to return
+https links (Python 2.6 is not SSL friendly).
+
+	CODE: Python_Version()
+
+	EXAMPLE CODE:
+	py_version = koding.Python_Version()
+	dialog.ok('[COLOR gold]PYTHON VERSION[/COLOR]','You are currently running:','Python v.%s'%py_version)
 
 ------------------------------------------------------------------------------------------
 
@@ -1945,7 +2164,7 @@ Refresh a number of items in kodi, choose the order they are executed in by putt
 For example if you want to refresh addons then repo and then the profile you would send through a list in
 the order you want them to be executed.
 
-	CODE: koding.Refresh(r_mode, [profile])
+	CODE: Refresh(r_mode, [profile])
 
 	AVAILABLE PARAMS:
 
@@ -2014,7 +2233,7 @@ Return the Kodi app name you're running, useful for fork compatibility
 SLEEP IF FUNCTION ACTIVE:
 This will allow you to pause code while a specific function is running in the background.
 
-	CODE: koding.Sleep_If_Function_Active(function, args, kill_time, show_busy)
+	CODE: Sleep_If_Function_Active(function, args, kill_time, show_busy)
 
 	AVAILABLE PARAMS:
 
@@ -2269,7 +2488,7 @@ FIND IN TEXT:
 Regex through some text and return a list of matches. Please note this will return a LIST so even if
 only one item is found you will still need to access it as a list, see example below.
 
-	CODE: koding.Find_In_Text(content, start, end, [show_errors])
+	CODE: Find_In_Text(content, start, end, [show_errors])
 
 	AVAILABLE PARAMS:
 	    
@@ -2471,7 +2690,7 @@ specific items in your new list.
 SPLIT STRING INTO LINES OF X AMOUNT OF CHARACTERS:
 Splits up a piece of text into a list of lines x amount of chars in length.
 
-	CODE: koding.Split_Lines(raw_string, size)
+	CODE: Split_Lines(raw_string, size)
 
 	AVAILABLE PARAMS:
 

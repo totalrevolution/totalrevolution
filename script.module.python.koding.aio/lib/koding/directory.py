@@ -121,7 +121,6 @@ Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=
 # ^ This will add an item to the list AND a context menu item for when bring up the menu (when focused on this item).
 # ^^ The context_override is set to False which means the new items will appear alongside the default Kodi context menu items.
 ~"""
-    from __init__       import dolog
     from systemtools    import Data_Type
     from vartools       import Convert_Special
 
@@ -130,7 +129,6 @@ Add_Dir(name='TEST ITEM', url='', mode='test_item', folder=False, context_items=
 
     addon_handle = int(sys.argv[1])
 # Check we're in an appropriate section for the content type set
-    dolog(xbmc.getInfoLabel('Window.Property(xmlfile)'))
     song_only_modes  = ['songs','artist','album','song','music']
     video_only_modes = ['sets','tvshows','seasons','actors','directors','unknown','video','set','movie','tvshow','season','episode']
     if xbmc.getInfoLabel('Window.Property(xmlfile)') == 'MyVideoNav.xml' and content_type in song_only_modes:

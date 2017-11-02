@@ -22,6 +22,7 @@ import time
 import urllib
 import xbmc
 import xbmcgui
+from systemtools import Python_Version
 #----------------------------------------------------------------    
 # TUTORIAL #
 def Cleanup_URL(url):
@@ -83,7 +84,7 @@ koding.Delete_Cookies(filename='google')
         return False
 #----------------------------------------------------------------    
 # TUTORIAL #
-def Download(url, dest, dp = None):
+def Download(url, dest, dp=None, timeout=5):
     """
 This will download a file, currently this has to be a standard download link which doesn't require cookies/login.
 
@@ -98,6 +99,9 @@ AVAILABLE PARAMS:
 
     dp - This is optional, if you pass through the dp function as a DialogProgress() then you'll get to see the progress of the download. If you choose not to add this paramater then you'll just get a busy spinning circle icon until it's completed. See the example below for a dp example.
 
+    timeout - By default this is set to 5. This is the max. amount of time you want to allow for checking whether or
+    not the url is a valid link and can be accessed via the system.
+
 EXAMPLE CODE:
 src = 'http://noobsandnerds.com/portal/Bits%20and%20bobs/Documents/user%20guide%20of%20the%20gyro%20remote.pdf'
 dst = xbmc.translatePath('special://home/remote.pdf')
@@ -106,8 +110,15 @@ dp.create('Downloading File','Please Wait')
 koding.Download(src,dst,dp)
 dialog.ok('[COLOR gold]DOWNLOAD COMPLETE[/COLOR]','Your download is complete, please check your home Kodi folder. There should be a new file called remote.pdf - you can delete this if you want.')
 ~"""
-    start_time=time.time()
-    urllib.urlretrieve(url, dest, lambda nb, bs, fs: Download_Progress(nb, bs, fs, dp, start_time))
+    status = Validate_Link(url,timeout)
+    if status >= 200 and status < 400:
+        if Python_Version() < 2.7 and url.startswith('https'):
+            url = url.replace('https','http')
+        start_time=time.time()
+        urllib.urlretrieve(url, dest, lambda nb, bs, fs: Download_Progress(nb, bs, fs, dp, start_time))
+        return True
+    else:
+        return False
 #----------------------------------------------------------------    
 def Download_Progress(numblocks, blocksize, filesize, dp, start_time):
     """ internal command ~"""
@@ -227,8 +238,6 @@ koding.Text_Box('CONTENTS OF WEB PAGE',url_contents)
     from addons     import Addon_Info
     from filetools  import Text_File
 
-    dolog('POST TYPE: %s'%post_type)
-    dolog('url: %s'%url)
     Addon_Version = Addon_Info(id='version')
     Addon_Profile = xbmc.translatePath(Addon_Info(id='profile'))
     Cookie_Folder = os.path.join(Addon_Profile,'cookies')
@@ -251,7 +260,6 @@ koding.Text_Box('CONTENTS OF WEB PAGE',url_contents)
 
 # If the payload is empty we split the params
     if len(payload) == 0:
-        dolog('###### QUERY STRING CONVERSION MODE')
 
 # If the url sent through is not http then we presume it's hitting the NaN page
         if not url.startswith(converthex('68747470')):
@@ -274,6 +282,9 @@ koding.Text_Box('CONTENTS OF WEB PAGE',url_contents)
     dolog('PAYLOAD: %s'%payload)
 
     try:
+        if Python_Version() < 2.7 and url.startswith('https'):
+            url = url.replace('https','http')
+
         if post_type == 'post':
             r = requests.post(url, payload, headers=headers, cookies=my_cookies, auth=auth, timeout=timeout, proxies=proxies)
         else:
@@ -315,6 +326,9 @@ else:
 ~"""
     import requests
     import xbmc
+
+    if Python_Version() < 2.7 and url.startswith('https'):
+        url = url.replace('https','http')
 
     try:
         r = requests.get(url,timeout=timeout)

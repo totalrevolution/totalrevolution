@@ -118,7 +118,7 @@ if not os.path.exists(os.path.join(ADDON_DATA,ORIG_ID,converthex('636f6f6b696573
     os.makedirs(os.path.join(ADDON_DATA,ORIG_ID,converthex('636f6f6b696573')))
 #----------------------------------------------------------------
 # TUTORIAL #
-def dolog(string, my_debug = False):
+def dolog(string, my_debug=False, line_info=True):
     """
 Print to the Kodi log but only if debugging is enabled in settings.xml
 
@@ -131,15 +131,22 @@ AVAILABLE PARAMS:
     my_debug  -  This is optional, if you set this to True you will print
     to the log regardless of what the debug setting is set at in add-on settings.
 
+    line_info - By default this is set to True and will show the line number where
+    the dolog command was called from along with the filepath it was called from.
+
 EXAMPLE CODE:
-koding.dolog(string='Quick test to see if this gets printed to the log', my_debug=True)
-dialog.ok('[COLOR gold]CHECK LOGFILE[/COLOR]','If you check your log file you should be able to see a new test line we printed.')
+koding.dolog(string='Quick test to see if this gets printed to the log', my_debug=True, line_info=True)
+dialog.ok('[COLOR gold]CHECK LOGFILE 1[/COLOR]','If you check your log file you should be able to see a new test line we printed \
+and immediately below that should be details of where it was called from.')
+koding.dolog(string='This one should print without the line and file info', my_debug=True, line_info=False)
+dialog.ok('[COLOR gold]CHECK LOGFILE 2[/COLOR]','If you check your log file again you should now be able to see a new line printed \
+but without the file/line details.')
 ~"""
     import xbmc
-    global DEBUG
-    global ADDON_ID
     if DEBUG == 'true' or my_debug:
-        xbmc.log('### %s : %s'%(ADDON_ID,string), level=xbmc.LOGNOTICE)
+        xbmc.log('### %s (%s) : %s'%(ADDON_ID,AddonVersion,string), level=xbmc.LOGNOTICE)
+    if line_info:
+        xbmc.log('^ Line No. %s  |  File: %s'%(inspect.currentframe().f_back.f_lineno,Caller('path')),level=xbmc.LOGNOTICE)
 #----------------------------------------------------------------
 def Check_Addons(addons):
     """ internal command ~"""

@@ -96,6 +96,7 @@ if comedy_addons:
             addon_list = eval( Text_File(final_path, 'r') )
             return addon_list[genre]
         except:
+            os.remove(final_path)
             return False
     else:
         return False
@@ -166,7 +167,7 @@ for item in enabled_list:
     my_return += '[COLOR=lime]ENABLED:[/COLOR] %s\n' % item
 for item in disabled_list:
     my_return += '[COLOR=red]DISABLED:[/COLOR] %s\n' % item
-Text_Box('ADDON STATUS',my_return)
+koding.Text_Box('ADDON STATUS',my_return)
 ~"""
     from database   import DB_Query
     from guitools   import Text_Box
@@ -195,6 +196,83 @@ Text_Box('ADDON STATUS',my_return)
         return enabled_list
     else:
         return disabled_list
+#----------------------------------------------------------------
+# TUTORIAL #
+def Addon_Service(addons='all', mode='list', skip_service='all'):
+    """
+Send through an add-on id, list of id's or leave as the default which is "all". This
+will loop through the list of add-ons and return the ones which are run as services.
+
+This enable/disable feature will comment out the service lines, and does not stop a running
+service or start a service. This is designed more for if you've manually extracted a new
+add-on into your system and it isn't yet enabled. Occasionally if the add-ons have dependencies
+which are run as services then trying to enable them can cause Kodi to freeze.
+
+CODE: Addon_Service([addon,disable])
+
+AVAILABLE PARAMS:
+    
+    addons  -  By default this is set to "all" but if there's a sepcific set of add-ons you
+    want to disable the service for just send through the id's in the form of a list.
+
+    mode  -  By default this is set to 'list' meaning you'll get a return of add-on folders
+    which contain an instance of service in the add-on.xml. You can set this to "disable" to
+    comment out the instances of service and similarly when you need to re-enable you can use
+    "enable" and that will uncomment out the service item. Please note that by uncommenting
+    the service will not automatically start - you'll need to reload the profile for that.
+
+    skip_service  -  This function can fail if certain dependencies are
+    run as a service, if they are causing problems you can send through
+    the id or a list of id's which you want to disable the service for.
+    This will comment out the service part in the addon.xml before attempting
+    to enable the add-on. Don't forget to re-enable this if you want the service
+    running.
+
+EXAMPLE CODE:
+dialog.ok('[COLOR gold]CHECKING FOR SERVICES[/COLOR]','We will now check for all add-ons installed which contain services')
+service_addons = Addon_Service(mode='list')
+my_text = 'List of add-ons running as a service:\n\n'
+for item in service_addons:
+    my_text += item+'\n'
+koding.Text_Box('[COLOR gold]SERVICE ADDONS[/COLOR]',my_text)
+~"""
+    from filetools   import Get_Contents, Text_File
+    from systemtools import Data_Type
+    from guitools    import Text_Box
+    service_addons = []
+    if addons=='all':
+        addons = Get_Contents(path=ADDONS, exclude_list=['packages','temp'],full_path=False)
+    else:
+        if Data_Type(addons) == 'str':
+            addons = [addons]
+
+    if skip_service=='all':
+        skip_service = addons
+    else:
+        if Data_Type(skip_service) == 'str':
+            skip_service = [skip_service]
+
+    service_line = '<extension point="xbmc.service"'
+    
+    for item in addons:
+        addon_path = os.path.join(ADDONS,item,'addon.xml')
+        if os.path.exists(addon_path) and item not in skip_service:
+            content = Text_File(addon_path,'r')
+            if service_line in content:
+                xbmc.log('%s contains a service,'%item,2)
+                for line in content.splitlines():
+                    if service_line in line:
+                        if item not in service_addons:
+                            service_addons.append(item)
+                            if not (line.strip().startswith('<!--')) and (mode == 'disable'):
+                                replace_line = '<!--%s-->'%line
+                                Text_File(addon_path,'w',content.replace(line,replace_line))
+                                break
+                            elif line.strip().startswith('<!--') and mode == 'enable':
+                                replace_line = line.replace(r'<!--','').replace(r'-->','')
+                                Text_File(addon_path,'w',content.replace(line,replace_line))
+                                break
+    return service_addons
 #----------------------------------------------------------------
 # TUTORIAL #
 def Addon_Setting(setting='',value='return_default',addon_id=''):
@@ -234,11 +312,11 @@ else:
         ADDON.setSetting(id=setting, value=value)
 #----------------------------------------------------------------
 # TUTORIAL #
-def Adult_Toggle(adult_list=[],disable=True):
+def Adult_Toggle(adult_list=[], disable=True, update_status=0):
     """
 Remove/Enable a list of add-ons, these are put into a containment area until enabled again.
 
-CODE: Adult_Toggle(adult_list, [disable])
+CODE: Adult_Toggle(adult_list, [disable, update_status])
 
 AVAILABLE PARAMS:
             
@@ -246,11 +324,19 @@ AVAILABLE PARAMS:
 
     disable  -  By default this is set to true so any add-ons in the list sent
     through will be disabled. Set to False if you want to enable the hidden add-ons.
-~"""
-    from filetools   import Move_Tree
-    from systemtools import End_Path
 
-    adult_store = xbmc.translatePath("special://profile/addon_data/script.module.python.koding.aio/adult_store")
+    update_status  - When running this function it needs to disable the
+    auto-update of add-ons by Kodi otherwise it risks crashing. This
+    update_status paramater is the state you want Kodi to revert back to
+    once the toggle of add-ons has completed. By default this is set to 0
+    which is auto-update. You can also choose 1 (notify of updates) or 2
+    (disable auto updates).
+
+~"""
+    from filetools   import Move_Tree, End_Path
+
+    adult_store  = xbmc.translatePath("special://profile/addon_data/script.module.python.koding.aio/adult_store")
+    disable_list = []
     if not os.path.exists(adult_store):
         os.makedirs(adult_store)
     my_addons = Installed_Addons()
@@ -259,14 +345,17 @@ AVAILABLE PARAMS:
             if item != None:
                 item = item["addonid"]
                 if item in adult_list:
-                    try:
-                        addon_path = xbmcaddon.Addon(id=item).getAddonInfo("path")
-                    except:
-                        addon_path = os.path.join(ADDONS,item)
-                    Toggle_Addons(addon=item, enable=False, safe_mode=False, refresh=True)
-                    path_id = End_Path(addon_path)
-                    if os.path.exists(addon_path):
-                        Move_Tree(addon_path,os.path.join(adult_store,path_id))
+                    disable_list.append(item)
+
+        Toggle_Addons(addon=disable_list, enable=False, safe_mode=True, refresh=True, update_status=update_status)
+        for item in disable_list:
+            try:
+                addon_path = xbmcaddon.Addon(id=item).getAddonInfo("path")
+            except:
+                addon_path = os.path.join(ADDONS,item)
+            path_id = End_Path(addon_path)
+            if os.path.exists(addon_path):
+                Move_Tree(addon_path,os.path.join(adult_store,path_id))
     else:
         KODI_VER    = int(float(xbmc.getInfoLabel("System.BuildVersion")[:2]))
         addon_vault = []
@@ -278,7 +367,7 @@ AVAILABLE PARAMS:
                     Move_Tree(store_dir,addon_dir)
                     addon_vault.append(item)
         if KODI_VER >= 16:
-            Toggle_Addons(addon=addon_vault, safe_mode=True, refresh=True)
+            Toggle_Addons(addon=addon_vault, safe_mode=True, refresh=True, update_status=update_status)
         else:
             Refresh(['addons','repos'])
 #----------------------------------------------------------------
@@ -299,7 +388,7 @@ AVAILABLE PARAMS:
         
         'addons': Return a list of all add-on id's called to get to this function.
         
-        'path'  : Return the full path to the script which called this funciton.
+        'path'  : Return the full path to the script which called this function.
         
         'paths' : Return a list of paths which have been called to get to this
         final function.
@@ -353,15 +442,16 @@ koding.Text_Box('ADD-ON LIST', path_list)
 def Check_Deps(addon_path, depfiles = []):
     import re
     from filetools import Text_File
-    exclude_list = ['xbmc.gui','script.module.metahandler','kodi.resource','xbmc.core','xbmc.metadata','xbmc.addon','xbmc.json','xbmc.python']
-    try:
-        readxml = Text_File(os.path.join(addon_path,'addon.xml'),'r')
+    from __init__  import dolog
+    exclude_list  = ['xbmc.gui', 'script.module.metahandler', 'metadata.common.allmusic.com',\
+                    'kodi.resource','xbmc.core','xbmc.metadata','xbmc.addon','xbmc.json','xbmc.python']
+    file_location = os.path.join(addon_path,'addon.xml')
+    if os.path.exists(file_location):
+        readxml = Text_File(file_location,'r')
         dmatch   = re.compile('import addon="(.+?)"').findall(readxml)
         for requires in dmatch:
             if not requires in exclude_list and not requires in depfiles:
                 depfiles.append(requires)
-    except:
-        pass
     return depfiles
 #----------------------------------------------------------------
 # TUTORIAL #
@@ -493,7 +583,8 @@ else:
 def Dependency_Check(addon_id = 'all', recursive = False):
     """
 This will return a list of all dependencies required by an add-on.
-This information is grabbed directly from the currently installed addon.xml for that id.
+This information is grabbed directly from the currently installed addon.xml,
+an individual add-on id or a list of add-on id's.
 
 CODE:  Dependency_Check([addon_id, recursive])
 
@@ -517,37 +608,50 @@ koding.Text_Box('Modules required for %s'%current_id,clean_text)
 ~"""
     import xbmcaddon
     import re
-    from filetools import Text_File
-    depfiles     = []
-
+    from filetools      import Text_File
+    from systemtools    import Data_Type 
+    
+    processed    = []
+    depfiles     = []    
+    
     if addon_id == 'all':
-        for name in os.listdir(ADDONS):
-            if name != 'packages' and name != 'temp':
-                try:
-                    addon_path = os.path.join(ADDONS,name)
-                    depfiles = Check_Deps(addon_path)
-                except:
-                    pass
-    else:
+        addon_id = os.listdir(ADDONS)
+    elif Data_Type(addon_id) == 'str':
+        addon_id = [addon_id]
+
+    for name in addon_id:
         try:
-            addon_path = xbmcaddon.Addon(id=addon_id).getAddonInfo('path')
+            addon_path = xbmcaddon.Addon(id=name).getAddonInfo('path')
         except:
-            addon_path = os.path.join(ADDONS,addon_id)
+            addon_path = os.path.join(ADDONS, name)
+        if not name in processed:
+            processed.append(name)
 
-        depfiles = Check_Deps(addon_path)
-
+    # Get list of master dependencies
+        depfiles = Check_Deps(addon_path,[name])
+        
+    # Recursively check all other dependencies
+        depchecks = depfiles
         if recursive:
-            dep_path = None
-            for item in depfiles:
-                try:
-                    dep_path = xbmcaddon.Addon(id=item).getAddonInfo('path')
-                except:
-                    dep_path = os.path.join(ADDONS,item)
-
-                if dep_path:
-                    depfiles = Check_Deps(dep_path)
-
-    return depfiles
+            while len(depchecks):
+                for depfile in depfiles:
+                    if depfile not in processed:
+                        try:
+                            dep_path = xbmcaddon.Addon(id=depfile).getAddonInfo('path')
+                        except:
+                            dep_path = os.path.join(ADDONS,depfile)
+                        newdepfiles = Check_Deps(dep_path, depfiles)
+                    # Pass through the path of sub-dependency and add items to master list and list to check
+                        for newdep in newdepfiles:
+                            if not (newdep in depchecks) and not (newdep in processed):
+                                depchecks.append(newdep)
+                            if not newdep in depfiles:
+                                depfiles.append(newdep)
+                    processed.append(depfile)
+                    depchecks.remove(depfile)
+                if name in depchecks:
+                    depchecks.remove(name)
+    return processed[1:]
 #----------------------------------------------------------------
 # TUTORIAL #
 def Get_Addon_ID(folder):
@@ -686,23 +790,27 @@ else:
             pass
 #----------------------------------------------------------------
 # TUTORIAL #
-def Toggle_Addons(addon='all', enable=True, safe_mode=True, exclude_list=[], new_only=True, refresh=True):
+def Toggle_Addons(addon='all', enable=True, safe_mode=True, exclude_list=[], new_only=True, refresh=True, update_status=0):
     """
 Send through either a list of add-on ids or one single add-on id.
 The add-ons sent through will then be added to the addons*.db
 and enabled or disabled (depending on state sent through).
+
 WARNING: If safe_mode is set to False this directly edits the
 addons*.db rather than using JSON-RPC. Although directly amending
 the db is a lot quicker there is no guarantee it won't cause
 severe problems in later versions of Kodi (this was created for v17).
 DO NOT set safe_mode to False unless you 100% understand the consequences!
+
 CODE:  Toggle_Addons([addon, enable, safe_mode, exclude_list, new_only, refresh])
+
 AVAILABLE PARAMS:
     (*) addon  -  This can be a list of addon ids, one single id or
     'all' to enable/disable all. If enabling all you can still use
     the exclude_list for any you want excluded from this function.
     enable  -  By default this is set to True, if you want to disable
     the add-on(s) then set this to False.
+    
     safe_mode  -  By default this is set to True which means the add-ons
     are enabled/disabled via JSON-RPC which is the method recommended by
     the XBMC foundation. Setting this to False will result in a much
@@ -710,14 +818,25 @@ AVAILABLE PARAMS:
     versions of Kodi and it may even cause corruption in future versions.
     Setting to False is NOT recommended and you should ONLY use this if
     you 100% understand the risks that you could break multiple setups.
+    
     exclude_list  -  Send through a list of any add-on id's you do not
     want to be included in this command.
+    
     new_only  -  By default this is set to True so only newly extracted
     add-on folders will be enabled/disabled. This means that any existing
     add-ons which have deliberately been disabled by the end user are
     not affected.
+    
     refresh  - By default this is set to True, it will refresh the
     current container and also force a local update on your add-ons db.
+
+    update_status  - When running this function it needs to disable the
+    auto-update of add-ons by Kodi otherwise it risks crashing. This
+    update_status paramater is the state you want Kodi to revert back to
+    once the toggle of add-ons has completed. By default this is set to 0
+    which is auto-update. You can also choose 1 (notify of updates) or 2
+    (disable auto updates).
+
 EXAMPLE CODE:
 from systemtools import Refresh
 xbmc.executebuiltin('ActivateWindow(Videos, addons://sources/video/)')
@@ -733,8 +852,10 @@ koding.Refresh('container')
     from __init__       import dolog
     from filetools      import DB_Path_Check, Get_Contents
     from database       import DB_Query
-    from systemtools    import Data_Type, Last_Error, Refresh, Set_Setting, Timestamp
+    from systemtools    import Data_Type, Last_Error, Refresh, Set_Setting, Sleep_If_Function_Active, Timestamp
 
+    Set_Setting('general.addonupdates', 'kodi_setting', '2')
+    dolog('disabled auto updates for add-ons')
     kodi_ver        = int(float(xbmc.getInfoLabel("System.BuildVersion")[:2]))
     addons_db       = DB_Path_Check('addons')
     data_type       = Data_Type(addon)
@@ -753,7 +874,7 @@ koding.Refresh('container')
         data_type = Data_Type(addon)
 
     if data_type == 'str' and addon!= 'all':
-        addon = [addon,'']
+        addon = [addon]
 
 # Grab all the add-on ids from addons folder
     if addon == 'all':
@@ -796,175 +917,57 @@ koding.Refresh('container')
 
 # Using the safe_mode (JSON-RPC)
     else:
+        mydeps        = []
         final_enabled = []
         if state:
-            my_value = 'true'
-            log_value = 'ENABLED'
+            my_value      = 'true'
+            log_value     = 'ENABLED'
+            final_addons  = []
         else:
-            my_value = 'false'
-            log_value = 'DISABLED'
+            my_value      = 'false'
+            log_value     = 'DISABLED'
+            final_addons  = addon
 
         for my_addon in addon:
 
-# If enabling the add-on then we also check for dependencies and enable them first
+        # If enabling the add-on then we also check for dependencies and enable them first
             if state:
                 dolog('Checking dependencies for : %s'%my_addon)
                 dependencies = Dependency_Check(addon_id=my_addon, recursive=True)
+                mydeps.append(dependencies)
 
-# traverse through the dependencies in reverse order attempting to enable
-                for item in reversed(dependencies):
-                    if not item in exclude_list and not item in final_enabled and not item in enabled_list:
-                        dolog('Attempting to enable: %s'%item)
-                        addon_set = Set_Setting(setting_type='addon_enable', setting=item, value = 'true')
+    # if enable selected we traverse through the dependencies enabling addons with lowest amount of deps to highest
+        if state:
+            mydeps = sorted(mydeps, key=len)
+            for dep in mydeps:
+                counter = 0
+                for item in dep:
+                    enable_dep = True
+                    if counter == 0:
+                        final_addons.append(item)
+                        enable_dep = False
+                    elif item in final_enabled:
+                        enable_dep = False
+                    else:
+                        enable_dep = True
+                    if enable_dep:
+                        if not item in exclude_list and not item in final_enabled and not item in enabled_list:
+                            dolog('Attempting to enable: %s'%item)
+                            if Set_Setting(setting_type='addon_enable', setting=item, value = 'true'):
+                                dolog('%s now %s' % (item, log_value))
+                                final_enabled.append(item)
+                    counter += 1
 
-# If we've successfully enabled then we add to list so we can skip any other instances
-                        if addon_set:
-                            dolog('%s now %s' % (my_addon, log_value))
-                            final_enabled.append(item)
-
-# Now the dependencies are enabled we need to enable the actual main add-on
+    # Now the dependencies are enabled we need to enable the actual main add-ons
+        for my_addon in final_addons:
             if not my_addon in final_enabled:
-                addon_set = Set_Setting(setting_type='addon_enable', setting=my_addon, value = my_value)
-            try:
-                if addon_set:
+                dolog('Attempting to enable: %s'%my_addon)
+                if Set_Setting(setting_type='addon_enable', setting=my_addon, value = my_value):
                     dolog('%s now %s' % (my_addon, log_value))
                     final_enabled.append(addon)
-            except:
-                pass
+            else:
+                dolog('Already enabled, skipping: %s'%my_addon)
     if refresh:
         Refresh(['addons','container'])
-
-# NEW CODE NOT WORKING
-#     from __init__       import dolog
-#     from filetools      import DB_Path_Check, Get_Contents
-#     from database       import DB_Query
-#     from systemtools    import Data_Type, Last_Error, Refresh, Set_Setting, Timestamp
-#     from web            import Validate_Link
-
-#     addons_db       = DB_Path_Check('addons')
-#     data_type       = Data_Type(addon)
-#     state           = int(bool(enable))
-#     enabled_list    = []
-#     disabled_list   = []
-#     if kodi_ver >= 17:
-#         on_system   = DB_Query(addons_db,'SELECT addonID, enabled from installed')
-# # Create a list of enabled and disabled add-ons already on system
-#         enabled_list  = Addon_List(enabled=True)
-#         disabled_list = Addon_List(enabled=False)
-
-# # If addon has been sent through as a string we add into a list
-#     if data_type == 'unicode':
-#         addon = addon.encode('utf8')
-#         data_type = Data_Type(addon)
-
-#     if data_type == 'str' and addon!= 'all':
-#         addon = [addon,'']
-
-# # Grab all the add-on ids from addons folder
-#     if addon == 'all':
-#         addon     = []
-#         my_addons = Get_Contents(path=ADDONS, exclude_list=['packages','temp'])
-#         for item in my_addons:
-#             addon_id = Get_Addon_ID(item)
-#             addon.append(addon_id)
-
-# # Find out what is and isn't enabled in the addons*.db
-#     temp_list = []
-#     for addon_id in addon:
-#         if not addon_id in exclude_list and addon_id != '':
-#             dolog('CHECKING: %s'%addon_id)
-
-# # Check ALL addons and not just newly extracted not yet in db
-#             if addon_id in disabled_list and not new_only and enable:
-#                 dolog('[1] Adding to temp list: %s'%addon_id)
-#                 temp_list.append(addon_id)
-
-# # Check addons not in our disabled list and also aren't in the enabled list
-#             elif addon_id not in disabled_list and addon_id not in enabled_list:
-#                 dolog('[2] Adding to temp list: %s'%addon_id)
-#                 temp_list.append(addon_id)
-
-# # Check addons that are already enabled, get ready to disable
-#             elif addon_id in enabled_list and not enable:
-#                 dolog('[3] Adding to temp list: %s'%addon_id)
-#                 temp_list.append(addon_id)
-
-# # Check addons which are disabled get ready to enable (same as first if function??)
-#             elif addon_id in disabled_list and enable:
-#                 dolog('[4] Adding to temp list: %s'%addon_id)
-#                 temp_list.append(addon_id)
-#     addon = temp_list
-
-# # If you want to bypass the JSON-RPC mode and directly modify the db (READ WARNING ABOVE!!!)
-#     if not safe_mode and kodi_ver >= 17:
-#         installedtime   = Timestamp('date_time')
-#         insert_query    = 'INSERT or IGNORE into installed (addonID , enabled, installDate) VALUES (?,?,?)'
-#         update_query    = 'UPDATE installed SET enabled = ? WHERE addonID = ? '
-#         insert_values   = [addon, state, installedtime]
-#         try:
-#             for item in addon:
-#                 DB_Query(addons_db, insert_query, [item, state, installedtime])
-#                 DB_Query(addons_db, update_query, [state, item])
-#         except:
-#             dolog(Last_Error())
-#         if refresh:
-#             Refresh()
-
-# # Using the safe_mode (JSON-RPC)
-#     else:
-#         Refresh('addons')
-#         xbmc.sleep(1000)
-#         final_enabled = []
-#         if state:
-#             my_value = 'true'
-#             log_value = 'ENABLED'
-#         else:
-#             my_value = 'false'
-#             log_value = 'DISABLED'
-
-#         for my_addon in addon:
-
-# # If enabling the add-on then we also check for dependencies and enable them first
-#             if state:
-#                 dolog('Checking dependencies for : %s'%my_addon)
-#                 dependencies = Dependency_Check(addon_id=my_addon, recursive=True)
-#                 dolog('Dependencies: %s'%dependencies)
-
-# # traverse through the dependencies in reverse order attempting to enable
-#                 for item in reversed(dependencies):
-#                     if not item in exclude_list and not item in final_enabled and not item in enabled_list:
-#                         dolog('Attempting to enable: %s'%item)
-#                         addon_set = Set_Setting(setting_type='addon_enable', setting=item, value = 'true')
-
-# # If we've successfully enabled then we add to list so we can skip any other instances
-#                         if addon_set:
-#                             dolog('%s now %s' % (my_addon, log_value))
-#                             final_enabled.append(item)
-
-# # Now the dependencies are enabled we need to enable the actual main add-on
-#         bad_repo = []
-#         for my_addon in addon:
-#             if not my_addon in final_enabled:
-#                 ok = True
-#                 addon_set = True
-#                 if 'repo' in my_addon:
-#                     ok = Check_Repo(my_addon)
-#                     if not ok:
-#                         dolog('BAD REPO: %s IS NOT RESOLVING SO WE ARE NOT INSTALLING'%my_addon)
-#                         addon_set = False
-#                 if addon_set:
-#                     addon_set = Set_Setting(setting_type='addon_enable', setting=my_addon, value = my_value)
-#                 if addon_set:
-#                     dolog('%s now %s' % (my_addon, log_value))
-#                     final_enabled.append(addon)
-#                 else:
-#                     bad_repo.append(my_addon)
-#         if len(bad_repo) > 0:
-#             final_list = 'The following repostitories are not resolving so have not been installed: '
-#             for item in bad_repo:
-#                 final_list += item+','
-#             final_list = final_list[:-1]
-#             dialog.ok('[COLOR=gold]BAD REPOSITORIES FOUND[/COLOR]',final_list)
-#     if refresh:
-#         Refresh('container')
-# ----------------------------------------------------------------
+    Set_Setting('general.addonupdates', 'kodi_setting', '%s'%update_status)
+#----------------------------------------------------------------

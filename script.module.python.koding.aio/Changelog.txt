@@ -1,3 +1,79 @@
+v.0.9.8.9:
+- Removed debugging info in sleep functions.
+
+v.0.9.8.8:
+- Added check on web based functions, attempt to auto change url's to http instead of https if Python version is lower than 2.7
+- Added new option to dolog function which can show line number and file where the dolog command was called from. Thanks to OptimusGreen for the suggestion and line number code.
+- Removed some unnecessary logging from the Add_Dir command.
+
+v.0.9.8.7:
+- Added new Python_Version function to return current running version of Python
+- Added beautifulsoup to addon.xml as dependency
+
+v.0.9.8.6:
+- Improved Fresh_Install function, now multi-platform and can add paths/addons to ignore
+- Fixed the Delete_Folders function, was removing sub-folders from items in ignore list
+
+v.0.9.8.4:
+- Re-done the Compress function as shutil.make_archive doesn't work on python 2.6 so now using tarfile and zipfile.
+
+v.0.9.8.3:
+- Added option to browse into zips when using Browse_To_File, default is False
+- Fixed the update spinner in Update Screen, wasn't able to disable
+- Fixed alignment of text in Update Screen, was showing oddly on some skins
+
+v.0.9.8.2:
+- Edited update_screen alignment for text
+
+v.0.9.8.1:
+- Edited adult toggle to use safe mode and toggle all at once rather than one by one
+- Adult_Toggle now requires an update_status to be sent through, if nothing sent through the default status will be set to auto-update once function is complete.
+
+v.0.9.8.0:
+- Browse_To_Folder no longer shows contents of archives
+
+v.0.9.7.9:
+- Removed dolog import from video.py as was causing problems
+- Fixed profile_path in database.py
+
+v.0.9.7.8:
+- Added Reset_Percent function
+- Fixed bug in database module, Addon ID was not being called correctly.
+- Added extra debugging notifications for add-on install
+- Disable/enable auto add-on updates in add-on install at start/end
+
+v.0.9.7.7:
+- Added timeout checker for Download function, especially useful on older installs which do not support SSL as it was previously waiting 30s before finally giving up.
+
+v.0.9.7.6:
+- Added Update_Screen function
+- Improved Update_Progress function
+
+v.0.9.7.5:
+- Added Update_Progress function for setting percentage of items currently processed as a skin string and also allows for any properties to be set at the same time.
+
+v.0.9.7.4:
+- Removed unquote from routing function as it was messing up the final var received
+- Re-work of how Toggle_Addons and Dependency_Check work, should be far more optimised now as when toggling add-ons it enables each dependency one at a time starting with the dependencies with no sub-dependencies and moving on up through the list progressively.
+
+v.0.9.7.3:
+- Another bug fix for routing unquoting issue
+- Added ability to pass through a skip_list in Addon_Service
+- Removed service toggle in Addon_Toggle, was causing problems
+
+v.0.9.7.2:
+- fix unquoting issue (midraal)
+
+v.0.9.7.1:
+- Added Disable/Enable services to Addon_Toggle
+
+v.0.9.7.0:
+- Added new Addon_Service funtion to show all addons running as service and also has the ability to disable/enable them. This only comments out the lines in the addon.xml, if they are already running as a service they will not be disabled until the next profile load. Similarly if enabled they will require a profile load for changes to take effect.
+- Fixed bug with Toggle_Addons - was trying to import a dependency from a path which no longer exists
+
+v.0.9.6.9.9:
+- Fixed bug with Addon_Genre not deleting old failed temp files
+
 v.0.9.6.9.8:
 - Fixed bug with dependency check, wasn't showing all recursive deps
 
@@ -103,7 +179,7 @@ v.0.9.3:
 - added reset_db function to use when running into threading error with sqlite
 - Added exceptions for built-in python libraries, no need to attempt enabling those
 - Fixed Main() commands which had broken due to cleaning of newlines and tabs
-- Fixed 
+- Fixed
 
 v.0.9.2:
 - Added Select_Dialog function to allow user to select from multiple values.

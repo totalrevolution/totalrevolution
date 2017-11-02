@@ -26,13 +26,14 @@ import xbmc
 import xbmcaddon
 import xbmcgui
 import xbmcvfs
+from __init__ import Caller
 
 # Put this in a try statement, when called from a service it will throw an error otherwise
 try:
     try:
-        ADDON_ID     =  xbmcaddon.Addon().getAddonInfo('id')
+        ADDON_ID = xbmcaddon.Addon().getAddonInfo('id')
     except:
-        ADDON_ID     =  sys.argv[2]
+        ADDON_ID = Caller()
 
     AddonVersion     = xbmcaddon.Addon(id=ADDON_ID).getAddonInfo('version')
     profile_path     = xbmc.translatePath(xbmcaddon.Addon(id=ADDON_ID).getAddonInfo('profile'))
@@ -51,10 +52,8 @@ def _connect_to_db():
             d[col[0]] = row[idx]
         return d
 
-    xbmcvfs.mkdir(xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile')))
-    db_location = os.path.join(
-        xbmc.translatePath(xbmcaddon.Addon().getAddonInfo('profile')).decode('utf-8'),
-        'database.db')
+    xbmcvfs.mkdir(profile_path)
+    db_location = os.path.join(profile_path.decode('utf-8'),'database.db')
     dbcon = database.connect(db_location)
     dbcon.row_factory = dict_factory
     dbcur = dbcon.cursor()
